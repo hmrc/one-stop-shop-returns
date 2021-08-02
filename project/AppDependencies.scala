@@ -10,10 +10,11 @@ object AppDependencies {
   )
 
   val test = Seq(
-    "uk.gov.hmrc"             %% "bootstrap-test-play-28"     % "5.8.0"             % Test,
-    "org.scalatest"           %% "scalatest"                  % "3.2.5"             % Test,
-    "com.typesafe.play"       %% "play-test"                  % PlayVersion.current % Test,
-    "com.vladsch.flexmark"    %  "flexmark-all"               % "0.36.8"            % "test, it",
-    "org.scalatestplus.play"  %% "scalatestplus-play"         % "5.1.0"             % "test, it"
-  )
+    "uk.gov.hmrc"             %% "bootstrap-test-play-28"     % "5.8.0",
+    "org.scalatest"           %% "scalatest"                  % "3.2.5",
+    "com.typesafe.play"       %% "play-test"                  % PlayVersion.current,
+    "com.vladsch.flexmark"    %  "flexmark-all"               % "0.36.8",
+    "org.scalatestplus.play"  %% "scalatestplus-play"         % "5.1.0",
+    "org.scalatestplus"       %% "scalacheck-1-15"            % "3.2.7.0"
+  ).map(_ % "test, it")
 }
