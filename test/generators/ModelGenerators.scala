@@ -14,23 +14,30 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.onestopshopreturns.controllers
+package generators
 
-import org.scalatest.matchers.should.Matchers
-import org.scalatest.wordspec.AnyWordSpec
-import play.api.http.Status
-import play.api.test.Helpers._
-import play.api.test.{FakeRequest, Helpers}
+import models._
+import org.scalacheck.Arbitrary.arbitrary
+import org.scalacheck.{Arbitrary, Gen}
+import uk.gov.hmrc.domain.Vrn
 
-class MicroserviceHelloWorldControllerSpec extends AnyWordSpec with Matchers {
+trait ModelGenerators {
 
-  private val fakeRequest = FakeRequest("GET", "/")
-  private val controller = new MicroserviceHelloWorldController(Helpers.stubControllerComponents())
-
-  "GET /" should {
-    "return 200" in {
-      val result = controller.hello()(fakeRequest)
-      status(result) shouldBe Status.OK
+  implicit val arbitraryPeriod: Arbitrary[Period] =
+    Arbitrary {
+      for {
+        year <- Gen.choose(2022, 2100)
+        quarter <- Gen.oneOf(Quarter.values)
+      } yield Period(year, quarter)
     }
-  }
+
+  implicit val arbitraryVrn: Arbitrary[Vrn] =
+    Arbitrary {
+      Gen.listOfN(9, Gen.numChar).map(_.mkString).map(Vrn)
+    }
+
+  implicit val arbitraryQuarter: Arbitrary[Quarter] =
+    Arbitrary {
+      Gen.oneOf(Quarter.values)
+    }
 }
