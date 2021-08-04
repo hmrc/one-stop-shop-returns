@@ -14,30 +14,26 @@
  * limitations under the License.
  */
 
-package generators
+package models
 
-import models._
-import org.scalacheck.Arbitrary.arbitrary
-import org.scalacheck.{Arbitrary, Gen}
+import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.domain.Vrn
 
-trait ModelGenerators {
+import java.time.{Instant, LocalDate}
 
-  implicit val arbitraryPeriod: Arbitrary[Period] =
-    Arbitrary {
-      for {
-        year <- Gen.choose(2022, 2100)
-        quarter <- Gen.oneOf(Quarter.values)
-      } yield Period(year, quarter)
-    }
+case class Return(
+                   vrn: Vrn,
+                   period: Period,
+                   reference: ReturnReference,
+                   startDate: Option[LocalDate],
+                   endDate: Option[LocalDate],
+                   salesFromNi: Set[SalesToCountry],
+                   salesFromEu: Seq[SalesFromEuCountry],
+                   submissionReceived: Instant,
+                   lastUpdated: Instant
+                 )
 
-  implicit val arbitraryVrn: Arbitrary[Vrn] =
-    Arbitrary {
-      Gen.listOfN(9, Gen.numChar).map(_.mkString).map(Vrn)
-    }
+object Return {
 
-  implicit val arbitraryQuarter: Arbitrary[Quarter] =
-    Arbitrary {
-      Gen.oneOf(Quarter.values)
-    }
+  implicit val format: OFormat[Return] = Json.format[Return]
 }
