@@ -36,5 +36,4 @@ object VatRateType extends Enumerable.Implicits {
 
   implicit val enumerable: Enumerable[VatRateType] =
     Enumerable(values.map(v => v.toString -> v): _*)
-
 }
