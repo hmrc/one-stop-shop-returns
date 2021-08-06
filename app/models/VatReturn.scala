@@ -21,19 +21,19 @@ import uk.gov.hmrc.domain.Vrn
 
 import java.time.{Instant, LocalDate}
 
-case class Return(
-                   vrn: Vrn,
-                   period: Period,
-                   reference: ReturnReference,
-                   startDate: Option[LocalDate],
-                   endDate: Option[LocalDate],
-                   salesFromNi: Set[SalesToCountry],
-                   salesFromEu: Seq[SalesFromEuCountry],
-                   submissionReceived: Instant,
-                   lastUpdated: Instant
-                 )
+case class VatReturn(
+                      vrn: Vrn,
+                      period: Period,
+                      reference: ReturnReference,
+                      startDate: Option[LocalDate],
+                      endDate: Option[LocalDate],
+                      salesFromNi: Set[SalesToCountry],
+                      salesFromEu: Set[SalesFromEuCountry],
+                      submissionReceived: Instant,
+                      lastUpdated: Instant
+                    )
 
-object Return {
+object VatReturn {
 
-  implicit val format: OFormat[Return] = Json.format[Return]
+  implicit val format: OFormat[VatReturn] = Json.format[VatReturn]
 }
