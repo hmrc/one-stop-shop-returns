@@ -17,6 +17,7 @@
 package generators
 
 import models._
+import models.requests.VatReturnRequest
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.{Arbitrary, Gen}
 import uk.gov.hmrc.domain.Vrn
@@ -86,7 +87,7 @@ trait ModelGenerators {
     Arbitrary {
       for {
         country <- arbitrary[Country]
-        number  <- Gen.choose(1, 27)
+        number  <- Gen.choose(1, 3)
         amounts <- Gen.listOfN(number, arbitrary[SalesAtVatRate]).map(_.toSet)
       } yield SalesToCountry(country, amounts)
     }
@@ -96,7 +97,7 @@ trait ModelGenerators {
       for {
         country       <- arbitrary[Country]
         taxIdentifier <- arbitrary[EuTaxIdentifier]
-        number        <- Gen.choose(1, 27)
+        number        <- Gen.choose(1, 3)
         amounts       <- Gen.listOfN(number, arbitrary[SalesToCountry]).map(_.toSet)
       } yield SalesFromEuCountry(country, taxIdentifier, amounts)
     }
@@ -110,5 +111,15 @@ trait ModelGenerators {
         salesFromEu <- Gen.listOf(arbitrary[SalesFromEuCountry]).map(_.toSet)
         now         = Instant.now
       } yield VatReturn(vrn, period, ReturnReference(vrn, period), None, None, salesFromNi, salesFromEu, now, now)
+    }
+
+  implicit val arbitraryVatReturnRequest: Arbitrary[VatReturnRequest] =
+    Arbitrary {
+      for {
+        vrn         <- arbitrary[Vrn]
+        period      <- arbitrary[Period]
+        salesFromNi <- Gen.listOf(arbitrary[SalesToCountry]).map(_.toSet)
+        salesFromEu <- Gen.listOf(arbitrary[SalesFromEuCountry]).map(_.toSet)
+      } yield VatReturnRequest(vrn, period, None, None, salesFromNi, salesFromEu)
     }
 }
