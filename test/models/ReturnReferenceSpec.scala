@@ -29,20 +29,20 @@ class ReturnReferenceSpec extends AnyFreeSpec with Matchers with ScalaCheckPrope
 
   ".fromString" - {
 
-    "must read from a string in the format GB/XI<vrn>/<quarter>.<year>" in {
+    "must read from a string in the format XI/XI<vrn>/<quarter>.<year>" in {
 
       val genYear = Gen.choose(2022, 2100)
       forAll(arbitrary[Vrn], genYear, arbitrary[Quarter]) {
         case (vrn, year, quarter) =>
 
-          val string = s"GB/XI$vrn/${quarter.toString}.$year"
+          val string = s"XI/XI$vrn/${quarter.toString}.$year"
           ReturnReference.fromString(string) mustBe defined
       }
     }
 
-    "must not read from a string that isn't in the format GB/XI<vrn>/<quarter>.<year>" in {
+    "must not read from a string that isn't in the format XI/XI<vrn>/<quarter>.<year>" in {
 
-      val pattern = """GB/XI\d{9}/Q[1-4].\d{4}""".r.anchored
+      val pattern = """XI/XI\d{9}/Q[1-4].\d{4}""".r.anchored
 
       forAll(arbitrary[String]) {
         string =>
