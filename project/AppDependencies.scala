@@ -18,6 +18,8 @@ object AppDependencies {
     "com.typesafe.play"       %% "play-test"                  % PlayVersion.current,
     "com.vladsch.flexmark"    %  "flexmark-all"               % "0.36.8",
     "org.scalatestplus.play"  %% "scalatestplus-play"         % "5.1.0",
-    "org.scalatestplus"       %% "scalacheck-1-15"            % "3.2.7.0"
+    "org.scalatestplus"       %% "scalacheck-1-15"            % "3.2.7.0",
+    "org.scalatestplus"       %% "mockito-3-4"                % "3.2.7.0",
+    "org.mockito"             %% "mockito-scala"              % "1.16.0"
   ).map(_ % "test, it")
 }
