@@ -14,17 +14,9 @@
  * limitations under the License.
  */
 
-package config
+package controllers.actions
 
-import com.google.inject.AbstractModule
-import controllers.actions.{AuthAction, AuthActionImpl}
+import play.api.mvc.{Request, WrappedRequest}
+import uk.gov.hmrc.domain.Vrn
 
-import java.time.{Clock, ZoneOffset}
-
-class Module extends AbstractModule {
-
-  override def configure(): Unit = {
-    bind(classOf[AuthAction]).to(classOf[AuthActionImpl]).asEagerSingleton()
-    bind(classOf[Clock]).toInstance(Clock.systemDefaultZone.withZone(ZoneOffset.UTC))
-  }
-}
+case class AuthorisedRequest[A](request: Request[A], userId: String, vrn: Vrn) extends WrappedRequest[A](request)

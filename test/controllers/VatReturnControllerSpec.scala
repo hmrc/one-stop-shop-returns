@@ -16,16 +16,14 @@
 
 package controllers
 
+import base.SpecBase
+import controllers.actions.FakeFailingAuthConnector
 import generators.Generators
 import models.InsertResult.{AlreadyExists, InsertSucceeded}
 import models.requests.VatReturnRequest
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito.{times, verify, when}
 import org.scalacheck.Arbitrary.arbitrary
-import org.scalatest.OptionValues
-import org.scalatest.freespec.AnyFreeSpec
-import org.scalatest.matchers.must.Matchers
-import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
@@ -33,18 +31,22 @@ import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import services.VatReturnService
+import uk.gov.hmrc.auth.core.{AuthConnector, MissingBearerToken}
 
 import scala.concurrent.Future
 
 class VatReturnControllerSpec
-  extends AnyFreeSpec
-    with Matchers
-    with MockitoSugar
+  extends SpecBase
     with ScalaCheckPropertyChecks
-    with Generators
-    with OptionValues {
+    with Generators {
 
   ".post" - {
+
+    val vatReturnRequest = arbitrary[VatReturnRequest].sample.value
+
+    lazy val request =
+      FakeRequest(POST, routes.VatReturnController.post().url)
+        .withJsonBody(Json.toJson(vatReturnRequest))
 
     "must save a VAT return and respond with Created" in {
 
@@ -52,16 +54,11 @@ class VatReturnControllerSpec
       when(mockService.createVatReturn(any())) thenReturn Future.successful(InsertSucceeded)
 
       val app =
-        new GuiceApplicationBuilder()
+        applicationBuilder
           .overrides(bind[VatReturnService].toInstance(mockService))
           .build()
 
-      val vatReturnRequest = arbitrary[VatReturnRequest].sample.value
-
       running(app) {
-        val request =
-          FakeRequest(POST, routes.VatReturnController.post().url)
-            .withJsonBody(Json.toJson(vatReturnRequest))
 
         val result = route(app, request).value
 
@@ -76,20 +73,29 @@ class VatReturnControllerSpec
       when(mockService.createVatReturn(any())) thenReturn Future.successful(AlreadyExists)
 
       val app =
-        new GuiceApplicationBuilder()
+        applicationBuilder
           .overrides(bind[VatReturnService].toInstance(mockService))
           .build()
 
-      val vatReturnRequest = arbitrary[VatReturnRequest].sample.value
-
       running(app) {
-        val request =
-          FakeRequest(POST, routes.VatReturnController.post().url)
-            .withJsonBody(Json.toJson(vatReturnRequest))
 
         val result = route(app, request).value
 
         status(result) mustEqual CONFLICT
+      }
+    }
+
+    "must return Unauthorized when the user is not authorised" in {
+
+      val app =
+        new GuiceApplicationBuilder()
+          .overrides(bind[AuthConnector].toInstance(new FakeFailingAuthConnector(new MissingBearerToken)))
+          .build()
+
+      running(app) {
+
+        val result = route(app, request).value
+        status(result) mustEqual UNAUTHORIZED
       }
     }
   }
