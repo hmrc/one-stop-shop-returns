@@ -19,7 +19,8 @@ package controllers
 import controllers.actions.AuthAction
 import models.InsertResult.{AlreadyExists, InsertSucceeded}
 import models.requests.VatReturnRequest
-import play.api.mvc.{Action, ControllerComponents}
+import play.api.libs.json.Json
+import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import services.VatReturnService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
@@ -38,6 +39,14 @@ class VatReturnController @Inject()(
       vatReturnService.createVatReturn(request.body).map {
         case InsertSucceeded => Created
         case AlreadyExists   => Conflict
+      }
+  }
+
+  def get(): Action[AnyContent] = auth.async {
+    implicit request =>
+      vatReturnService.get(request.vrn).map {
+        case Nil => NotFound
+        case seq => Ok(Json.toJson(seq))
       }
   }
 }

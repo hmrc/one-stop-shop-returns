@@ -20,10 +20,12 @@ import base.SpecBase
 import controllers.actions.FakeFailingAuthConnector
 import generators.Generators
 import models.InsertResult.{AlreadyExists, InsertSucceeded}
+import models.{ReturnReference, VatReturn}
 import models.requests.VatReturnRequest
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito.{times, verify, when}
 import org.scalacheck.Arbitrary.arbitrary
+import org.scalacheck.Gen
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
@@ -85,7 +87,7 @@ class VatReturnControllerSpec
       }
     }
 
-    "must return Unauthorized when the user is not authorised" in {
+    "must respond with Unauthorized when the user is not authorised" in {
 
       val app =
         new GuiceApplicationBuilder()
@@ -94,6 +96,65 @@ class VatReturnControllerSpec
 
       running(app) {
 
+        val result = route(app, request).value
+        status(result) mustEqual UNAUTHORIZED
+      }
+    }
+  }
+
+  ".get" - {
+
+    lazy val request = FakeRequest(GET, routes.VatReturnController.get().url)
+
+    "must respond with OK and a sequence of returns when some exist for this user" in {
+
+      val mockService = mock[VatReturnService]
+      val returns =
+        Gen
+          .nonEmptyListOf(arbitrary[VatReturn])
+          .sample.value
+          .map(r => r copy (vrn = vrn, reference = ReturnReference(vrn, r.period)))
+
+      when(mockService.get(any())) thenReturn Future.successful(returns)
+
+      val app =
+        applicationBuilder
+          .overrides(bind[VatReturnService].toInstance(mockService))
+          .build()
+
+      running(app) {
+        val result = route(app, request).value
+
+        status(result) mustEqual OK
+        contentAsJson(result) mustEqual Json.toJson(returns)
+      }
+    }
+
+    "must respond with NOT FOUND when no returns exist for this user" in {
+
+      val mockService = mock[VatReturnService]
+      when(mockService.get(any())) thenReturn Future.successful(Seq.empty)
+
+      val app =
+        applicationBuilder
+          .overrides(bind[VatReturnService].toInstance(mockService))
+          .build()
+
+      running(app) {
+        val result = route(app, request).value
+
+        status(result) mustEqual NOT_FOUND
+      }
+    }
+
+    "must respond with Unauthorized when the user is not authorised" in {
+
+      val app =
+        new GuiceApplicationBuilder()
+          .overrides(bind[AuthConnector].toInstance(new FakeFailingAuthConnector(new MissingBearerToken)))
+          .build()
+
+      running(app) {
         val result = route(app, request).value
         status(result) mustEqual UNAUTHORIZED
       }
