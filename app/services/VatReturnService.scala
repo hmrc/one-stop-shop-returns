@@ -46,4 +46,7 @@ class VatReturnService @Inject()(
 
     repository.insert(vatReturn)
   }
+
+  def get(vrn: Vrn): Future[Seq[VatReturn]] =
+    repository.get(vrn)
 }
