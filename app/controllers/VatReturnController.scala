@@ -16,6 +16,7 @@
 
 package controllers
 
+import controllers.actions.AuthAction
 import models.InsertResult.{AlreadyExists, InsertSucceeded}
 import models.requests.VatReturnRequest
 import play.api.mvc.{Action, ControllerComponents}
@@ -27,11 +28,12 @@ import scala.concurrent.ExecutionContext
 
 class VatReturnController @Inject()(
                                      cc: ControllerComponents,
-                                     vatReturnService: VatReturnService
+                                     vatReturnService: VatReturnService,
+                                     auth: AuthAction
                                    )(implicit ec: ExecutionContext)
   extends BackendController(cc) {
 
-  def post(): Action[VatReturnRequest] = Action(parse.json[VatReturnRequest]).async {
+  def post(): Action[VatReturnRequest] = auth(parse.json[VatReturnRequest]).async {
     implicit request =>
       vatReturnService.createVatReturn(request.body).map {
         case InsertSucceeded => Created
