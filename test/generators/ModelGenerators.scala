@@ -87,7 +87,7 @@ trait ModelGenerators {
     Arbitrary {
       for {
         country <- arbitrary[Country]
-        number  <- Gen.choose(1, 3)
+        number  <- Gen.choose(1, 2)
         amounts <- Gen.listOfN(number, arbitrary[SalesAtVatRate]).map(_.toSet)
       } yield SalesToCountry(country, amounts)
     }
@@ -107,8 +107,10 @@ trait ModelGenerators {
       for {
         vrn         <- arbitrary[Vrn]
         period      <- arbitrary[Period]
-        salesFromNi <- Gen.listOf(arbitrary[SalesToCountry]).map(_.toSet)
-        salesFromEu <- Gen.listOf(arbitrary[SalesFromEuCountry]).map(_.toSet)
+        niSales     <- Gen.choose(1, 3)
+        euSales     <- Gen.choose(1, 3)
+        salesFromNi <- Gen.listOfN(niSales, arbitrary[SalesToCountry]).map(_.toSet)
+        salesFromEu <- Gen.listOfN(euSales, arbitrary[SalesFromEuCountry]).map(_.toSet)
         now         = Instant.now
       } yield VatReturn(vrn, period, ReturnReference(vrn, period), None, None, salesFromNi, salesFromEu, now, now)
     }
@@ -118,8 +120,10 @@ trait ModelGenerators {
       for {
         vrn         <- arbitrary[Vrn]
         period      <- arbitrary[Period]
-        salesFromNi <- Gen.listOf(arbitrary[SalesToCountry]).map(_.toSet)
-        salesFromEu <- Gen.listOf(arbitrary[SalesFromEuCountry]).map(_.toSet)
+        niSales     <- Gen.choose(1, 3)
+        euSales     <- Gen.choose(1, 3)
+        salesFromNi <- Gen.listOfN(niSales, arbitrary[SalesToCountry]).map(_.toSet)
+        salesFromEu <- Gen.listOfN(euSales, arbitrary[SalesFromEuCountry]).map(_.toSet)
       } yield VatReturnRequest(vrn, period, None, None, salesFromNi, salesFromEu)
     }
 }
