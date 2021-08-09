@@ -14,26 +14,11 @@
  * limitations under the License.
  */
 
-package models
+package repositories
 
-import play.api.libs.json.{Json, OFormat}
-
-case class VatRate(rate: BigDecimal, rateType: VatRateType)
-
-object VatRate {
-
-  implicit val format: OFormat[VatRate] = Json.format[VatRate]
-}
-
-sealed trait VatRateType
-
-object VatRateType extends Enumerable.Implicits {
-
-  case object Standard extends WithName("STANDARD") with VatRateType
-  case object Reduced extends WithName("REDUCED") with VatRateType
-
-  val values: Seq[VatRateType] = Seq(Standard, Reduced)
-
-  implicit val enumerable: Enumerable[VatRateType] =
-    Enumerable(values.map(v => v.toString -> v): _*)
+object MongoErrors {
+  object Duplicate {
+    def unapply(ex: Exception): Option[Exception] =
+      if (ex.getMessage.contains("E11000")) Some(ex) else None
+  }
 }
