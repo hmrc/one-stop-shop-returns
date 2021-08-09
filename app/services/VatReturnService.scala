@@ -16,9 +16,10 @@
 
 package services
 
-import models.{InsertResult, ReturnReference, VatReturn}
+import models.{InsertResult, Period, ReturnReference, VatReturn}
 import models.requests.VatReturnRequest
 import repositories.VatReturnRepository
+import uk.gov.hmrc.domain.Vrn
 
 import java.time.{Clock, Instant}
 import javax.inject.Inject
