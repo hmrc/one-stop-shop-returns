@@ -27,8 +27,8 @@ case class VatReturn(
                       reference: ReturnReference,
                       startDate: Option[LocalDate],
                       endDate: Option[LocalDate],
-                      salesFromNi: Set[SalesToCountry],
-                      salesFromEu: Set[SalesFromEuCountry],
+                      salesFromNi: List[SalesToCountry],
+                      salesFromEu: List[SalesFromEuCountry],
                       submissionReceived: Instant,
                       lastUpdated: Instant
                     )
