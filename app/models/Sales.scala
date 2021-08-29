@@ -19,9 +19,9 @@ package models
 import play.api.libs.json.{Json, OFormat}
 
 case class SalesFromEuCountry(
-                               countryOfEstablishment: Country,
-                               taxIdentifier: EuTaxIdentifier,
-                               sales: Set[SalesToCountry]
+                               countryOfSale: Country,
+                               taxIdentifier: Option[EuTaxIdentifier],
+                               sales: List[SalesToCountry]
                              )
 
 object SalesFromEuCountry {
@@ -31,7 +31,7 @@ object SalesFromEuCountry {
 
 case class SalesToCountry(
                            countryOfConsumption: Country,
-                           amounts: Set[SalesAtVatRate]
+                           amounts: List[SalesDetails]
                          )
 
 object SalesToCountry {
@@ -39,12 +39,12 @@ object SalesToCountry {
   implicit val format: OFormat[SalesToCountry] = Json.format[SalesToCountry]
 }
 
-case class SalesAtVatRate(
-                           vatRate: VatRate,
-                           taxableAmount: BigDecimal,
-                           vatAmount: BigDecimal
-                         )
+case class SalesDetails(
+                         vatRate: VatRate,
+                         netValueOfSales: BigDecimal,
+                         vatOnSales: BigDecimal
+                       )
 
-object SalesAtVatRate {
-  implicit val format: OFormat[SalesAtVatRate] = Json.format[SalesAtVatRate]
+object SalesDetails {
+  implicit val format: OFormat[SalesDetails] = Json.format[SalesDetails]
 }
