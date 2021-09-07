@@ -19,6 +19,8 @@ package controllers
 import controllers.actions.AuthAction
 import models.InsertResult.{AlreadyExists, InsertSucceeded}
 import models.requests.VatReturnRequest
+import models.Period
+import models.Period._
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import services.VatReturnService
@@ -42,11 +44,19 @@ class VatReturnController @Inject()(
       }
   }
 
-  def get(): Action[AnyContent] = auth.async {
+  def list(): Action[AnyContent] = auth.async {
     implicit request =>
       vatReturnService.get(request.vrn).map {
         case Nil => NotFound
         case seq => Ok(Json.toJson(seq))
+      }
+  }
+
+  def get(period: Period): Action[AnyContent] = auth.async {
+    implicit request =>
+      vatReturnService.get(request.vrn, period).map {
+        case None => NotFound
+        case value => Ok(Json.toJson(value))
       }
   }
 }

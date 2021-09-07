@@ -1,4 +1,5 @@
 # microservice specific routes
 
 POST        /vat-returns            controllers.VatReturnController.post
-GET         /vat-returns            controllers.VatReturnController.get
+GET         /vat-returns            controllers.VatReturnController.list
+GET         /vat-returns/:period    controllers.VatReturnController.get(period: Period)

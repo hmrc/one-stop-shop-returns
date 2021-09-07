@@ -1,6 +1,7 @@
 
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin.publishingSettings
 import scoverage.ScoverageKeys
+import play.sbt.routes.RoutesKeys
 
 val appName = "one-stop-shop-returns"
 
@@ -24,6 +25,9 @@ lazy val microservice = Project(appName, file("."))
     ScoverageKeys.coverageMinimumStmtTotal := 78,
     ScoverageKeys.coverageFailOnMinimum := true,
     ScoverageKeys.coverageHighlighting := true,
+    RoutesKeys.routesImport ++= Seq(
+      "models._"
+    )
   )
   .settings(PlayKeys.playDefaultPort := 10205)
   .settings(publishingSettings: _*)
