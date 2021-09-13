@@ -42,7 +42,7 @@ object SalesToCountry {
 case class SalesDetails(
                          vatRate: VatRate,
                          netValueOfSales: BigDecimal,
-                         vatOnSales: BigDecimal
+                         vatOnSales: VatOnSales
                        )
 
 object SalesDetails {
