@@ -37,3 +37,20 @@ object VatReturn {
 
   implicit val format: OFormat[VatReturn] = Json.format[VatReturn]
 }
+
+case class EncryptedVatReturn(
+                      vrn: Vrn,
+                      period: Period,
+                      reference: ReturnReference,
+                      startDate: Option[LocalDate],
+                      endDate: Option[LocalDate],
+                      salesFromNi: List[EncryptedSalesToCountry],
+                      salesFromEu: List[EncryptedSalesFromEuCountry],
+                      submissionReceived: Instant,
+                      lastUpdated: Instant
+                    )
+
+object EncryptedVatReturn {
+
+  implicit val format: OFormat[EncryptedVatReturn] = Json.format[EncryptedVatReturn]
+}
