@@ -16,7 +16,7 @@
 
 package services
 
-import models.{InsertResult, Period, ReturnReference, VatReturn}
+import models.{InsertResult, PaymentReference, Period, ReturnReference, VatReturn}
 import models.requests.VatReturnRequest
 import repositories.VatReturnRepository
 import uk.gov.hmrc.domain.Vrn
@@ -36,6 +36,7 @@ class VatReturnService @Inject()(
       vrn                = request.vrn,
       period             = request.period,
       reference          = ReturnReference(request.vrn, request.period),
+      paymentReference   = PaymentReference(request.vrn, request.period),
       startDate          = request.startDate,
       endDate            = request.endDate,
       salesFromNi        = request.salesFromNi,

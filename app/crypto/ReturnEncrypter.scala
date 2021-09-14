@@ -138,11 +138,12 @@ class ReturnEncrypter @Inject()(crypto: SecureGCMCipher) {
 
   def encryptReturn(vatReturn: VatReturn, vrn: Vrn, key: String): EncryptedVatReturn = {
     EncryptedVatReturn(
-      vrn         = vrn,
-      period      = vatReturn.period,
-      reference   = vatReturn.reference,
-      startDate   = vatReturn.startDate,
-      endDate     = vatReturn.endDate,
+      vrn = vrn,
+      period = vatReturn.period,
+      reference = vatReturn.reference,
+      paymentReference = vatReturn.paymentReference,
+      startDate = vatReturn.startDate,
+      endDate = vatReturn.endDate,
       salesFromNi = vatReturn.salesFromNi.map(encryptSalesToCountry(_, vrn, key)),
       salesFromEu = vatReturn.salesFromEu.map(encryptSalesFromEuCountry(_, vrn, key)),
       submissionReceived = vatReturn.submissionReceived,
@@ -152,11 +153,12 @@ class ReturnEncrypter @Inject()(crypto: SecureGCMCipher) {
 
   def decryptReturn(encryptedVatReturn: EncryptedVatReturn, vrn: Vrn, key: String): VatReturn = {
     VatReturn(
-      vrn         = vrn,
-      period      = encryptedVatReturn.period,
-      reference   = encryptedVatReturn.reference,
-      startDate   = encryptedVatReturn.startDate,
-      endDate     = encryptedVatReturn.endDate,
+      vrn = vrn,
+      period = encryptedVatReturn.period,
+      reference = encryptedVatReturn.reference,
+      paymentReference = encryptedVatReturn.paymentReference,
+      startDate = encryptedVatReturn.startDate,
+      endDate = encryptedVatReturn.endDate,
       salesFromNi = encryptedVatReturn.salesFromNi.map(decryptSalesToCountry(_, vrn, key)),
       salesFromEu = encryptedVatReturn.salesFromEu.map(decryptSalesFromEuCountry(_, vrn, key)),
       submissionReceived = encryptedVatReturn.submissionReceived,

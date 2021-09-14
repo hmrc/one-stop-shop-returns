@@ -97,11 +97,13 @@ class ReturnEncrypterSpec extends SpecBase with ScalaCheckPropertyChecks with Ge
     "must encrypt a return with all options missing and decrypt it" in {
       val period = arbitrary[Period].sample.value
       val returnReference = ReturnReference(vrn, period)
+      val paymentReference = PaymentReference(vrn, period)
 
       val vatReturn: VatReturn = VatReturn(
         vrn = vrn,
         period = period,
         reference = returnReference,
+        paymentReference = paymentReference,
         startDate = None,
         endDate = None,
         salesFromNi = List.empty,
@@ -120,6 +122,7 @@ class ReturnEncrypterSpec extends SpecBase with ScalaCheckPropertyChecks with Ge
 
       val period = arbitrary[Period].sample.value
       val returnReference = ReturnReference(vrn, period)
+      val paymentReference = PaymentReference(vrn, period)
 
       val belgium = Country("BE", "Belgium")
       val vatRate = VatRate(20, VatRateType.Standard)
@@ -136,6 +139,7 @@ class ReturnEncrypterSpec extends SpecBase with ScalaCheckPropertyChecks with Ge
         vrn = vrn,
         period = period,
         reference = returnReference,
+        paymentReference = paymentReference,
         startDate = Some(LocalDate.now()),
         endDate = Some(LocalDate.now()),
         salesFromNi = List(salesToCountry),
