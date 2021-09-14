@@ -16,6 +16,7 @@
 
 package models
 
+import crypto.EncryptedValue
 import play.api.libs.json.{Json, OFormat}
 
 case class VatRate(rate: BigDecimal, rateType: VatRateType)
@@ -23,6 +24,13 @@ case class VatRate(rate: BigDecimal, rateType: VatRateType)
 object VatRate {
 
   implicit val format: OFormat[VatRate] = Json.format[VatRate]
+}
+
+case class EncryptedVatRate(rate: EncryptedValue, rateType: EncryptedValue)
+
+object EncryptedVatRate {
+
+  implicit val format: OFormat[EncryptedVatRate] = Json.format[EncryptedVatRate]
 }
 
 sealed trait VatRateType

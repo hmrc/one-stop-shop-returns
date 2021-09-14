@@ -16,6 +16,7 @@
 
 package models
 
+import crypto.EncryptedValue
 import play.api.libs.json.{Json, OFormat}
 
 case class SalesFromEuCountry(
@@ -29,6 +30,17 @@ object SalesFromEuCountry {
   implicit val format: OFormat[SalesFromEuCountry] = Json.format[SalesFromEuCountry]
 }
 
+case class EncryptedSalesFromEuCountry(
+                               countryOfSale: EncryptedCountry,
+                               taxIdentifier: Option[EncryptedEuTaxIdentifier],
+                               sales: List[EncryptedSalesToCountry]
+                             )
+
+object EncryptedSalesFromEuCountry {
+
+  implicit val format: OFormat[EncryptedSalesFromEuCountry] = Json.format[EncryptedSalesFromEuCountry]
+}
+
 case class SalesToCountry(
                            countryOfConsumption: Country,
                            amounts: List[SalesDetails]
@@ -39,6 +51,16 @@ object SalesToCountry {
   implicit val format: OFormat[SalesToCountry] = Json.format[SalesToCountry]
 }
 
+case class EncryptedSalesToCountry(
+                           countryOfConsumption: EncryptedCountry,
+                           amounts: List[EncryptedSalesDetails]
+                         )
+
+object EncryptedSalesToCountry {
+
+  implicit val format: OFormat[EncryptedSalesToCountry] = Json.format[EncryptedSalesToCountry]
+}
+
 case class SalesDetails(
                          vatRate: VatRate,
                          netValueOfSales: BigDecimal,
@@ -47,4 +69,14 @@ case class SalesDetails(
 
 object SalesDetails {
   implicit val format: OFormat[SalesDetails] = Json.format[SalesDetails]
+}
+
+case class EncryptedSalesDetails(
+                         vatRate: EncryptedVatRate,
+                         netValueOfSales: EncryptedValue,
+                         vatOnSales: EncryptedValue
+                       )
+
+object EncryptedSalesDetails {
+  implicit val format: OFormat[EncryptedSalesDetails] = Json.format[EncryptedSalesDetails]
 }
