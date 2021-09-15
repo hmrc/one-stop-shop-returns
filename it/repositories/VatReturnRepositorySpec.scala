@@ -1,13 +1,17 @@
 package repositories
 
+import config.AppConfig
+import crypto.{ReturnEncrypter, SecureGCMCipher}
 import generators.Generators
 import models.InsertResult.{AlreadyExists, InsertSucceeded}
-import models.{Period, ReturnReference, VatReturn}
+import models.{EncryptedVatReturn, Period, ReturnReference, VatReturn}
+import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import org.scalatestplus.mockito.MockitoSugar.mock
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.mongo.test.{CleanMongoCollectionSupport, DefaultPlayMongoRepositorySupport}
 
@@ -16,15 +20,26 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class VatReturnRepositorySpec
   extends AnyFreeSpec
     with Matchers
-    with DefaultPlayMongoRepositorySupport[VatReturn]
+    with DefaultPlayMongoRepositorySupport[EncryptedVatReturn]
     with CleanMongoCollectionSupport
     with ScalaFutures
     with IntegrationPatience
     with OptionValues
     with Generators {
 
+  private val cipher    = new SecureGCMCipher
+  private val encrypter = new ReturnEncrypter(cipher)
+  private val appConfig = mock[AppConfig]
+  private val secretKey = "VqmXp7yigDFxbCUdDdNZVIvbW6RgPNJsliv6swQNCL8="
+
+  when(appConfig.encryptionKey) thenReturn secretKey
+
   override protected val repository =
-    new VatReturnRepository(mongoComponent = mongoComponent)
+    new VatReturnRepository(
+      mongoComponent = mongoComponent,
+      returnEncrypter = encrypter,
+      appConfig = appConfig
+    )
 
   private def rotateDigitsInString(chars: String): String =
     chars.map {
@@ -46,10 +61,12 @@ class VatReturnRepositorySpec
       val insertResult1 = repository.insert(vatReturn1).futureValue
       val insertReturn2 = repository.insert(vatReturn2).futureValue
       val databaseRecords = findAll().futureValue
+      val decryptedDatabaseRecords =
+        databaseRecords.map(e => encrypter.decryptReturn(e, e.vrn, secretKey))
 
       insertResult1 mustEqual InsertSucceeded
       insertReturn2 mustEqual InsertSucceeded
-      databaseRecords must contain theSameElementsAs Seq(vatReturn1, vatReturn2)
+      decryptedDatabaseRecords must contain theSameElementsAs Seq(vatReturn1, vatReturn2)
     }
 
     "must insert returns for different VRNs in the same period" in {
@@ -64,10 +81,12 @@ class VatReturnRepositorySpec
       val insertResult1 = repository.insert(vatReturn1).futureValue
       val insertReturn2 = repository.insert(vatReturn2).futureValue
       val databaseRecords = findAll().futureValue
+      val decryptedDatabaseRecords =
+        databaseRecords.map(e => encrypter.decryptReturn(e, e.vrn, secretKey))
 
       insertResult1 mustEqual InsertSucceeded
       insertReturn2 mustEqual InsertSucceeded
-      databaseRecords must contain theSameElementsAs Seq(vatReturn1, vatReturn2)
+      decryptedDatabaseRecords must contain theSameElementsAs Seq(vatReturn1, vatReturn2)
     }
 
     "must not insert a return with the same VRN and period" in {
@@ -80,7 +99,10 @@ class VatReturnRepositorySpec
       insertResult1 mustEqual InsertSucceeded
       insertResult2 mustEqual AlreadyExists
 
-      findAll().futureValue must contain only vatReturn
+      val decryptedDatabaseRecords =
+        findAll().futureValue.map(e => encrypter.decryptReturn(e, e.vrn, secretKey))
+
+      decryptedDatabaseRecords must contain only vatReturn
     }
   }
 
@@ -100,9 +122,9 @@ class VatReturnRepositorySpec
         reference = ReturnReference(vrn3, vatReturn1.period)
       )
 
-      insert(vatReturn1).futureValue
-      insert(vatReturn2).futureValue
-      insert(vatReturn3).futureValue
+      insert(encrypter.encryptReturn(vatReturn1, vatReturn1.vrn, secretKey)).futureValue
+      insert(encrypter.encryptReturn(vatReturn2, vatReturn2.vrn, secretKey)).futureValue
+      insert(encrypter.encryptReturn(vatReturn3, vatReturn3.vrn, secretKey)).futureValue
 
       val returns = repository.get(vatReturn1.vrn).futureValue
 
@@ -116,7 +138,7 @@ class VatReturnRepositorySpec
 
       val vatReturn = arbitrary[VatReturn].sample.value
 
-      insert(vatReturn).futureValue
+      insert(encrypter.encryptReturn(vatReturn, vatReturn.vrn, secretKey)).futureValue
 
       val result = repository.get(vatReturn.vrn, vatReturn.period).futureValue
 

@@ -10,6 +10,8 @@ import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import uk.gov.hmrc.domain.Vrn
 
+import java.time.{Clock, LocalDate, ZoneId}
+
 trait SpecBase
   extends AnyFreeSpec
     with Matchers
@@ -20,6 +22,8 @@ trait SpecBase
     with MockitoSugar {
 
   protected val vrn: Vrn = Vrn("123456789")
+
+  val stubClock: Clock = Clock.fixed(LocalDate.now.atStartOfDay(ZoneId.systemDefault).toInstant, ZoneId.systemDefault)
 
   protected def applicationBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder().overrides(bind[AuthAction].to[FakeAuthAction])
