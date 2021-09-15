@@ -74,7 +74,7 @@ object SalesDetails {
 case class EncryptedSalesDetails(
                          vatRate: EncryptedVatRate,
                          netValueOfSales: EncryptedValue,
-                         vatOnSales: EncryptedValue
+                         vatOnSales: EncryptedVatOnSales
                        )
 
 object EncryptedSalesDetails {

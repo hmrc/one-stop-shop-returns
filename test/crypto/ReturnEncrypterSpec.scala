@@ -40,6 +40,19 @@ class ReturnEncrypterSpec extends SpecBase with ScalaCheckPropertyChecks with Ge
     }
   }
 
+  "encrypt / decrypt VatOnSales" - {
+
+    "must encrypt vatOnSales and decrypt it" in {
+      forAll(arbitrary[VatOnSales]) {
+        vatOnSales =>
+          val e = encrypter.encryptVatOnSales(vatOnSales, vrn, secretKey)
+          val d = encrypter.decryptVatOnSales(e, vrn, secretKey)
+
+          d mustEqual vatOnSales
+      }
+    }
+  }
+
   "encrypt / decrypt VatRate" - {
 
     "must encrypt vatRate and decrypt it" in {
@@ -123,7 +136,7 @@ class ReturnEncrypterSpec extends SpecBase with ScalaCheckPropertyChecks with Ge
 
       val belgium = Country("BE", "Belgium")
       val vatRate = VatRate(20, VatRateType.Standard)
-      val salesDetails = SalesDetails(vatRate, 100, 20)
+      val salesDetails = SalesDetails(vatRate, 100, VatOnSales(VatOnSalesChoice.Standard, 20))
       val salesToCountry = SalesToCountry(belgium, List(salesDetails))
 
       val salesFromEuCountry = SalesFromEuCountry(
