@@ -18,9 +18,8 @@ package repositories
 
 import config.AppConfig
 import crypto.ReturnEncrypter
-import models.InsertResult.{AlreadyExists, InsertSucceeded}
-import models.{EncryptedVatReturn, InsertResult, Period, VatReturn}
-import org.mongodb.scala.model.{Filters, IndexModel, IndexOptions, Indexes, ReplaceOptions}
+import models.{EncryptedVatReturn, Period, VatReturn}
+import org.mongodb.scala.model.{Filters, IndexModel, IndexOptions, Indexes}
 import repositories.MongoErrors.Duplicate
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.mongo.MongoComponent
@@ -53,15 +52,15 @@ class VatReturnRepository @Inject()(
 
   private val encryptionKey = appConfig.encryptionKey
 
-  def insert(vatReturn: VatReturn): Future[InsertResult] = {
+  def insert(vatReturn: VatReturn): Future[Option[VatReturn]] = {
     val encryptedVatReturn = returnEncrypter.encryptReturn(vatReturn, vatReturn.vrn, encryptionKey)
 
     collection
       .insertOne(encryptedVatReturn)
       .toFuture
-      .map(_ => InsertSucceeded)
+      .map(_ => Some(vatReturn))
       .recover {
-        case Duplicate(_) => AlreadyExists
+        case Duplicate(_) => None
       }
   }
 

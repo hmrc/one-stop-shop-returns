@@ -16,7 +16,7 @@
 
 package services
 
-import models.{InsertResult, PaymentReference, Period, ReturnReference, VatReturn}
+import models.{PaymentReference, Period, ReturnReference, VatReturn}
 import models.requests.VatReturnRequest
 import repositories.VatReturnRepository
 import uk.gov.hmrc.domain.Vrn
@@ -31,7 +31,7 @@ class VatReturnService @Inject()(
                                 )
                                 (implicit ec: ExecutionContext) {
 
-  def createVatReturn(request: VatReturnRequest): Future[InsertResult] = {
+  def createVatReturn(request: VatReturnRequest): Future[Option[VatReturn]] = {
     val vatReturn = VatReturn(
       vrn                = request.vrn,
       period             = request.period,

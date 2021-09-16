@@ -17,10 +17,8 @@
 package controllers
 
 import controllers.actions.AuthAction
-import models.InsertResult.{AlreadyExists, InsertSucceeded}
 import models.requests.VatReturnRequest
 import models.Period
-import models.Period._
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import services.VatReturnService
@@ -39,8 +37,8 @@ class VatReturnController @Inject()(
   def post(): Action[VatReturnRequest] = auth(parse.json[VatReturnRequest]).async {
     implicit request =>
       vatReturnService.createVatReturn(request.body).map {
-        case InsertSucceeded => Created
-        case AlreadyExists   => Conflict
+        case Some(vatReturn) => Created(Json.toJson(vatReturn))
+        case None            => Conflict
       }
   }
 

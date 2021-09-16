@@ -64,8 +64,8 @@ class VatReturnRepositorySpec
       val decryptedDatabaseRecords =
         databaseRecords.map(e => encrypter.decryptReturn(e, e.vrn, secretKey))
 
-      insertResult1 mustEqual InsertSucceeded
-      insertReturn2 mustEqual InsertSucceeded
+      insertResult1 mustBe Some(vatReturn1)
+      insertReturn2 mustBe Some(vatReturn2)
       decryptedDatabaseRecords must contain theSameElementsAs Seq(vatReturn1, vatReturn2)
     }
 
@@ -84,8 +84,8 @@ class VatReturnRepositorySpec
       val decryptedDatabaseRecords =
         databaseRecords.map(e => encrypter.decryptReturn(e, e.vrn, secretKey))
 
-      insertResult1 mustEqual InsertSucceeded
-      insertReturn2 mustEqual InsertSucceeded
+      insertResult1 mustBe Some(vatReturn1)
+      insertReturn2 mustBe Some(vatReturn2)
       decryptedDatabaseRecords must contain theSameElementsAs Seq(vatReturn1, vatReturn2)
     }
 
@@ -96,8 +96,8 @@ class VatReturnRepositorySpec
       val insertResult1 = repository.insert(vatReturn).futureValue
       val insertResult2 = repository.insert(vatReturn).futureValue
 
-      insertResult1 mustEqual InsertSucceeded
-      insertResult2 mustEqual AlreadyExists
+      insertResult1 mustBe Some(vatReturn)
+      insertResult2 mustBe None
 
       val decryptedDatabaseRecords =
         findAll().futureValue.map(e => encrypter.decryptReturn(e, e.vrn, secretKey))
