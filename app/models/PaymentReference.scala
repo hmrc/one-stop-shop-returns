@@ -40,7 +40,7 @@ object PaymentReference {
         None
     }
 
-  private def twoDigitYear(year: Int) = year % 100
+  private def twoDigitYear(year: Int) = year.toString takeRight 2
 
   implicit def writes: Writes[PaymentReference] = new Writes[PaymentReference] {
     override def writes(o: PaymentReference): JsValue =
