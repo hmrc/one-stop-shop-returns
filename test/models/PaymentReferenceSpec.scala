@@ -18,7 +18,7 @@ package models
 
 import generators.Generators
 import org.scalacheck.Arbitrary.arbitrary
-import org.scalacheck.Gen
+import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
@@ -56,6 +56,13 @@ class PaymentReferenceSpec extends AnyFreeSpec with Matchers with ScalaCheckProp
   }
 
   "must serialise and deserialise to / from a valid payment reference" in {
+    implicit val arbitraryPeriod: Arbitrary[Period] =
+      Arbitrary {
+        for {
+          year    <- Gen.choose(2021, 2099)
+          quarter <- arbitrary[Quarter]
+        } yield Period(year, quarter)
+      }
 
     forAll(arbitrary[Period], arbitrary[Vrn]) {
       case (period, vrn) =>
