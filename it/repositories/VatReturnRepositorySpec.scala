@@ -3,7 +3,6 @@ package repositories
 import config.AppConfig
 import crypto.{ReturnEncrypter, SecureGCMCipher}
 import generators.Generators
-import models.InsertResult.{AlreadyExists, InsertSucceeded}
 import models.{EncryptedVatReturn, Period, ReturnReference, VatReturn}
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
