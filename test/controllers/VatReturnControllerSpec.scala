@@ -19,7 +19,6 @@ package controllers
 import base.SpecBase
 import controllers.actions.FakeFailingAuthConnector
 import generators.Generators
-import models.InsertResult.{AlreadyExists, InsertSucceeded}
 import models.{Period, ReturnReference, VatReturn}
 import models.requests.VatReturnRequest
 import models.Quarter.Q3
@@ -46,15 +45,17 @@ class VatReturnControllerSpec
   ".post" - {
 
     val vatReturnRequest = arbitrary[VatReturnRequest].sample.value
+    val vatReturn        = arbitrary[VatReturn].sample.value
 
     lazy val request =
       FakeRequest(POST, routes.VatReturnController.post().url)
         .withJsonBody(Json.toJson(vatReturnRequest))
 
     "must save a VAT return and respond with Created" in {
-
       val mockService = mock[VatReturnService]
-      when(mockService.createVatReturn(any())) thenReturn Future.successful(InsertSucceeded)
+
+      when(mockService.createVatReturn(any()))
+        .thenReturn(Future.successful(Some(vatReturn)))
 
       val app =
         applicationBuilder
@@ -66,6 +67,7 @@ class VatReturnControllerSpec
         val result = route(app, request).value
 
         status(result) mustEqual CREATED
+        contentAsJson(result) mustBe Json.toJson(vatReturn)
         verify(mockService, times(1)).createVatReturn(eqTo(vatReturnRequest))
       }
     }
@@ -73,7 +75,7 @@ class VatReturnControllerSpec
     "must respond with Conflict when trying to save a duplicate" in {
 
       val mockService = mock[VatReturnService]
-      when(mockService.createVatReturn(any())) thenReturn Future.successful(AlreadyExists)
+      when(mockService.createVatReturn(any())).thenReturn(Future.successful(None))
 
       val app =
         applicationBuilder

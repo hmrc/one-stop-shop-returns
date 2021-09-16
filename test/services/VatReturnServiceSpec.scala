@@ -17,7 +17,7 @@
 package services
 
 import generators.Generators
-import models.InsertResult.{AlreadyExists, InsertSucceeded}
+import models.VatReturn
 import models.requests.VatReturnRequest
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{times, verify, when}
@@ -50,7 +50,8 @@ class VatReturnServiceSpec
 
       val now            = Instant.now
       val stubClock      = Clock.fixed(now, ZoneId.systemDefault())
-      val insertResult   = Gen.oneOf(InsertSucceeded, AlreadyExists).sample.value
+      val vatReturn      = arbitrary[VatReturn].sample.value
+      val insertResult   = Gen.oneOf(Some(vatReturn), None).sample.value
       val mockRepository = mock[VatReturnRepository]
 
       when(mockRepository.insert(any())) thenReturn Future.successful(insertResult)
