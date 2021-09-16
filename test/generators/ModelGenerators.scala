@@ -67,7 +67,15 @@ trait ModelGenerators {
       for {
         vatRateType <- Gen.oneOf(VatRateType.values)
         rate        <- Gen.choose(BigDecimal(0), BigDecimal(100))
-      } yield VatRate(rate.setScale(2, RoundingMode.HALF_EVEN), vatRateType)
+      } yield VatRate(rate.setScale(2, RoundingMode.HALF_UP), vatRateType)
+    }
+
+  implicit val arbitraryVatOnSales: Arbitrary[VatOnSales] =
+    Arbitrary {
+      for {
+        choice <- Gen.oneOf(VatOnSalesChoice.values)
+        amount <- Gen.choose[BigDecimal](0, 1000000)
+      } yield VatOnSales(choice, amount.setScale(2, RoundingMode.HALF_UP))
     }
 
     implicit val arbitrarySalesAtVatRate: Arbitrary[SalesDetails] =
@@ -75,11 +83,11 @@ trait ModelGenerators {
         for {
           vatRate       <- arbitrary[VatRate]
           taxableAmount <- Gen.choose(BigDecimal(0), BigDecimal(1000000))
-          vatAmount     <- Gen.choose(BigDecimal(0), BigDecimal(1000000))
+          vatOnSales    <- arbitrary[VatOnSales]
         } yield SalesDetails(
             vatRate,
-            taxableAmount.setScale(2, RoundingMode.HALF_EVEN),
-            vatAmount.setScale(2, RoundingMode.HALF_EVEN)
+            taxableAmount.setScale(2, RoundingMode.HALF_UP),
+          vatOnSales
           )
       }
 
