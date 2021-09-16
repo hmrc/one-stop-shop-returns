@@ -36,6 +36,25 @@ class ReturnEncrypter @Inject()(crypto: SecureGCMCipher) {
     Country(d(code), d(name))
   }
 
+  def encryptVatOnSales(vatOnSales: VatOnSales, vrn: Vrn, key: String): EncryptedVatOnSales = {
+    def e(field: String): EncryptedValue = crypto.encrypt(field, vrn.vrn, key)
+
+    EncryptedVatOnSales(e(vatOnSales.choice.toString), e(vatOnSales.amount.toString))
+  }
+
+  def decryptVatOnSales(vatOnSales: EncryptedVatOnSales, vrn: Vrn, key: String): VatOnSales = {
+    def d(field: EncryptedValue): String = crypto.decrypt(field, vrn.vrn, key)
+
+    val choice = d(vatOnSales.choice) match {
+      case VatOnSalesChoice.Standard.toString    => VatOnSalesChoice.Standard
+      case VatOnSalesChoice.NonStandard.toString => VatOnSalesChoice.NonStandard
+      case _                                     => throw new RuntimeException("Unable to decrypt value as a VatOnSalesChoice")
+    }
+    val amount = BigDecimal(d(vatOnSales.amount))
+
+    VatOnSales(choice, amount)
+  }
+
   def encryptSalesDetails(salesDetails: SalesDetails, vrn: Vrn, key: String): EncryptedSalesDetails = {
     def e(field: String): EncryptedValue = crypto.encrypt(field, vrn.vrn, key)
     import salesDetails._
@@ -43,7 +62,8 @@ class ReturnEncrypter @Inject()(crypto: SecureGCMCipher) {
     EncryptedSalesDetails(
       encryptVatRate(vatRate, vrn, key),
       e(netValueOfSales.toString()),
-      e(vatOnSales.toString()))
+      encryptVatOnSales(vatOnSales, vrn, key)
+    )
   }
 
   def decryptSalesDetails(country: EncryptedSalesDetails, vrn: Vrn, key: String): SalesDetails = {
@@ -53,7 +73,7 @@ class ReturnEncrypter @Inject()(crypto: SecureGCMCipher) {
     SalesDetails(
       decryptVatRate(vatRate, vrn, key),
       BigDecimal(d(netValueOfSales)),
-      BigDecimal(d(vatOnSales))
+      decryptVatOnSales(vatOnSales, vrn, key)
     )
   }
 

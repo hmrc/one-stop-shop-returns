@@ -64,7 +64,7 @@ object EncryptedSalesToCountry {
 case class SalesDetails(
                          vatRate: VatRate,
                          netValueOfSales: BigDecimal,
-                         vatOnSales: BigDecimal
+                         vatOnSales: VatOnSales
                        )
 
 object SalesDetails {
@@ -74,7 +74,7 @@ object SalesDetails {
 case class EncryptedSalesDetails(
                          vatRate: EncryptedVatRate,
                          netValueOfSales: EncryptedValue,
-                         vatOnSales: EncryptedValue
+                         vatOnSales: EncryptedVatOnSales
                        )
 
 object EncryptedSalesDetails {
