@@ -19,7 +19,7 @@ package controllers
 import base.SpecBase
 import controllers.actions.FakeFailingAuthConnector
 import generators.Generators
-import models.{Period, ReturnReference, VatReturn}
+import models._
 import models.requests.VatReturnRequest
 import models.Quarter.Q3
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
@@ -32,9 +32,11 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import services.VatReturnService
+import services.{PeriodService, VatReturnService}
 import uk.gov.hmrc.auth.core.{AuthConnector, MissingBearerToken}
+import scala.language.implicitConversions
 
+import java.time.LocalDate
 import scala.concurrent.Future
 
 class VatReturnControllerSpec
