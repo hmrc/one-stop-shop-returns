@@ -37,9 +37,18 @@ class ReturnStatusController @Inject()(
                                    )(implicit ec: ExecutionContext)
   extends BackendController(cc) {
 
-  def listStatuses(commencementDate: Long): Action[AnyContent] = auth.async {
+  /*
+    val periods = periodService.getReturnPeriods(commencementLocalDate)
+    vatReturnService.get(request.vrn).map {
+      returns =>
+        periods.map {
+          period =>
+
+        }
+    }
+   */
+  def listStatuses(commencementLocalDate: LocalDate): Action[AnyContent] = auth.async {
     implicit request =>
-      val commencementLocalDate = LocalDate.ofEpochDay(commencementDate)
       val periodWithStatuses = Future.sequence (
         periodService.getReturnPeriods(commencementLocalDate).map { period =>
           vatReturnService.get(request.vrn, period).map {
