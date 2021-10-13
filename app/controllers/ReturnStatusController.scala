@@ -17,8 +17,7 @@
 package controllers
 
 import controllers.actions.AuthAction
-import models.{Period, PeriodWithStatus, SubmissionStatus}
-import models.requests.VatReturnRequest
+import models.{PeriodWithStatus, SubmissionStatus}
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import services.{PeriodService, VatReturnService}
@@ -26,45 +25,39 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import java.time.{Clock, LocalDate}
 import javax.inject.Inject
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
 class ReturnStatusController @Inject()(
-                                     cc: ControllerComponents,
-                                     vatReturnService: VatReturnService,
-                                     periodService: PeriodService,
-                                     auth: AuthAction,
-                                     clock: Clock
-                                   )(implicit ec: ExecutionContext)
+                                        cc: ControllerComponents,
+                                        vatReturnService: VatReturnService,
+                                        periodService: PeriodService,
+                                        auth: AuthAction,
+                                        clock: Clock
+                                      )(implicit ec: ExecutionContext)
   extends BackendController(cc) {
 
-  /*
-    val periods = periodService.getReturnPeriods(commencementLocalDate)
-    vatReturnService.get(request.vrn).map {
-      returns =>
-        periods.map {
-          period =>
-
-        }
-    }
-   */
   def listStatuses(commencementLocalDate: LocalDate): Action[AnyContent] = auth.async {
     implicit request =>
-      val periodWithStatuses = Future.sequence (
-        periodService.getReturnPeriods(commencementLocalDate).map { period =>
-          vatReturnService.get(request.vrn, period).map {
-            case Some(_) =>
-              PeriodWithStatus(period, SubmissionStatus.Complete)
-            case None =>
-              if (LocalDate.now(clock).isAfter(period.paymentDeadline)) {
-                PeriodWithStatus(period, SubmissionStatus.Overdue)
+      val periods = periodService.getReturnPeriods(commencementLocalDate)
+
+      val periodWithStatuses = vatReturnService.get(request.vrn).map {
+        returns =>
+          val returnPeriods = returns.map(_.period)
+          periods.map {
+            period =>
+              if (returnPeriods.contains(period)) {
+                PeriodWithStatus(period, SubmissionStatus.Complete)
               } else {
-                PeriodWithStatus(period, SubmissionStatus.Due)
+                if (LocalDate.now(clock).isAfter(period.paymentDeadline)) {
+                  PeriodWithStatus(period, SubmissionStatus.Overdue)
+                } else {
+                  PeriodWithStatus(period, SubmissionStatus.Due)
+                }
               }
           }
-        }
-      )
+      }
 
-      periodWithStatuses.map{ pws =>
+      periodWithStatuses.map { pws =>
         Ok(Json.toJson(pws))
       }
   }

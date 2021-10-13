@@ -32,11 +32,9 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import services.{PeriodService, VatReturnService}
+import services.VatReturnService
 import uk.gov.hmrc.auth.core.{AuthConnector, MissingBearerToken}
-import scala.language.implicitConversions
 
-import java.time.LocalDate
 import scala.concurrent.Future
 
 class VatReturnControllerSpec

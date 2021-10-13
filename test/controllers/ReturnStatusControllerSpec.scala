@@ -44,7 +44,7 @@ class ReturnStatusControllerSpec
     val period = Period(2021, Q3)
     val commencementDate = LocalDate.now()
 
-    lazy val request = FakeRequest(GET, routes.ReturnStatusController.listStatuses(commencementDate.toEpochDay).url)
+    lazy val request = FakeRequest(GET, routes.ReturnStatusController.listStatuses(commencementDate).url)
 
     "must respond with OK and a sequence of periods with statuses" in {
 
@@ -54,9 +54,9 @@ class ReturnStatusControllerSpec
         Gen
           .nonEmptyListOf(arbitrary[VatReturn])
           .sample.value
-          .map(r => r copy (vrn = vrn, reference = ReturnReference(vrn, r.period))).head
+          .map(r => r copy(vrn = vrn, reference = ReturnReference(vrn, r.period))).head
 
-      when(mockVatReturnService.get(any(), any())) thenReturn Future.successful(Some(vatReturn))
+      when(mockVatReturnService.get(any())) thenReturn Future.successful(Seq(vatReturn.copy(period = period)))
       when(mockPeriodService.getReturnPeriods(any())) thenReturn Seq(period)
 
       val app =
