@@ -14,18 +14,20 @@
  * limitations under the License.
  */
 
-package models.financialdata
-
+package config
+import play.api.Configuration
 import play.api.libs.json.{Format, Json}
 
-case class Item(
-                 amount: Option[BigDecimal],
-                 clearingReason: Option[String],
-                 paymentReference: Option[String],
-                 paymentAmount: Option[BigDecimal],
-                 paymentMethod: Option[String]
-               )
+import javax.inject.Inject
 
-object Item {
-  implicit val format: Format[Item] = Json.format[Item]
+class DesConfig @Inject()(config: Configuration) {
+
+  val baseUrl: Service    = config.get[Service]("microservice.services.des")
+  val authorizationToken: String = config.get[String]("microservice.services.des.authorizationToken")
+  val environment: String = config.get[String]("microservice.services.des.environment")
+
+  val desHeaders: Seq[(String, String)] = Seq(
+    "Authorization" -> s"Bearer $authorizationToken",
+    "Environment" -> environment
+  )
 }

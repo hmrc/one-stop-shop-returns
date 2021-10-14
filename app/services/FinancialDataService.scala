@@ -14,18 +14,19 @@
  * limitations under the License.
  */
 
-package models.financialdata
+package services
 
-import play.api.libs.json.{Format, Json}
+import connectors.FinancialDataConnector
+import models.financialdata.FinancialDataQueryParameters
+import uk.gov.hmrc.domain.Vrn
 
-case class Item(
-                 amount: Option[BigDecimal],
-                 clearingReason: Option[String],
-                 paymentReference: Option[String],
-                 paymentAmount: Option[BigDecimal],
-                 paymentMethod: Option[String]
-               )
+import java.time.LocalDate
+import javax.inject.Inject
 
-object Item {
-  implicit val format: Format[Item] = Json.format[Item]
+class FinancialDataService @Inject()(
+  financialDataConnector: FinancialDataConnector){
+  
+  def getFinancialData(vrn: Vrn, commencementDate: LocalDate) = 
+    financialDataConnector.getFinancialData(vrn, FinancialDataQueryParameters(fromDate = Some(commencementDate), toDate = Some(LocalDate.now())))
+
 }
