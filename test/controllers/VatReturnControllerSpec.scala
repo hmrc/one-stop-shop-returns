@@ -19,7 +19,7 @@ package controllers
 import base.SpecBase
 import controllers.actions.FakeFailingAuthConnector
 import generators.Generators
-import models.{Period, ReturnReference, VatReturn}
+import models._
 import models.requests.VatReturnRequest
 import models.Quarter.Q3
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}

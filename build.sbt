@@ -26,7 +26,9 @@ lazy val microservice = Project(appName, file("."))
     ScoverageKeys.coverageFailOnMinimum := true,
     ScoverageKeys.coverageHighlighting := true,
     RoutesKeys.routesImport ++= Seq(
-      "models._"
+      "java.time.LocalDate",
+      "models._",
+      "models.Binders._"
     )
   )
   .settings(PlayKeys.playDefaultPort := 10205)
