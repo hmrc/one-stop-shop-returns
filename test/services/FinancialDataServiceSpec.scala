@@ -94,7 +94,7 @@ class FinancialDataServiceSpec extends AnyFreeSpec
         val commencementDate = LocalDate.of(2021, 9, 1)
         val connector = mock[FinancialDataConnector]
         val service = new FinancialDataService(connector)
-        val queryParameters = FinancialDataQueryParameters(fromDate = Some(commencementDate), toDate = Some(LocalDate.now()))
+        val queryParameters = FinancialDataQueryParameters(fromDate = Some(period.firstDay), toDate = Some(LocalDate.now()))
 
         when(connector.getFinancialData(any(), equalTo(queryParameters))) thenReturn(
           Future.successful(Some(FinancialDataResponse(Some("VRN"), Some("123456789"), Some("?"), ZonedDateTime.now(), Option(financialTransactions)))))
@@ -140,7 +140,7 @@ class FinancialDataServiceSpec extends AnyFreeSpec
         val commencementDate = LocalDate.of(2021, 9, 1)
         val connector = mock[FinancialDataConnector]
         val service = new FinancialDataService(connector)
-        val queryParameters = FinancialDataQueryParameters(fromDate = Some(commencementDate), toDate = Some(LocalDate.now()))
+        val queryParameters = FinancialDataQueryParameters(fromDate = Some(period.firstDay), toDate = Some(LocalDate.now()))
 
         when(connector.getFinancialData(any(), equalTo(queryParameters))) thenReturn(
           Future.successful(Some(FinancialDataResponse(Some("VRN"), Some("123456789"), Some("?"), ZonedDateTime.now(), Option(financialTransactions)))))
@@ -204,7 +204,7 @@ class FinancialDataServiceSpec extends AnyFreeSpec
         val commencementDate = LocalDate.of(2021, 9, 1)
         val connector = mock[FinancialDataConnector]
         val service = new FinancialDataService(connector)
-        val queryParameters = FinancialDataQueryParameters(fromDate = Some(commencementDate), toDate = Some(LocalDate.now()))
+        val queryParameters = FinancialDataQueryParameters(fromDate = Some(period.firstDay), toDate = Some(LocalDate.now()))
 
         when(connector.getFinancialData(any(), equalTo(queryParameters))) thenReturn(
           Future.successful(Some(FinancialDataResponse(Some("VRN"), Some("123456789"), Some("?"), ZonedDateTime.now(), Option(financialTransactions)))))

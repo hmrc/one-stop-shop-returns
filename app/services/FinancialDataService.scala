@@ -28,6 +28,9 @@ import scala.concurrent.{ExecutionContext, Future}
 class FinancialDataService @Inject()(
                                       financialDataConnector: FinancialDataConnector)(implicit ec: ExecutionContext) {
 
+  def getFinancialData(vrn: Vrn, commencementDate: LocalDate): Future[Option[FinancialDataResponse]] =
+    financialDataConnector.getFinancialData(vrn, FinancialDataQueryParameters(fromDate = Some(commencementDate), toDate = Some(LocalDate.now())))
+
   def getCharge(vrn: Vrn, period: Period): Future[Option[Charge]] = {
     getFinancialData(vrn, period.firstDay).map { maybeFinancialDataResponse => // TODO check period.first day makes sense, what if someone overpaid a previous period, how would that be represented?
       maybeFinancialDataResponse.flatMap {
@@ -46,8 +49,5 @@ class FinancialDataService @Inject()(
     }
 
   }
-
-  def getFinancialData(vrn: Vrn, commencementDate: LocalDate): Future[Option[FinancialDataResponse]] =
-    financialDataConnector.getFinancialData(vrn, FinancialDataQueryParameters(fromDate = Some(commencementDate), toDate = Some(LocalDate.now())))
 
 }
