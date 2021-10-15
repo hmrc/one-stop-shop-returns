@@ -17,6 +17,7 @@
 package generators
 
 import models._
+import models.financialdata.Charge
 import models.requests.VatReturnRequest
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.{Arbitrary, Gen}
@@ -134,5 +135,15 @@ trait ModelGenerators {
         salesFromNi <- Gen.listOfN(niSales, arbitrary[SalesToCountry])
         salesFromEu <- Gen.listOfN(euSales, arbitrary[SalesFromEuCountry])
       } yield VatReturnRequest(vrn, period, None, None, salesFromNi, salesFromEu)
+    }
+
+  implicit val arbitraryCharge: Arbitrary[Charge] =
+    Arbitrary {
+      for {
+        period <- arbitrary[Period]
+        originalAmount <- arbitrary[BigDecimal]
+        outstandingAmount <- arbitrary[BigDecimal]
+        clearedAmount <- arbitrary[BigDecimal]
+      } yield Charge(period, originalAmount, outstandingAmount, clearedAmount)
     }
 }

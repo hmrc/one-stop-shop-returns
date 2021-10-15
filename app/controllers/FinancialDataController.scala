@@ -17,6 +17,8 @@
 package controllers
 
 import controllers.actions.AuthAction
+import models.Period
+import models.financialdata.Charge
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents, Result}
 import services.FinancialDataService
@@ -24,7 +26,7 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import java.time.LocalDate
 import javax.inject.Inject
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 class FinancialDataController@Inject()(
                                         cc: ControllerComponents,
@@ -36,4 +38,9 @@ class FinancialDataController@Inject()(
       implicit request => 
         service.getFinancialData(request.vrn, commencementDate).map(data => Ok(Json.toJson(data)))
     }
+
+  def getCharge(period: Period): Action[AnyContent] = auth.async {
+    implicit request =>
+      Future(Ok(Json.toJson(Charge(period, 1000, 500, 500))))
+  }
 }

@@ -16,12 +16,13 @@
 
 package models.financialdata
 
+import models.Period
 import play.api.libs.json.{Format, Json}
 
 import java.time.LocalDate
 
 case class FinancialTransaction(
-                               chargeType: Option[String],
+                               chargeType: Option[String], // G Ret AT EU-OMS
                                mainType: Option[String],
                                taxPeriodFrom: Option[LocalDate],
                                taxPeriodTo: Option[LocalDate],
@@ -34,3 +35,4 @@ case class FinancialTransaction(
 object FinancialTransaction {
   implicit val format: Format[FinancialTransaction] = Json.format[FinancialTransaction]
 }
+
