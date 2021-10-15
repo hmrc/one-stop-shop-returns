@@ -17,16 +17,37 @@
 package services
 
 import connectors.FinancialDataConnector
-import models.financialdata.FinancialDataQueryParameters
+import models.financialdata.{Charge, FinancialDataQueryParameters, FinancialDataResponse}
+import models.Period
 import uk.gov.hmrc.domain.Vrn
 
 import java.time.LocalDate
 import javax.inject.Inject
+import scala.concurrent.{ExecutionContext, Future}
 
 class FinancialDataService @Inject()(
-  financialDataConnector: FinancialDataConnector){
-  
-  def getFinancialData(vrn: Vrn, commencementDate: LocalDate) = 
+                                      financialDataConnector: FinancialDataConnector)(implicit ec: ExecutionContext) {
+
+  def getCharge(vrn: Vrn, period: Period): Future[Option[Charge]] = {
+    getFinancialData(vrn, period.firstDay).map { maybeFinancialDataResponse => // TODO check period.first day makes sense, what if someone overpaid a previous period, how would that be represented?
+      maybeFinancialDataResponse.flatMap {
+        financialDataResponse =>
+          financialDataResponse.financialTransactions.map{
+            transactions =>
+              val transactionsForPeriod = transactions.filter(t => t.taxPeriodFrom.contains(period.firstDay))
+              Charge(
+                period = period,
+                originalAmount = transactionsForPeriod.map(_.originalAmount.getOrElse(BigDecimal(0))).sum,
+                outstandingAmount = transactionsForPeriod.map(_.outstandingAmount.getOrElse(BigDecimal(0))).sum,
+                clearedAmount= transactionsForPeriod.map(_.clearedAmount.getOrElse(BigDecimal(0))).sum
+              )
+          }
+      }
+    }
+
+  }
+
+  def getFinancialData(vrn: Vrn, commencementDate: LocalDate): Future[Option[FinancialDataResponse]] =
     financialDataConnector.getFinancialData(vrn, FinancialDataQueryParameters(fromDate = Some(commencementDate), toDate = Some(LocalDate.now())))
 
 }

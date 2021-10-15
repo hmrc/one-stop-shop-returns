@@ -20,8 +20,8 @@ import models.Period
 import play.api.libs.json.{Format, Json}
 
 case class Charge(
-                   period: Period, // FinancialDataResponse.financialTransactions.head.period
-                   originalAmount: BigDecimal, // sum(FinancialDataResponse.financialTransactions.
+                   period: Period,
+                   originalAmount: BigDecimal,
                    outstandingAmount: BigDecimal,
                    clearedAmount: BigDecimal
                  )

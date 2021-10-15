@@ -33,7 +33,7 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import services.VatReturnService
+import services.{FinancialDataService, VatReturnService}
 import uk.gov.hmrc.auth.core.{AuthConnector, MissingBearerToken}
 
 import scala.concurrent.Future
@@ -52,10 +52,14 @@ class FinancialDataControllerSpec
       FakeRequest(GET, routes.FinancialDataController.getCharge(period).url)
 
     "return a basic charge" in {
+      val financialDataService = mock[FinancialDataService]
 
       val app =
         applicationBuilder
+          .overrides(bind[FinancialDataService].to(financialDataService))
           .build()
+
+      when(financialDataService.getCharge(any(), any())) thenReturn Future.successful(Some(charge))
 
       running(app) {
 
@@ -63,6 +67,24 @@ class FinancialDataControllerSpec
 
         status(result) mustEqual OK
         contentAsJson(result) mustBe Json.toJson(charge)
+      }
+    }
+
+    "return NotFound if no charge found" in {
+      val financialDataService = mock[FinancialDataService]
+
+      val app =
+        applicationBuilder
+          .overrides(bind[FinancialDataService].to(financialDataService))
+          .build()
+
+      when(financialDataService.getCharge(any(), any())) thenReturn Future.successful(None)
+
+      running(app) {
+
+        val result = route(app, request).value
+
+        status(result) mustEqual NOT_FOUND
       }
     }
 

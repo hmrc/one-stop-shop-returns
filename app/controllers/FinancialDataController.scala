@@ -41,6 +41,11 @@ class FinancialDataController@Inject()(
 
   def getCharge(period: Period): Action[AnyContent] = auth.async {
     implicit request =>
-      Future(Ok(Json.toJson(Charge(period, 1000, 500, 500))))
+      service.getCharge(request.vrn, period).map {
+        case Some(value) =>
+          Ok(Json.toJson(value))
+        case _ =>
+          NotFound
+      }
   }
 }
