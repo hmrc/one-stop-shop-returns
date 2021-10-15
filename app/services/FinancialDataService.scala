@@ -32,7 +32,7 @@ class FinancialDataService @Inject()(
     financialDataConnector.getFinancialData(vrn, FinancialDataQueryParameters(fromDate = Some(commencementDate), toDate = Some(LocalDate.now())))
 
   def getCharge(vrn: Vrn, period: Period): Future[Option[Charge]] = {
-    getFinancialData(vrn, period.firstDay).map { maybeFinancialDataResponse => // TODO check period.first day makes sense, what if someone overpaid a previous period, how would that be represented?
+    getFinancialData(vrn, period.firstDay).map { maybeFinancialDataResponse =>
       maybeFinancialDataResponse.flatMap {
         financialDataResponse =>
           financialDataResponse.financialTransactions.map{
