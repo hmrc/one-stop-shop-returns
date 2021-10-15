@@ -36,7 +36,7 @@ class FinancialDataConnector @Inject() (
   private val headers: Seq[(String, String)] = desConfig.desHeaders
 
   private def financialDataUrl(vrn: Vrn) =
-    s"${desConfig.baseUrl}/enterprise/financial-data/${vrn.name.toUpperCase()}/${vrn.value}/ECOM"
+    s"${desConfig.baseUrl}/enterprise/financial-data/${vrn.name.toUpperCase()}/${vrn.value}/${desConfig.regimeType}"
 
   def getFinancialData(vrn: Vrn, queryParameters: FinancialDataQueryParameters): Future[Option[FinancialDataResponse]] = {
     val url = financialDataUrl(vrn)

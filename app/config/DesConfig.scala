@@ -25,6 +25,7 @@ class DesConfig @Inject()(config: Configuration) {
   val baseUrl: Service    = config.get[Service]("microservice.services.des")
   val authorizationToken: String = config.get[String]("microservice.services.des.authorizationToken")
   val environment: String = config.get[String]("microservice.services.des.environment")
+  val regimeType: String = config.get[String]("microservice.services.des.regimeType")
 
   val desHeaders: Seq[(String, String)] = Seq(
     "Authorization" -> s"Bearer $authorizationToken",
