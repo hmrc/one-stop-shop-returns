@@ -17,16 +17,36 @@
 package services
 
 import connectors.FinancialDataConnector
-import models.financialdata.{Charge, FinancialDataQueryParameters, FinancialData}
-import models.Period
+import models.{Period, Quarter}
+import models.financialdata._
 import uk.gov.hmrc.domain.Vrn
 
-import java.time.LocalDate
+import java.time.{Clock, LocalDate}
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class FinancialDataService @Inject()(
-                                      financialDataConnector: FinancialDataConnector)(implicit ec: ExecutionContext) {
+                                      financialDataConnector: FinancialDataConnector,
+                                      clock: Clock
+                                    )(implicit ec: ExecutionContext) {
+
+  def getCharge(vrn: Vrn, period: Period): Future[Option[Charge]] = {
+    getFinancialData(vrn, period.firstDay).map { maybeFinancialDataResponse =>
+      maybeFinancialDataResponse.flatMap {
+        financialDataResponse =>
+          financialDataResponse.financialTransactions.map {
+            transactions =>
+              val transactionsForPeriod = transactions.filter(t => t.taxPeriodFrom.contains(period.firstDay))
+              Charge(
+                period = period,
+                originalAmount = transactionsForPeriod.map(_.originalAmount.getOrElse(BigDecimal(0))).sum,
+                outstandingAmount = transactionsForPeriod.map(_.outstandingAmount.getOrElse(BigDecimal(0))).sum,
+                clearedAmount = transactionsForPeriod.map(_.clearedAmount.getOrElse(BigDecimal(0))).sum
+              )
+          }
+      }
+    }
+  }
 
   def getFinancialData(vrn: Vrn, commencementDate: LocalDate): Future[Option[FinancialData]] =
     financialDataConnector.getFinancialData(vrn, FinancialDataQueryParameters(fromDate = Some(commencementDate), toDate = Some(LocalDate.now()))).flatMap {
@@ -34,23 +54,27 @@ class FinancialDataService @Inject()(
       case Left(e) => Future.failed(new Exception(s"An error occurred while getting financial Data: ${e.body}"))
     }
 
-  def getCharge(vrn: Vrn, period: Period): Future[Option[Charge]] = {
-    getFinancialData(vrn, period.firstDay).map { maybeFinancialDataResponse =>
-      maybeFinancialDataResponse.flatMap {
-        financialDataResponse =>
-          financialDataResponse.financialTransactions.map{
-            transactions =>
-              val transactionsForPeriod = transactions.filter(t => t.taxPeriodFrom.contains(period.firstDay))
-              Charge(
-                period = period,
-                originalAmount = transactionsForPeriod.map(_.originalAmount.getOrElse(BigDecimal(0))).sum,
-                outstandingAmount = transactionsForPeriod.map(_.outstandingAmount.getOrElse(BigDecimal(0))).sum,
-                clearedAmount= transactionsForPeriod.map(_.clearedAmount.getOrElse(BigDecimal(0))).sum
-              )
-          }
+  def getOutstandingAmounts(vrn: Vrn, commencementDate: LocalDate): Future[Seq[PeriodWithOutstandingAmount]] = {
+    financialDataConnector.getFinancialData(vrn,
+      FinancialDataQueryParameters(
+        fromDate = Some(commencementDate),
+        toDate = Some(LocalDate.now(clock)),
+        onlyOpenItems = Some(true) // TODO check if this makes sense
+      )).flatMap {
+      case Right(maybeFinancialDataResponse) => maybeFinancialDataResponse match {
+        case Some(financialData) =>
+          Future.successful(financialData.financialTransactions.getOrElse(Seq.empty)
+            .filter(transaction => transaction.outstandingAmount.getOrElse(BigDecimal(0)) > BigDecimal(0))
+            .groupBy(transaction => transaction.taxPeriodFrom).map {
+            case (Some(periodStart), transactions: Seq[FinancialTransaction]) =>
+              PeriodWithOutstandingAmount(Period(periodStart.getYear, Quarter.quarterFromStartMonth(periodStart.getMonth)), transactions.map(_.outstandingAmount.getOrElse(BigDecimal(0))).sum)
+          }.toSeq)
+        case None =>
+          Future.successful(Seq.empty)
       }
+      case Left(e) =>
+        Future.failed(new Exception(s"An error occurred while getting financial Data: ${e.body}"))
     }
-
   }
 
 }

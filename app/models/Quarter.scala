@@ -44,4 +44,11 @@ object Quarter extends Enumerable.Implicits {
     case _           => Failure(new IllegalArgumentException(s"$string is not a valid quarter"))
   }
 
+  def quarterFromStartMonth(month: Month): Quarter = month.firstMonthOfQuarter() match {
+    case JANUARY => Q1
+    case APRIL => Q2
+    case JULY => Q3
+    case OCTOBER => Q4
+  }
+
 }

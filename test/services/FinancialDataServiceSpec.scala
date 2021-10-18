@@ -3,7 +3,7 @@ package services
 import connectors.FinancialDataConnector
 import generators.Generators
 import models.Period
-import models.financialdata.{FinancialDataQueryParameters, FinancialData, FinancialTransaction, Item}
+import models.financialdata.{FinancialData, FinancialDataQueryParameters, FinancialTransaction, Item, PeriodWithOutstandingAmount}
 import models.Quarter.Q3
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
@@ -15,9 +15,8 @@ import org.mockito.ArgumentMatchers.{any, eq => equalTo}
 import org.mockito.Mockito.when
 import uk.gov.hmrc.domain.Vrn
 
-import java.time.{LocalDate, ZonedDateTime}
+import java.time.{Clock, LocalDate, ZonedDateTime, ZoneId}
 import scala.concurrent.Future
-
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class FinancialDataServiceSpec extends AnyFreeSpec
@@ -27,6 +26,8 @@ class FinancialDataServiceSpec extends AnyFreeSpec
   with Generators
   with OptionValues
   with ScalaFutures {
+
+  val stubClock: Clock = Clock.fixed(LocalDate.now.atStartOfDay(ZoneId.systemDefault).toInstant, ZoneId.systemDefault)
 
   "getFinancialData" - {
 
@@ -56,7 +57,7 @@ class FinancialDataServiceSpec extends AnyFreeSpec
     "when commencement date is in Q3 2021" in {
       val commencementDate = LocalDate.of(2021, 9, 1)
       val connector = mock[FinancialDataConnector]
-      val service = new FinancialDataService(connector)
+      val service = new FinancialDataService(connector, stubClock)
       val queryParameters = FinancialDataQueryParameters(fromDate = Some(commencementDate), toDate = Some(LocalDate.now()))
 
       when(connector.getFinancialData(any(), equalTo(queryParameters))) thenReturn(
@@ -92,7 +93,7 @@ class FinancialDataServiceSpec extends AnyFreeSpec
         )
 
         val connector = mock[FinancialDataConnector]
-        val service = new FinancialDataService(connector)
+        val service = new FinancialDataService(connector, stubClock)
         val queryParameters = FinancialDataQueryParameters(fromDate = Some(period.firstDay), toDate = Some(LocalDate.now()))
 
         when(connector.getFinancialData(any(), equalTo(queryParameters))) thenReturn(
@@ -137,7 +138,7 @@ class FinancialDataServiceSpec extends AnyFreeSpec
         )
 
         val connector = mock[FinancialDataConnector]
-        val service = new FinancialDataService(connector)
+        val service = new FinancialDataService(connector, stubClock)
         val queryParameters = FinancialDataQueryParameters(fromDate = Some(period.firstDay), toDate = Some(LocalDate.now()))
 
         when(connector.getFinancialData(any(), equalTo(queryParameters))) thenReturn(
@@ -200,7 +201,7 @@ class FinancialDataServiceSpec extends AnyFreeSpec
         )
 
         val connector = mock[FinancialDataConnector]
-        val service = new FinancialDataService(connector)
+        val service = new FinancialDataService(connector, stubClock)
         val queryParameters = FinancialDataQueryParameters(fromDate = Some(period.firstDay), toDate = Some(LocalDate.now()))
 
         when(connector.getFinancialData(any(), equalTo(queryParameters))) thenReturn(
@@ -215,6 +216,70 @@ class FinancialDataServiceSpec extends AnyFreeSpec
         charge.outstandingAmount mustBe BigDecimal(1000)
         charge.clearedAmount mustBe BigDecimal(1500)
 
+      }
+
+    }
+
+  }
+
+  ".getOutstandingAmounts" - {
+
+    "return a period with outstanding amounts" - {
+
+      "when there has been no payments for 1 period" in {
+
+        val commencementDate = LocalDate.now()
+        val period = Period(2021, Q3)
+
+        val financialTransactions = Seq(
+          FinancialTransaction(
+            chargeType = Some("G Ret AT EU-OMS"),
+            mainType = None,
+            taxPeriodFrom = Some(period.firstDay),
+            taxPeriodTo = Some(period.lastDay),
+            originalAmount = Some(BigDecimal(1000)),
+            outstandingAmount = Some(BigDecimal(1000)),
+            clearedAmount = Some(BigDecimal(0)),
+            items = Some(Seq.empty)
+          )
+        )
+
+        val connector = mock[FinancialDataConnector]
+        val service = new FinancialDataService(connector, stubClock)
+        val queryParameters = FinancialDataQueryParameters(fromDate = Some(commencementDate), toDate = Some(LocalDate.now(stubClock)), onlyOpenItems = Some(true))
+
+        when(connector.getFinancialData(any(), equalTo(queryParameters))) thenReturn(
+          Future.successful(Right(Some(FinancialData(Some("VRN"), Some("123456789"), Some("?"), ZonedDateTime.now(stubClock), Option(financialTransactions))))))
+
+        val response = service.getOutstandingAmounts(Vrn("123456789"), commencementDate).futureValue
+
+        val expectedResponse = Seq(PeriodWithOutstandingAmount(period, BigDecimal(1000)))
+
+        response must contain theSameElementsAs expectedResponse
+      }
+
+    }
+    "return empty" - {
+
+      "when there are no transactions found" in {
+
+        val commencementDate = LocalDate.now()
+        val period = Period(2021, Q3)
+
+        val financialTransactions = Seq.empty
+
+        val connector = mock[FinancialDataConnector]
+        val service = new FinancialDataService(connector, stubClock)
+        val queryParameters = FinancialDataQueryParameters(fromDate = Some(commencementDate), toDate = Some(LocalDate.now(stubClock)), onlyOpenItems = Some(true))
+
+        when(connector.getFinancialData(any(), equalTo(queryParameters))) thenReturn(
+          Future.successful(Right(Some(FinancialData(Some("VRN"), Some("123456789"), Some("?"), ZonedDateTime.now(stubClock), Option(financialTransactions))))))
+
+        val response = service.getOutstandingAmounts(Vrn("123456789"), commencementDate).futureValue
+
+        val expectedResponse = Seq.empty
+
+        response must contain theSameElementsAs expectedResponse
       }
 
     }
