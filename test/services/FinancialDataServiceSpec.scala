@@ -3,7 +3,7 @@ package services
 import connectors.FinancialDataConnector
 import generators.Generators
 import models.Period
-import models.financialdata.{FinancialDataQueryParameters, FinancialDataResponse, FinancialTransaction, Item}
+import models.financialdata.{FinancialDataQueryParameters, FinancialData, FinancialTransaction, Item}
 import models.Quarter.Q3
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
@@ -60,7 +60,7 @@ class FinancialDataServiceSpec extends AnyFreeSpec
       val queryParameters = FinancialDataQueryParameters(fromDate = Some(commencementDate), toDate = Some(LocalDate.now()))
 
       when(connector.getFinancialData(any(), equalTo(queryParameters))) thenReturn(
-        Future.successful(Some(FinancialDataResponse(Some("VRN"), Some("123456789"), Some("?"), ZonedDateTime.now(), Option(financialTransactions)))))
+        Future.successful(Right(Some(FinancialData(Some("VRN"), Some("123456789"), Some("?"), ZonedDateTime.now(), Option(financialTransactions))))))
 
       val response = service.getFinancialData(Vrn("123456789"), commencementDate).futureValue
 
@@ -91,13 +91,12 @@ class FinancialDataServiceSpec extends AnyFreeSpec
           )
         )
 
-        val commencementDate = LocalDate.of(2021, 9, 1)
         val connector = mock[FinancialDataConnector]
         val service = new FinancialDataService(connector)
         val queryParameters = FinancialDataQueryParameters(fromDate = Some(period.firstDay), toDate = Some(LocalDate.now()))
 
         when(connector.getFinancialData(any(), equalTo(queryParameters))) thenReturn(
-          Future.successful(Some(FinancialDataResponse(Some("VRN"), Some("123456789"), Some("?"), ZonedDateTime.now(), Option(financialTransactions)))))
+          Future.successful(Right(Some(FinancialData(Some("VRN"), Some("123456789"), Some("?"), ZonedDateTime.now(), Option(financialTransactions))))))
 
         val response = service.getCharge(Vrn("123456789"), period).futureValue
 
@@ -137,13 +136,12 @@ class FinancialDataServiceSpec extends AnyFreeSpec
           )
         )
 
-        val commencementDate = LocalDate.of(2021, 9, 1)
         val connector = mock[FinancialDataConnector]
         val service = new FinancialDataService(connector)
         val queryParameters = FinancialDataQueryParameters(fromDate = Some(period.firstDay), toDate = Some(LocalDate.now()))
 
         when(connector.getFinancialData(any(), equalTo(queryParameters))) thenReturn(
-          Future.successful(Some(FinancialDataResponse(Some("VRN"), Some("123456789"), Some("?"), ZonedDateTime.now(), Option(financialTransactions)))))
+          Future.successful(Right(Some(FinancialData(Some("VRN"), Some("123456789"), Some("?"), ZonedDateTime.now(), Option(financialTransactions))))))
 
         val response = service.getCharge(Vrn("123456789"), period).futureValue
 
@@ -201,13 +199,12 @@ class FinancialDataServiceSpec extends AnyFreeSpec
           )
         )
 
-        val commencementDate = LocalDate.of(2021, 9, 1)
         val connector = mock[FinancialDataConnector]
         val service = new FinancialDataService(connector)
         val queryParameters = FinancialDataQueryParameters(fromDate = Some(period.firstDay), toDate = Some(LocalDate.now()))
 
         when(connector.getFinancialData(any(), equalTo(queryParameters))) thenReturn(
-          Future.successful(Some(FinancialDataResponse(Some("VRN"), Some("123456789"), Some("?"), ZonedDateTime.now(), Option(financialTransactions)))))
+          Future.successful(Right(Some(FinancialData(Some("VRN"), Some("123456789"), Some("?"), ZonedDateTime.now(), Option(financialTransactions))))))
 
         val response = service.getCharge(Vrn("123456789"), period).futureValue
 

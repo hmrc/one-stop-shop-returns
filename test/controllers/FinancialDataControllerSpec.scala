@@ -17,24 +17,18 @@
 package controllers
 
 import base.SpecBase
-import controllers.actions.FakeFailingAuthConnector
 import generators.Generators
 import models._
-import models.requests.VatReturnRequest
 import models.Quarter.Q3
 import models.financialdata.Charge
-import org.mockito.ArgumentMatchers.{any, eq => eqTo}
-import org.mockito.Mockito.{times, verify, when}
-import org.scalacheck.Arbitrary.arbitrary
-import org.scalacheck.Gen
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito.when
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.inject.bind
-import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import services.{FinancialDataService, VatReturnService}
-import uk.gov.hmrc.auth.core.{AuthConnector, MissingBearerToken}
+import services.FinancialDataService
 
 import scala.concurrent.Future
 
@@ -70,7 +64,7 @@ class FinancialDataControllerSpec
       }
     }
 
-    "return NotFound if no charge found" in {
+    "return OK if no charge found" in {
       val financialDataService = mock[FinancialDataService]
 
       val app =
@@ -84,7 +78,25 @@ class FinancialDataControllerSpec
 
         val result = route(app, request).value
 
-        status(result) mustEqual NOT_FOUND
+        status(result) mustEqual OK
+      }
+    }
+
+    "error if api errors" in {
+      val financialDataService = mock[FinancialDataService]
+
+      val app =
+        applicationBuilder
+          .overrides(bind[FinancialDataService].to(financialDataService))
+          .build()
+
+      when(financialDataService.getCharge(any(), any())) thenReturn Future.failed(new Exception("Some exception"))
+
+      running(app) {
+
+        val result = route(app, request).value
+
+        whenReady(result.failed) { exp => exp mustBe a[Exception]}
       }
     }
 

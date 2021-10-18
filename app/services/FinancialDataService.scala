@@ -17,7 +17,7 @@
 package services
 
 import connectors.FinancialDataConnector
-import models.financialdata.{Charge, FinancialDataQueryParameters, FinancialDataResponse}
+import models.financialdata.{Charge, FinancialDataQueryParameters, FinancialData}
 import models.Period
 import uk.gov.hmrc.domain.Vrn
 
@@ -28,8 +28,11 @@ import scala.concurrent.{ExecutionContext, Future}
 class FinancialDataService @Inject()(
                                       financialDataConnector: FinancialDataConnector)(implicit ec: ExecutionContext) {
 
-  def getFinancialData(vrn: Vrn, commencementDate: LocalDate): Future[Option[FinancialDataResponse]] =
-    financialDataConnector.getFinancialData(vrn, FinancialDataQueryParameters(fromDate = Some(commencementDate), toDate = Some(LocalDate.now())))
+  def getFinancialData(vrn: Vrn, commencementDate: LocalDate): Future[Option[FinancialData]] =
+    financialDataConnector.getFinancialData(vrn, FinancialDataQueryParameters(fromDate = Some(commencementDate), toDate = Some(LocalDate.now()))).flatMap {
+      case Right(value) => Future.successful(value)
+      case Left(e) => Future.failed(new Exception(s"An error occurred while getting financial Data: ${e.body}"))
+    }
 
   def getCharge(vrn: Vrn, period: Period): Future[Option[Charge]] = {
     getFinancialData(vrn, period.firstDay).map { maybeFinancialDataResponse =>

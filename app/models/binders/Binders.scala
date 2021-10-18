@@ -17,7 +17,7 @@
 package models
 
 import play.api.mvc.PathBindable
-import play.api.Logging
+import logging.Logging
 
 import java.time.{LocalDate, ZoneId}
 import java.time.format.DateTimeFormatter

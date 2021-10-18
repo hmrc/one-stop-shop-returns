@@ -16,14 +16,13 @@
 
 package connectors
 import config.DesConfig
-import models.financialdata.{FinancialDataQueryParameters, FinancialDataResponse}
-import play.api.Logging
+import connectors.FinancialDataHttpParser._
+import logging.Logging
+import models.financialdata.FinancialDataQueryParameters
 import uk.gov.hmrc.domain.Vrn
+import uk.gov.hmrc.http.{HeaderCarrier, HttpClient}
 
 import javax.inject.Inject
-import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.HttpClient
-
 import scala.concurrent.{ExecutionContext, Future}
 
 class FinancialDataConnector @Inject() (
@@ -31,16 +30,16 @@ class FinancialDataConnector @Inject() (
                                          desConfig: DesConfig
                                        )(implicit ec: ExecutionContext) extends Logging {
 
-  // external services require explicitly passed headers
+  // external services require explicitly passed headersa
   private implicit val emptyHc: HeaderCarrier = HeaderCarrier()
   private val headers: Seq[(String, String)] = desConfig.desHeaders
 
   private def financialDataUrl(vrn: Vrn) =
-    s"${desConfig.baseUrl}/enterprise/financial-data/${vrn.name.toUpperCase()}/${vrn.value}/${desConfig.regimeType}"
+    s"${desConfig.baseUrl}enterprise/financial-data/${vrn.name.toUpperCase()}/${vrn.value}/${desConfig.regimeType}"
 
-  def getFinancialData(vrn: Vrn, queryParameters: FinancialDataQueryParameters): Future[Option[FinancialDataResponse]] = {
+  def getFinancialData(vrn: Vrn, queryParameters: FinancialDataQueryParameters): Future[FinancialDataResponse] = {
     val url = financialDataUrl(vrn)
-    http.GET[Option[FinancialDataResponse]](
+    http.GET[FinancialDataResponse](
       url,
       queryParameters.toSeqQueryParams,
       headers = headers
