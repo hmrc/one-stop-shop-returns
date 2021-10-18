@@ -1,10 +1,10 @@
 # microservice specific routes
 
-POST        /vat-returns                                         controllers.VatReturnController.post
-GET         /vat-returns                                         controllers.VatReturnController.list
-GET         /vat-returns/:period                                 controllers.VatReturnController.get(period: Period)
+POST        /vat-returns                                   controllers.VatReturnController.post
+GET         /vat-returns                                   controllers.VatReturnController.list
+GET         /vat-returns/:period                           controllers.VatReturnController.get(period: Period)
 
-GET         /vat-returns/statuses/:commencementDate              controllers.ReturnStatusController.listStatuses(commencementDate: LocalDate)
+GET         /vat-returns/statuses/:commencementDate        controllers.ReturnStatusController.listStatuses(commencementDate: LocalDate)
 
-GET         /vat-returns/financial-data/:commencementDate        controllers.FinancialDataController.get(commencementDate: LocalDate)
-GET         /vat-returns/financial-data/charge/:period           controllers.FinancialDataController.getCharge(period: Period)
+GET         /financial-data/:commencementDate              controllers.FinancialDataController.get(commencementDate: LocalDate)
+GET         /financial-data/charge/:period                 controllers.FinancialDataController.getCharge(period: Period)
