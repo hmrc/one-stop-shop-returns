@@ -5,3 +5,6 @@ GET         /vat-returns                                   controllers.VatReturn
 GET         /vat-returns/:period                           controllers.VatReturnController.get(period: Period)
 
 GET         /vat-returns/statuses/:commencementDate        controllers.ReturnStatusController.listStatuses(commencementDate: LocalDate)
+
+GET         /financial-data/:commencementDate              controllers.FinancialDataController.get(commencementDate: LocalDate)
+GET         /financial-data/charge/:period                 controllers.FinancialDataController.getCharge(period: Period)
