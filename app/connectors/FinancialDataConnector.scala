@@ -30,7 +30,6 @@ class FinancialDataConnector @Inject() (
                                          desConfig: DesConfig
                                        )(implicit ec: ExecutionContext) extends Logging {
 
-  // external services require explicitly passed headersa
   private implicit val emptyHc: HeaderCarrier = HeaderCarrier()
   private val headers: Seq[(String, String)] = desConfig.desHeaders
 
