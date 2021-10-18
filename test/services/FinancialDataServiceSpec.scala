@@ -227,6 +227,72 @@ class FinancialDataServiceSpec extends AnyFreeSpec
 
   }
 
+  ".getOutstandingAmounts" - {
+
+    "return a period with outstanding amounts" - {
+
+      "when there has been no payments for 1 period" in {
+
+        val commencementDate = LocalDate.now()
+        val period = Period(2021, Q3)
+
+        val financialTransactions = Seq(
+          FinancialTransaction(
+            chargeType = Some("G Ret AT EU-OMS"),
+            mainType = None,
+            taxPeriodFrom = Some(period.firstDay),
+            taxPeriodTo = Some(period.lastDay),
+            originalAmount = Some(BigDecimal(1000)),
+            outstandingAmount = Some(BigDecimal(1000)),
+            clearedAmount = Some(BigDecimal(0)),
+            items = Some(Seq.empty)
+          )
+        )
+
+        val connector = mock[FinancialDataConnector]
+        val vatReturnService = mock[VatReturnService]
+        val service = new FinancialDataService(connector, vatReturnService, stubClock)
+        val queryParameters = FinancialDataQueryParameters(fromDate = Some(commencementDate), toDate = Some(LocalDate.now(stubClock)), onlyOpenItems = Some(true))
+
+        when(connector.getFinancialData(any(), equalTo(queryParameters))) thenReturn(
+          Future.successful(Right(Some(FinancialData(Some("VRN"), Some("123456789"), Some("?"), ZonedDateTime.now(stubClock), Option(financialTransactions))))))
+
+        val response = service.getOutstandingAmounts(Vrn("123456789"), commencementDate).futureValue
+
+        val expectedResponse = Seq(PeriodWithOutstandingAmount(period, BigDecimal(1000)))
+
+        response must contain theSameElementsAs expectedResponse
+      }
+
+    }
+    "return empty" - {
+
+      "when there are no transactions found" in {
+
+        val commencementDate = LocalDate.now()
+        val period = Period(2021, Q3)
+
+        val financialTransactions = Seq.empty
+
+        val connector = mock[FinancialDataConnector]
+        val vatReturnService = mock[VatReturnService]
+        val service = new FinancialDataService(connector, vatReturnService, stubClock)
+        val queryParameters = FinancialDataQueryParameters(fromDate = Some(commencementDate), toDate = Some(LocalDate.now(stubClock)), onlyOpenItems = Some(true))
+
+        when(connector.getFinancialData(any(), equalTo(queryParameters))) thenReturn(
+          Future.successful(Right(Some(FinancialData(Some("VRN"), Some("123456789"), Some("?"), ZonedDateTime.now(stubClock), Option(financialTransactions))))))
+
+        val response = service.getOutstandingAmounts(Vrn("123456789"), commencementDate).futureValue
+
+        val expectedResponse = Seq.empty
+
+        response must contain theSameElementsAs expectedResponse
+      }
+
+    }
+
+  }
+
   ".getVatReturnWithFinancialData" - {
 
     "return a VatReturnWithFinancialData" - {

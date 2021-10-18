@@ -20,7 +20,7 @@ import base.SpecBase
 import generators.Generators
 import models._
 import models.Quarter.Q3
-import models.financialdata.{Charge, VatReturnWithFinancialData}
+import models.financialdata.{Charge, PeriodWithOutstandingAmount, VatReturnWithFinancialData}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
@@ -29,7 +29,7 @@ import play.api.inject.bind
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import services.{FinancialDataService, VatReturnService}
+import services.FinancialDataService
 
 import java.time.LocalDate
 import scala.concurrent.Future
@@ -98,9 +98,58 @@ class FinancialDataControllerSpec
 
         val result = route(app, request).value
 
-        whenReady(result.failed) { exp => exp mustBe a[Exception]}
+        whenReady(result.failed) { exp => exp mustBe a[Exception] }
       }
     }
+
+  }
+
+  ".getOutstandingAmounts(period)" - {
+
+    val commencementDate = LocalDate.now(stubClock)
+    val period = Period(2021, Q3)
+    val outstandingPayment = PeriodWithOutstandingAmount(period, BigDecimal(1000.50))
+
+    lazy val request =
+      FakeRequest(GET, routes.FinancialDataController.getOutstandingAmounts(commencementDate).url)
+
+    "return a basic outstanding payment" in {
+      val financialDataService = mock[FinancialDataService]
+
+      val app =
+        applicationBuilder
+          .overrides(bind[FinancialDataService].to(financialDataService))
+          .build()
+
+      when(financialDataService.getOutstandingAmounts(any(), any())) thenReturn Future.successful(Seq(outstandingPayment))
+
+      running(app) {
+
+        val result = route(app, request).value
+
+        status(result) mustEqual OK
+        contentAsJson(result) mustBe Json.toJson(Seq(outstandingPayment))
+      }
+    }
+
+    "error if api errors" in {
+      val financialDataService = mock[FinancialDataService]
+
+      val app =
+        applicationBuilder
+          .overrides(bind[FinancialDataService].to(financialDataService))
+          .build()
+
+      when(financialDataService.getOutstandingAmounts(any(), any())) thenReturn Future.failed(new Exception("Some exception"))
+
+      running(app) {
+
+        val result = route(app, request).value
+
+        whenReady(result.failed) { exp => exp mustBe a[Exception] }
+      }
+    }
+
 
   }
 

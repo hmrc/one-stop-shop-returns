@@ -17,8 +17,8 @@
 package services
 
 import connectors.FinancialDataConnector
+import models.{Period, Quarter}
 import models.financialdata._
-import models.Period
 import uk.gov.hmrc.domain.Vrn
 
 import java.time.{Clock, LocalDate}
@@ -41,7 +41,6 @@ class FinancialDataService @Inject()(
           }
       }
     }
-
   }
 
   def getVatReturnWithFinancialData(vrn: Vrn, commencementDate: LocalDate): Future[Seq[VatReturnWithFinancialData]] = {
@@ -52,12 +51,12 @@ class FinancialDataService @Inject()(
           fromDate = Some(commencementDate),
           toDate = Some(LocalDate.now(clock))
         )).map {
-          case Right(v) => v
-          case Left(_) => None
-        }.recover {
-          case _: Exception =>
-            None
-        }
+      case Right(v) => v
+      case Left(_) => None
+    }.recover {
+      case _: Exception =>
+        None
+    }
 
     for {
       vatReturns <- vatReturnService.get(vrn)
@@ -81,6 +80,29 @@ class FinancialDataService @Inject()(
       case Right(value) => Future.successful(value)
       case Left(e) => Future.failed(new Exception(s"An error occurred while getting financial Data: ${e.body}"))
     }
+
+  def getOutstandingAmounts(vrn: Vrn, commencementDate: LocalDate): Future[Seq[PeriodWithOutstandingAmount]] = {
+    financialDataConnector.getFinancialData(vrn,
+      FinancialDataQueryParameters(
+        fromDate = Some(commencementDate),
+        toDate = Some(LocalDate.now(clock)),
+        onlyOpenItems = Some(true) // TODO check if this makes sense
+      )).flatMap {
+      case Right(maybeFinancialDataResponse) => maybeFinancialDataResponse match {
+        case Some(financialData) =>
+          Future.successful(financialData.financialTransactions.getOrElse(Seq.empty)
+            .filter(transaction => transaction.outstandingAmount.getOrElse(BigDecimal(0)) > BigDecimal(0))
+            .groupBy(transaction => transaction.taxPeriodFrom).map {
+            case (Some(periodStart), transactions: Seq[FinancialTransaction]) =>
+              PeriodWithOutstandingAmount(Period(periodStart.getYear, Quarter.quarterFromStartMonth(periodStart.getMonth)), transactions.map(_.outstandingAmount.getOrElse(BigDecimal(0))).sum)
+          }.toSeq)
+        case None =>
+          Future.successful(Seq.empty)
+      }
+      case Left(e) =>
+        Future.failed(new Exception(s"An error occurred while getting financial Data: ${e.body}"))
+    }
+  }
 
   private def getChargeForPeriod(period: Period, transactions: Seq[FinancialTransaction]): Option[Charge] = {
     val transactionsForPeriod = transactions.filter(t => t.taxPeriodFrom.contains(period.firstDay))
