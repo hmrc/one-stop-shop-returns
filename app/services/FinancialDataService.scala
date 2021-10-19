@@ -65,10 +65,13 @@ class FinancialDataService @Inject()(
         case Some(financialData) =>
           Future.successful(financialData.financialTransactions.getOrElse(Seq.empty)
             .filter(transaction => transaction.outstandingAmount.getOrElse(BigDecimal(0)) > BigDecimal(0))
-            .groupBy(transaction => transaction.taxPeriodFrom).map {
+            .groupBy(transaction => transaction.taxPeriodFrom)
+            .map {
             case (Some(periodStart), transactions: Seq[FinancialTransaction]) =>
               PeriodWithOutstandingAmount(Period(periodStart.getYear, Quarter.quarterFromStartMonth(periodStart.getMonth)), transactions.map(_.outstandingAmount.getOrElse(BigDecimal(0))).sum)
-          }.toSeq)
+          }.toSeq
+            .sortBy(_.period.toString).reverse
+          )
         case None =>
           Future.successful(Seq.empty)
       }
