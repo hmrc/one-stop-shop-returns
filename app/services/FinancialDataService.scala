@@ -18,6 +18,7 @@ package services
 
 import connectors.FinancialDataConnector
 import models.{Period, Quarter}
+import models.des.DesException
 import models.financialdata._
 import uk.gov.hmrc.domain.Vrn
 
@@ -51,7 +52,7 @@ class FinancialDataService @Inject()(
   def getFinancialData(vrn: Vrn, commencementDate: LocalDate): Future[Option[FinancialData]] =
     financialDataConnector.getFinancialData(vrn, FinancialDataQueryParameters(fromDate = Some(commencementDate), toDate = Some(LocalDate.now()))).flatMap {
       case Right(value) => Future.successful(value)
-      case Left(e) => Future.failed(new Exception(s"An error occurred while getting financial Data: ${e.body}"))
+      case Left(e) => Future.failed(DesException(s"An error occurred while getting financial Data: ${e.body}"))
     }
 
   def getOutstandingAmounts(vrn: Vrn, commencementDate: LocalDate): Future[Seq[PeriodWithOutstandingAmount]] = {
@@ -67,16 +68,16 @@ class FinancialDataService @Inject()(
             .filter(transaction => transaction.outstandingAmount.getOrElse(BigDecimal(0)) > BigDecimal(0))
             .groupBy(transaction => transaction.taxPeriodFrom)
             .map {
-            case (Some(periodStart), transactions: Seq[FinancialTransaction]) =>
-              PeriodWithOutstandingAmount(Period(periodStart.getYear, Quarter.quarterFromStartMonth(periodStart.getMonth)), transactions.map(_.outstandingAmount.getOrElse(BigDecimal(0))).sum)
-          }.toSeq
+              case (Some(periodStart), transactions: Seq[FinancialTransaction]) =>
+                PeriodWithOutstandingAmount(Period(periodStart.getYear, Quarter.quarterFromStartMonth(periodStart.getMonth)), transactions.map(_.outstandingAmount.getOrElse(BigDecimal(0))).sum)
+            }.toSeq
             .sortBy(_.period.toString).reverse
           )
         case None =>
           Future.successful(Seq.empty)
       }
       case Left(e) =>
-        Future.failed(new Exception(s"An error occurred while getting financial Data: ${e.body}"))
+        Future.failed(DesException(s"An error occurred while getting financial Data: ${e.body}"))
     }
   }
 
