@@ -39,7 +39,7 @@ object FinancialDataHttpParser extends Logging {
               Left(InvalidJson)
           }
         case status =>
-          logger.warn(s"Unexpected response from DES, received status $status")
+          logger.warn(s"Unexpected response from DES, received status $status, body of response was: ${response.body}")
           Left(UnexpectedResponseStatus(status, s"Unexpected response from DES, received status $status"))
       }
   }
