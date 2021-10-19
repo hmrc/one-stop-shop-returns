@@ -20,6 +20,7 @@ import base.SpecBase
 import generators.Generators
 import models._
 import models.Quarter.Q3
+import models.des.DesException
 import models.financialdata.{Charge, PeriodWithOutstandingAmount, VatReturnWithFinancialData}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
@@ -92,7 +93,7 @@ class FinancialDataControllerSpec
           .overrides(bind[FinancialDataService].to(financialDataService))
           .build()
 
-      when(financialDataService.getCharge(any(), any())) thenReturn Future.failed(new Exception("Some exception"))
+      when(financialDataService.getCharge(any(), any())) thenReturn Future.failed(DesException("Some exception"))
 
       running(app) {
 
@@ -140,7 +141,7 @@ class FinancialDataControllerSpec
           .overrides(bind[FinancialDataService].to(financialDataService))
           .build()
 
-      when(financialDataService.getOutstandingAmounts(any(), any())) thenReturn Future.failed(new Exception("Some exception"))
+      when(financialDataService.getOutstandingAmounts(any(), any())) thenReturn Future.failed(DesException("Some exception"))
 
       running(app) {
 
