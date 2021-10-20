@@ -20,16 +20,18 @@ import base.SpecBase
 import generators.Generators
 import models._
 import models.Quarter.Q3
-import models.financialdata.Charge
+import models.financialdata.{Charge, VatReturnWithFinancialData}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
+import org.scalacheck.Arbitrary.arbitrary
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.inject.bind
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import services.FinancialDataService
+import services.{FinancialDataService, VatReturnService}
 
+import java.time.LocalDate
 import scala.concurrent.Future
 
 class FinancialDataControllerSpec
@@ -100,5 +102,38 @@ class FinancialDataControllerSpec
       }
     }
 
+  }
+
+  ".getVatReturnWithFinancialData(commencementDate)" - {
+
+    val period = Period(2021, Q3)
+    val vatReturn = arbitrary[VatReturn].sample.value
+    val charge = Charge(period, 1000, 500, 500)
+    val vatOwed = 1000
+    val commencementDate = LocalDate.now()
+
+    val vatReturnWithFinancialData = VatReturnWithFinancialData(vatReturn, Some(charge), Some(vatOwed))
+
+    lazy val request =
+      FakeRequest(GET, routes.FinancialDataController.getVatReturnWithFinancialData(commencementDate).url)
+
+    "return a basic vat return with financial data" in {
+      val financialDataService = mock[FinancialDataService]
+
+      val app =
+        applicationBuilder
+          .overrides(bind[FinancialDataService].to(financialDataService))
+          .build()
+
+      when(financialDataService.getVatReturnWithFinancialData(any(), any())) thenReturn Future.successful(Seq(vatReturnWithFinancialData))
+
+      running(app) {
+
+        val result = route(app, request).value
+
+        status(result) mustEqual OK
+        contentAsJson(result) mustBe Json.toJson(Seq(vatReturnWithFinancialData))
+      }
+    }
   }
 }

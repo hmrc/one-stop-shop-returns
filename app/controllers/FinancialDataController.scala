@@ -46,4 +46,24 @@ class FinancialDataController @Inject()(
         Ok(Json.toJson(data))
       }
   }
+
+  def getVatReturnWithFinancialData(commencementDate: LocalDate): Action[AnyContent] = auth.async {
+    implicit request =>
+      service.getVatReturnWithFinancialData(request.vrn, commencementDate).map{
+        data => Ok(Json.toJson(data))
+      }
+
+  }
 }
+
+
+
+
+
+
+
+
+
+
+
+

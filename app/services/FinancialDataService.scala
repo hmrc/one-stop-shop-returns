@@ -17,40 +17,76 @@
 package services
 
 import connectors.FinancialDataConnector
-import models.financialdata.{Charge, FinancialDataQueryParameters, FinancialData}
+import models.financialdata.{Charge, FinancialData, FinancialDataQueryParameters, VatReturnWithFinancialData}
 import models.Period
 import uk.gov.hmrc.domain.Vrn
 
-import java.time.LocalDate
+import java.time.{Clock, LocalDate}
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class FinancialDataService @Inject()(
-                                      financialDataConnector: FinancialDataConnector)(implicit ec: ExecutionContext) {
-
-  def getFinancialData(vrn: Vrn, commencementDate: LocalDate): Future[Option[FinancialData]] =
-    financialDataConnector.getFinancialData(vrn, FinancialDataQueryParameters(fromDate = Some(commencementDate), toDate = Some(LocalDate.now()))).flatMap {
-      case Right(value) => Future.successful(value)
-      case Left(e) => Future.failed(new Exception(s"An error occurred while getting financial Data: ${e.body}"))
-    }
+                                      financialDataConnector: FinancialDataConnector,
+                                      vatReturnService: VatReturnService,
+                                      clock: Clock
+                                    )(implicit ec: ExecutionContext) {
 
   def getCharge(vrn: Vrn, period: Period): Future[Option[Charge]] = {
     getFinancialData(vrn, period.firstDay).map { maybeFinancialDataResponse =>
       maybeFinancialDataResponse.flatMap {
         financialDataResponse =>
-          financialDataResponse.financialTransactions.map{
+          financialDataResponse.financialTransactions.map {
             transactions =>
               val transactionsForPeriod = transactions.filter(t => t.taxPeriodFrom.contains(period.firstDay))
               Charge(
                 period = period,
                 originalAmount = transactionsForPeriod.map(_.originalAmount.getOrElse(BigDecimal(0))).sum,
                 outstandingAmount = transactionsForPeriod.map(_.outstandingAmount.getOrElse(BigDecimal(0))).sum,
-                clearedAmount= transactionsForPeriod.map(_.clearedAmount.getOrElse(BigDecimal(0))).sum
+                clearedAmount = transactionsForPeriod.map(_.clearedAmount.getOrElse(BigDecimal(0))).sum
               )
           }
       }
     }
 
+  }
+
+  def getFinancialData(vrn: Vrn, commencementDate: LocalDate): Future[Option[FinancialData]] =
+    financialDataConnector.getFinancialData(vrn, FinancialDataQueryParameters(fromDate = Some(commencementDate), toDate = Some(LocalDate.now(clock)))).flatMap {
+      case Right(value) => Future.successful(value)
+      case Left(e) => Future.failed(new Exception(s"An error occurred while getting financial Data: ${e.body}"))
+    }
+
+  def getVatReturnWithFinancialData(vrn: Vrn, commencementDate: LocalDate): Future[Seq[VatReturnWithFinancialData]] = {
+
+    // getAllReturns for a user
+
+    for {
+      vatReturns <- vatReturnService.get(vrn)
+      maybeFinancialDataResponse <- getFinancialData(vrn, commencementDate)
+    } yield {
+      vatReturns.map { vatReturn =>
+        val charge = maybeFinancialDataResponse.flatMap {
+          financialDataResponse =>
+            financialDataResponse.financialTransactions.map {
+              transactions =>
+                val transactionsForPeriod = transactions.filter(t => t.taxPeriodFrom.contains(vatReturn.period.firstDay))
+
+                Charge(
+                  period = vatReturn.period,
+                  originalAmount = transactionsForPeriod.map(_.originalAmount.getOrElse(BigDecimal(0))).sum,
+                  outstandingAmount = transactionsForPeriod.map(_.outstandingAmount.getOrElse(BigDecimal(0))).sum,
+                  clearedAmount = transactionsForPeriod.map(_.clearedAmount.getOrElse(BigDecimal(0))).sum
+                )
+            }
+        }
+        VatReturnWithFinancialData(vatReturn, charge, charge.map(c => (c.outstandingAmount * 100).toLong))
+      }
+    }
+
+    // getAllFinancialData
+    // -> groupByPeriod
+    // map over allreturns -> financialData
+    ???
   }
 
 }
