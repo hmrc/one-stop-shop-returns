@@ -254,7 +254,7 @@ class FinancialDataServiceSpec extends AnyFreeSpec
         val service = new FinancialDataService(connector, vatReturnService, stubClock)
         val queryParameters = FinancialDataQueryParameters(fromDate = Some(commencementDate), toDate = Some(LocalDate.now(stubClock)), onlyOpenItems = Some(true))
 
-        when(connector.getFinancialData(any(), equalTo(queryParameters))) thenReturn(
+        when(connector.getFinancialData(any(), any())) thenReturn(
           Future.successful(Right(Some(FinancialData(Some("VRN"), Some("123456789"), Some("?"), ZonedDateTime.now(stubClock), Option(financialTransactions))))))
 
         val response = service.getOutstandingAmounts(Vrn("123456789"), commencementDate).futureValue
@@ -279,7 +279,7 @@ class FinancialDataServiceSpec extends AnyFreeSpec
         val service = new FinancialDataService(connector, vatReturnService, stubClock)
         val queryParameters = FinancialDataQueryParameters(fromDate = Some(commencementDate), toDate = Some(LocalDate.now(stubClock)), onlyOpenItems = Some(true))
 
-        when(connector.getFinancialData(any(), equalTo(queryParameters))) thenReturn(
+        when(connector.getFinancialData(any(), any())) thenReturn(
           Future.successful(Right(Some(FinancialData(Some("VRN"), Some("123456789"), Some("?"), ZonedDateTime.now(stubClock), Option(financialTransactions))))))
 
         val response = service.getOutstandingAmounts(Vrn("123456789"), commencementDate).futureValue
