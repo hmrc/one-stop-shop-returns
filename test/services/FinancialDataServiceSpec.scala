@@ -249,12 +249,12 @@ class FinancialDataServiceSpec extends AnyFreeSpec
           )
         )
 
-        val vatReturn = arbitrary[VatReturn].sample.value
+        val vatReturn = arbitrary[VatReturn].sample.value.copy(period = period)
 
         val connector = mock[FinancialDataConnector]
         val vatReturnService = mock[VatReturnService]
         val service = new FinancialDataService(connector, vatReturnService, stubClock)
-        val queryParameters = FinancialDataQueryParameters(fromDate = Some(commencementDate), toDate = Some(LocalDate.now(stubClock)), onlyOpenItems = Some(true))
+        val queryParameters = FinancialDataQueryParameters(fromDate = Some(commencementDate), toDate = Some(LocalDate.now(stubClock)))
 
         when(connector.getFinancialData(any(), equalTo(queryParameters))) thenReturn (
           Future.successful(Right(Some(FinancialData(Some("VRN"), Some("123456789"), Some("ECOM"), ZonedDateTime.now(stubClock), Option(financialTransactions))))))
@@ -263,7 +263,7 @@ class FinancialDataServiceSpec extends AnyFreeSpec
 
         val response = service.getVatReturnWithFinancialData(Vrn("123456789"), commencementDate).futureValue
 
-        val expectedResponse = Seq(VatReturnWithFinancialData(vatReturn, Some(Charge(period, BigDecimal(1000), BigDecimal(1000), BigDecimal(0))), Some(1000)))
+        val expectedResponse = Seq(VatReturnWithFinancialData(vatReturn, Some(Charge(period, BigDecimal(1000), BigDecimal(1000), BigDecimal(0))), Some(100000)))
 
         response must contain theSameElementsAs expectedResponse
       }

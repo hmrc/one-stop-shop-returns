@@ -67,26 +67,37 @@ class FinancialDataService @Inject()(
       vatReturns.map { vatReturn =>
         val charge = maybeFinancialDataResponse.flatMap {
           financialDataResponse =>
-            financialDataResponse.financialTransactions.map {
+            financialDataResponse.financialTransactions.flatMap {
               transactions =>
                 val transactionsForPeriod = transactions.filter(t => t.taxPeriodFrom.contains(vatReturn.period.firstDay))
 
-                Charge(
-                  period = vatReturn.period,
-                  originalAmount = transactionsForPeriod.map(_.originalAmount.getOrElse(BigDecimal(0))).sum,
-                  outstandingAmount = transactionsForPeriod.map(_.outstandingAmount.getOrElse(BigDecimal(0))).sum,
-                  clearedAmount = transactionsForPeriod.map(_.clearedAmount.getOrElse(BigDecimal(0))).sum
-                )
+                println("")
+                println("")
+                println(transactions)
+                println("")
+                println(transactionsForPeriod)
+                println("")
+                println("")
+
+                if (transactionsForPeriod.nonEmpty) {
+                  println("was not empty")
+                  Some(
+                    Charge(
+                      period = vatReturn.period,
+                      originalAmount = transactionsForPeriod.map(_.originalAmount.getOrElse(BigDecimal(0))).sum,
+                      outstandingAmount = transactionsForPeriod.map(_.outstandingAmount.getOrElse(BigDecimal(0))).sum,
+                      clearedAmount = transactionsForPeriod.map(_.clearedAmount.getOrElse(BigDecimal(0))).sum
+                    )
+                  )
+                } else {
+                  println("was empty")
+                  None
+                }
             }
         }
         VatReturnWithFinancialData(vatReturn, charge, charge.map(c => (c.outstandingAmount * 100).toLong))
       }
     }
-
-    // getAllFinancialData
-    // -> groupByPeriod
-    // map over allreturns -> financialData
-    ???
   }
 
 }
