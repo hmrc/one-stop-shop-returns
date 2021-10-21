@@ -17,7 +17,7 @@
 package services
 
 import connectors.FinancialDataConnector
-import models.financialdata.{Charge, FinancialData, FinancialDataQueryParameters, VatReturnWithFinancialData}
+import models.financialdata._
 import models.Period
 import uk.gov.hmrc.domain.Vrn
 
@@ -35,30 +35,16 @@ class FinancialDataService @Inject()(
     getFinancialData(vrn, period.firstDay).map { maybeFinancialDataResponse =>
       maybeFinancialDataResponse.flatMap {
         financialDataResponse =>
-          financialDataResponse.financialTransactions.map {
+          financialDataResponse.financialTransactions.flatMap {
             transactions =>
-              val transactionsForPeriod = transactions.filter(t => t.taxPeriodFrom.contains(period.firstDay))
-              Charge(
-                period = period,
-                originalAmount = transactionsForPeriod.map(_.originalAmount.getOrElse(BigDecimal(0))).sum,
-                outstandingAmount = transactionsForPeriod.map(_.outstandingAmount.getOrElse(BigDecimal(0))).sum,
-                clearedAmount = transactionsForPeriod.map(_.clearedAmount.getOrElse(BigDecimal(0))).sum
-              )
+              getChargeForPeriod(period, transactions)
           }
       }
     }
 
   }
 
-  def getFinancialData(vrn: Vrn, commencementDate: LocalDate): Future[Option[FinancialData]] =
-    financialDataConnector.getFinancialData(vrn, FinancialDataQueryParameters(fromDate = Some(commencementDate), toDate = Some(LocalDate.now(clock)))).flatMap {
-      case Right(value) => Future.successful(value)
-      case Left(e) => Future.failed(new Exception(s"An error occurred while getting financial Data: ${e.body}"))
-    }
-
   def getVatReturnWithFinancialData(vrn: Vrn, commencementDate: LocalDate): Future[Seq[VatReturnWithFinancialData]] = {
-
-    // getAllReturns for a user
 
     for {
       vatReturns <- vatReturnService.get(vrn)
@@ -69,34 +55,33 @@ class FinancialDataService @Inject()(
           financialDataResponse =>
             financialDataResponse.financialTransactions.flatMap {
               transactions =>
-                val transactionsForPeriod = transactions.filter(t => t.taxPeriodFrom.contains(vatReturn.period.firstDay))
-
-                println("")
-                println("")
-                println(transactions)
-                println("")
-                println(transactionsForPeriod)
-                println("")
-                println("")
-
-                if (transactionsForPeriod.nonEmpty) {
-                  println("was not empty")
-                  Some(
-                    Charge(
-                      period = vatReturn.period,
-                      originalAmount = transactionsForPeriod.map(_.originalAmount.getOrElse(BigDecimal(0))).sum,
-                      outstandingAmount = transactionsForPeriod.map(_.outstandingAmount.getOrElse(BigDecimal(0))).sum,
-                      clearedAmount = transactionsForPeriod.map(_.clearedAmount.getOrElse(BigDecimal(0))).sum
-                    )
-                  )
-                } else {
-                  println("was empty")
-                  None
-                }
+                getChargeForPeriod(vatReturn.period, transactions)
             }
         }
         VatReturnWithFinancialData(vatReturn, charge, charge.map(c => (c.outstandingAmount * 100).toLong))
       }
+    }
+  }
+
+  def getFinancialData(vrn: Vrn, commencementDate: LocalDate): Future[Option[FinancialData]] =
+    financialDataConnector.getFinancialData(vrn, FinancialDataQueryParameters(fromDate = Some(commencementDate), toDate = Some(LocalDate.now(clock)))).flatMap {
+      case Right(value) => Future.successful(value)
+      case Left(e) => Future.failed(new Exception(s"An error occurred while getting financial Data: ${e.body}"))
+    }
+
+  private def getChargeForPeriod(period: Period, transactions: Seq[FinancialTransaction]): Option[Charge] = {
+    val transactionsForPeriod = transactions.filter(t => t.taxPeriodFrom.contains(period.firstDay))
+    if (transactionsForPeriod.nonEmpty) {
+      Some(
+        Charge(
+          period = period,
+          originalAmount = transactionsForPeriod.map(_.originalAmount.getOrElse(BigDecimal(0))).sum,
+          outstandingAmount = transactionsForPeriod.map(_.outstandingAmount.getOrElse(BigDecimal(0))).sum,
+          clearedAmount = transactionsForPeriod.map(_.clearedAmount.getOrElse(BigDecimal(0))).sum
+        )
+      )
+    } else {
+      None
     }
   }
 
