@@ -17,9 +17,12 @@
 package services
 
 import connectors.FinancialDataConnector
+import connectors.FinancialDataHttpParser.FinancialDataResponse
+import logging.Logging
 import models.{Period, Quarter}
 import models.des.DesException
 import models.financialdata._
+import models.Quarter.{Q3, Q4}
 import uk.gov.hmrc.domain.Vrn
 
 import java.time.{Clock, LocalDate}
@@ -29,7 +32,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class FinancialDataService @Inject()(
                                       financialDataConnector: FinancialDataConnector,
                                       clock: Clock
-                                    )(implicit ec: ExecutionContext) {
+                                    )(implicit ec: ExecutionContext) extends Logging {
 
   def getCharge(vrn: Vrn, period: Period): Future[Option[Charge]] = {
     getFinancialData(vrn, period.firstDay).map { maybeFinancialDataResponse =>
@@ -56,29 +59,92 @@ class FinancialDataService @Inject()(
     }
 
   def getOutstandingAmounts(vrn: Vrn, commencementDate: LocalDate): Future[Seq[PeriodWithOutstandingAmount]] = {
-    financialDataConnector.getFinancialData(vrn,
-      FinancialDataQueryParameters(
-        fromDate = Some(commencementDate),
-        toDate = Some(LocalDate.now(clock)),
-        onlyOpenItems = Some(true) // TODO check if this makes sense
-      )).flatMap {
-      case Right(maybeFinancialDataResponse) => maybeFinancialDataResponse match {
-        case Some(financialData) =>
-          Future.successful(financialData.financialTransactions.getOrElse(Seq.empty)
-            .filter(transaction => transaction.outstandingAmount.getOrElse(BigDecimal(0)) > BigDecimal(0))
-            .groupBy(transaction => transaction.taxPeriodFrom)
-            .map {
-              case (Some(periodStart), transactions: Seq[FinancialTransaction]) =>
-                PeriodWithOutstandingAmount(Period(periodStart.getYear, Quarter.quarterFromStartMonth(periodStart.getMonth)), transactions.map(_.outstandingAmount.getOrElse(BigDecimal(0))).sum)
-            }.toSeq
-            .sortBy(_.period.toString).reverse
-          )
-        case None =>
-          Future.successful(Seq.empty)
+    testRequests(vrn).flatMap { _ =>
+      financialDataConnector.getFinancialData(vrn,
+        FinancialDataQueryParameters(
+          fromDate = Some(commencementDate),
+          toDate = Some(LocalDate.now(clock)),
+          onlyOpenItems = Some(true) // TODO check if this makes sense
+        )).flatMap {
+        case Right(maybeFinancialDataResponse) => maybeFinancialDataResponse match {
+          case Some(financialData) =>
+            Future.successful(financialData.financialTransactions.getOrElse(Seq.empty)
+              .filter(transaction => transaction.outstandingAmount.getOrElse(BigDecimal(0)) > BigDecimal(0))
+              .groupBy(transaction => transaction.taxPeriodFrom)
+              .map {
+                case (Some(periodStart), transactions: Seq[FinancialTransaction]) =>
+                  PeriodWithOutstandingAmount(Period(periodStart.getYear, Quarter.quarterFromStartMonth(periodStart.getMonth)), transactions.map(_.outstandingAmount.getOrElse(BigDecimal(0))).sum)
+              }.toSeq
+              .sortBy(_.period.toString).reverse
+            )
+          case None =>
+            Future.successful(Seq.empty)
+        }
+        case Left(e) =>
+          Future.failed(DesException(s"An error occurred while getting financial Data: ${e.body}"))
       }
-      case Left(e) =>
-        Future.failed(DesException(s"An error occurred while getting financial Data: ${e.body}"))
+    }.recover {
+      case e: Exception =>
+        logger.info(s"The following error was thrown while getting test requests: ${e.getMessage}", e)
+        throw e
     }
   }
+
+  private def testRequests(vrn: Vrn): Future[Unit] = {
+
+    val thisTaxYearQueryParams = FinancialDataQueryParameters(
+      fromDate = Some(LocalDate.of(2020, 4, 6)),
+      toDate = Some(LocalDate.of(2021, 4, 5))
+    )
+    val futureThisTaxYearResponse = financialDataConnector.getFinancialData(vrn, thisTaxYearQueryParams)
+
+    val thisPeriod = Period(2021, Q4)
+    val thisPeriodQueryParams = FinancialDataQueryParameters(
+      fromDate = Some(thisPeriod.firstDay),
+      toDate = Some(thisPeriod.lastDay)
+    )
+    val futureThisPeriodResponse = financialDataConnector.getFinancialData(vrn, thisPeriodQueryParams)
+
+    val previousPeriod = Period(2021, Q3)
+    val previousPeriodQueryParams = FinancialDataQueryParameters(
+      fromDate = Some(previousPeriod.firstDay),
+      toDate = Some(previousPeriod.lastDay)
+    )
+    val futurePreviousPeriodResponse = financialDataConnector.getFinancialData(vrn, previousPeriodQueryParams)
+
+    val fiveYearQueryParam = FinancialDataQueryParameters(
+      fromDate = Some(LocalDate.of(2016, 4, 6)),
+      toDate = Some(LocalDate.of(2021, 4, 5))
+    )
+    val futureFiveYearPeriodResponse = financialDataConnector.getFinancialData(vrn, fiveYearQueryParam)
+
+
+    val fiveYearTodayMiddleQueryParam = FinancialDataQueryParameters(
+      fromDate = Some(LocalDate.of(2018, 4, 6)),
+      toDate = Some(LocalDate.of(2023, 4, 5))
+    )
+    val futureFiveYearTodayMiddlePeriodResponse = financialDataConnector.getFinancialData(vrn, fiveYearTodayMiddleQueryParam)
+
+
+    for {
+      thisTaxYearResponse <- futureThisTaxYearResponse
+      thisPeriodResponse <- futureThisPeriodResponse
+      previousPeriodResponse <- futurePreviousPeriodResponse
+      fiveYearPeriodResponse <- futureFiveYearPeriodResponse
+      fiveYearTodayMiddlePeriodResponse <- futureFiveYearTodayMiddlePeriodResponse
+    } yield {
+      outputResponse("thisTaxYearResponse", thisTaxYearResponse)
+      outputResponse("thisPeriodResponse", thisPeriodResponse)
+      outputResponse("previousPeriodResponse", previousPeriodResponse)
+      outputResponse("fiveYearPeriodResponse", fiveYearPeriodResponse)
+      outputResponse("fiveYearTodayMiddlePeriodResponse", fiveYearTodayMiddlePeriodResponse)
+    }
+
+  }
+
+  private def outputResponse(label: String, financialDataResponse: FinancialDataResponse): Unit = {
+    logger.info(s"Financial Data [$label] had a response of $financialDataResponse")
+  }
+
 
 }
