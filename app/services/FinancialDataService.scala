@@ -46,9 +46,22 @@ class FinancialDataService @Inject()(
 
   def getVatReturnWithFinancialData(vrn: Vrn, commencementDate: LocalDate): Future[Seq[VatReturnWithFinancialData]] = {
 
+    val getFinancialDataResponse = financialDataConnector
+      .getFinancialData(vrn,
+        FinancialDataQueryParameters(
+          fromDate = Some(commencementDate),
+          toDate = Some(LocalDate.now(clock))
+        )).map {
+          case Right(v) => v
+          case Left(_) => None
+        }.recover {
+          case _: Exception =>
+            None
+        }
+
     for {
       vatReturns <- vatReturnService.get(vrn)
-      maybeFinancialDataResponse <- getFinancialData(vrn, commencementDate)
+      maybeFinancialDataResponse <- getFinancialDataResponse
     } yield {
       vatReturns.map { vatReturn =>
         val charge = maybeFinancialDataResponse.flatMap {
