@@ -93,8 +93,8 @@ class FinancialDataService @Inject()(
   private def testRequests(vrn: Vrn): Future[Unit] = {
 
     val thisTaxYearQueryParams = FinancialDataQueryParameters(
-      fromDate = Some(LocalDate.of(2020, 4, 6)),
-      toDate = Some(LocalDate.of(2021, 4, 5))
+      fromDate = Some(LocalDate.of(2021, 4, 6)),
+      toDate = Some(LocalDate.of(2022, 4, 5))
     )
     val futureThisTaxYearResponse = financialDataConnector.getFinancialData(vrn, thisTaxYearQueryParams)
 
