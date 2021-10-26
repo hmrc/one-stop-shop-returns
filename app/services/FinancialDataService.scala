@@ -54,7 +54,7 @@ class FinancialDataService @Inject()(
           fromDate = Some(commencementDate),
           toDate = Some(LocalDate.now(clock))
         )).map {
-      case Right(v) => v
+      case Right(maybeFinancialData) => maybeFinancialData
       case Left(_) => None
     }.recover {
       case _: Exception =>
