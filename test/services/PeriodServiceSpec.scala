@@ -17,7 +17,7 @@
 package services
 
 import generators.Generators
-import models.Period
+import models.{Period, PeriodYear}
 import models.Quarter._
 import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
@@ -64,6 +64,55 @@ class PeriodServiceSpec
     }
 
   }
+
+  ".getPeriodYears" - {
+    "when today is 11th October 2021" - {
+      val instant = Instant.ofEpochSecond(1633959834)
+      val stubClock: Clock = Clock.fixed(instant, ZoneId.systemDefault)
+
+      "should return 2021 for commencement date of 30th September" in {
+        val commencementDate = LocalDate.of(2021, 9, 30)
+
+        val service = new PeriodService(stubClock)
+
+        val expectedTaxYears = Seq(PeriodYear(2021))
+
+        service.getPeriodYears(commencementDate) must contain theSameElementsAs expectedTaxYears
+      }
+
+    }
+    "when today is 7th April 2022" - {
+      val instant = Instant.ofEpochSecond(1649332800)
+      val stubClock: Clock = Clock.fixed(instant, ZoneId.systemDefault)
+
+      "should return 2021 and 2022 for commencement date of 30th September" in {
+        val commencementDate = LocalDate.of(2021, 9, 30)
+
+        val service = new PeriodService(stubClock)
+
+        val expectedTaxYears = Seq(PeriodYear(2021), PeriodYear(2022))
+
+        service.getPeriodYears(commencementDate) must contain theSameElementsAs expectedTaxYears
+      }
+
+    }
+    "when today is 11th October 2022" - {
+      val instant = Instant.ofEpochSecond(1665489600)
+      val stubClock: Clock = Clock.fixed(instant, ZoneId.systemDefault)
+
+      "should return 2021 and 2022 for commencement date of 30th September" in {
+        val commencementDate = LocalDate.of(2021, 9, 30)
+
+        val service = new PeriodService(stubClock)
+
+        val expectedTaxYears = Seq(PeriodYear(2021), PeriodYear(2022))
+
+        service.getPeriodYears(commencementDate) must contain theSameElementsAs expectedTaxYears
+      }
+
+    }
+  }
+
   ".getAllPeriods" - {
     "when today is 11th October" in {
       val instant = Instant.ofEpochSecond(1633959834)

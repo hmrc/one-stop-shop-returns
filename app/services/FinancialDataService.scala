@@ -17,12 +17,10 @@
 package services
 
 import connectors.FinancialDataConnector
-import connectors.FinancialDataHttpParser.FinancialDataResponse
 import logging.Logging
 import models.{Period, Quarter}
 import models.des.DesException
 import models.financialdata._
-import models.Quarter.{Q3, Q4}
 import uk.gov.hmrc.domain.Vrn
 
 import java.time.{Clock, LocalDate}
@@ -32,6 +30,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class FinancialDataService @Inject()(
                                       financialDataConnector: FinancialDataConnector,
                                       vatReturnService: VatReturnService,
+                                      periodService: PeriodService,
                                       clock: Clock
                                     )(implicit ec: ExecutionContext) extends Logging {
 
@@ -86,12 +85,12 @@ class FinancialDataService @Inject()(
     }
 
   def getOutstandingAmounts(vrn: Vrn, commencementDate: LocalDate): Future[Seq[PeriodWithOutstandingAmount]] = {
-    testRequests(vrn).flatMap { _ =>
+    Future.sequence(periodService.getPeriodYears(commencementDate).map { taxYear =>
       financialDataConnector.getFinancialData(vrn,
         FinancialDataQueryParameters(
-          fromDate = Some(commencementDate),
-          toDate = Some(LocalDate.now(clock)),
-          onlyOpenItems = Some(true) // TODO check if this makes sense
+          fromDate = Some(taxYear.startOfYear),
+          toDate = Some(taxYear.endOfYear),
+          onlyOpenItems = Some(true)
         )).flatMap {
         case Right(maybeFinancialDataResponse) => maybeFinancialDataResponse match {
           case Some(financialData) =>
@@ -110,11 +109,7 @@ class FinancialDataService @Inject()(
         case Left(e) =>
           Future.failed(DesException(s"An error occurred while getting financial Data: ${e.body}"))
       }
-    }.recover {
-      case e: Exception =>
-        logger.info(s"The following error was thrown while getting test requests: ${e.getMessage}", e)
-        throw e
-    }
+    }).map(_.flatten)
   }
 
   private def getChargeForPeriod(period: Period, transactions: Seq[FinancialTransaction]): Option[Charge] = {
@@ -133,60 +128,5 @@ class FinancialDataService @Inject()(
     }
   }
 
-  private def testRequests(vrn: Vrn): Future[Unit] = {
-
-    val thisTaxYearQueryParams = FinancialDataQueryParameters(
-      fromDate = Some(LocalDate.of(2021, 4, 6)),
-      toDate = Some(LocalDate.of(2022, 4, 5))
-    )
-    val futureThisTaxYearResponse = financialDataConnector.getFinancialData(vrn, thisTaxYearQueryParams)
-
-    val thisPeriod = Period(2021, Q4)
-    val thisPeriodQueryParams = FinancialDataQueryParameters(
-      fromDate = Some(thisPeriod.firstDay),
-      toDate = Some(thisPeriod.lastDay)
-    )
-    val futureThisPeriodResponse = financialDataConnector.getFinancialData(vrn, thisPeriodQueryParams)
-
-    val previousPeriod = Period(2021, Q3)
-    val previousPeriodQueryParams = FinancialDataQueryParameters(
-      fromDate = Some(previousPeriod.firstDay),
-      toDate = Some(previousPeriod.lastDay)
-    )
-    val futurePreviousPeriodResponse = financialDataConnector.getFinancialData(vrn, previousPeriodQueryParams)
-
-    val fiveYearQueryParam = FinancialDataQueryParameters(
-      fromDate = Some(LocalDate.of(2016, 4, 6)),
-      toDate = Some(LocalDate.of(2021, 4, 5))
-    )
-    val futureFiveYearPeriodResponse = financialDataConnector.getFinancialData(vrn, fiveYearQueryParam)
-
-
-    val fiveYearTodayMiddleQueryParam = FinancialDataQueryParameters(
-      fromDate = Some(LocalDate.of(2018, 4, 6)),
-      toDate = Some(LocalDate.of(2023, 4, 5))
-    )
-    val futureFiveYearTodayMiddlePeriodResponse = financialDataConnector.getFinancialData(vrn, fiveYearTodayMiddleQueryParam)
-
-
-    for {
-      thisTaxYearResponse <- futureThisTaxYearResponse
-      thisPeriodResponse <- futureThisPeriodResponse
-      previousPeriodResponse <- futurePreviousPeriodResponse
-      fiveYearPeriodResponse <- futureFiveYearPeriodResponse
-      fiveYearTodayMiddlePeriodResponse <- futureFiveYearTodayMiddlePeriodResponse
-    } yield {
-      outputResponse("thisTaxYearResponse", thisTaxYearResponse)
-      outputResponse("thisPeriodResponse", thisPeriodResponse)
-      outputResponse("previousPeriodResponse", previousPeriodResponse)
-      outputResponse("fiveYearPeriodResponse", fiveYearPeriodResponse)
-      outputResponse("fiveYearTodayMiddlePeriodResponse", fiveYearTodayMiddlePeriodResponse)
-    }
-
-  }
-
-  private def outputResponse(label: String, financialDataResponse: FinancialDataResponse): Unit = {
-    logger.info(s"Financial Data [$label] had a response of $financialDataResponse")
-  }
 
 }

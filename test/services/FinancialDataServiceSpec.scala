@@ -2,9 +2,9 @@ package services
 
 import connectors.FinancialDataConnector
 import generators.Generators
-import models.{Period, VatReturn}
+import models._
 import models.financialdata._
-import models.Quarter.Q3
+import models.Quarter._
 import org.mockito.ArgumentMatchers.{any, eq => equalTo}
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
@@ -29,6 +29,7 @@ class FinancialDataServiceSpec extends AnyFreeSpec
   with ScalaFutures {
 
   val stubClock: Clock = Clock.fixed(LocalDate.now.atStartOfDay(ZoneId.systemDefault).toInstant, ZoneId.systemDefault)
+  val stubPeriodService: PeriodService = mock[PeriodService]
 
   "getFinancialData" - {
 
@@ -59,7 +60,7 @@ class FinancialDataServiceSpec extends AnyFreeSpec
       val commencementDate = LocalDate.of(2021, 9, 1)
       val connector = mock[FinancialDataConnector]
       val vatReturnService = mock[VatReturnService]
-      val service = new FinancialDataService(connector, vatReturnService, stubClock)
+      val service = new FinancialDataService(connector, vatReturnService, stubPeriodService, stubClock)
       val queryParameters = FinancialDataQueryParameters(fromDate = Some(commencementDate), toDate = Some(LocalDate.now()))
 
       when(connector.getFinancialData(any(), equalTo(queryParameters))) thenReturn (
@@ -96,7 +97,7 @@ class FinancialDataServiceSpec extends AnyFreeSpec
 
         val connector = mock[FinancialDataConnector]
         val vatReturnService = mock[VatReturnService]
-        val service = new FinancialDataService(connector, vatReturnService, stubClock)
+        val service = new FinancialDataService(connector, vatReturnService, stubPeriodService, stubClock)
         val queryParameters = FinancialDataQueryParameters(fromDate = Some(period.firstDay), toDate = Some(LocalDate.now()))
 
         when(connector.getFinancialData(any(), equalTo(queryParameters))) thenReturn (
@@ -142,7 +143,7 @@ class FinancialDataServiceSpec extends AnyFreeSpec
 
         val connector = mock[FinancialDataConnector]
         val vatReturnService = mock[VatReturnService]
-        val service = new FinancialDataService(connector, vatReturnService, stubClock)
+        val service = new FinancialDataService(connector, vatReturnService, stubPeriodService, stubClock)
         val queryParameters = FinancialDataQueryParameters(fromDate = Some(period.firstDay), toDate = Some(LocalDate.now()))
 
         when(connector.getFinancialData(any(), equalTo(queryParameters))) thenReturn (
@@ -206,7 +207,7 @@ class FinancialDataServiceSpec extends AnyFreeSpec
 
         val connector = mock[FinancialDataConnector]
         val vatReturnService = mock[VatReturnService]
-        val service = new FinancialDataService(connector, vatReturnService, stubClock)
+        val service = new FinancialDataService(connector, vatReturnService, stubPeriodService, stubClock)
         val queryParameters = FinancialDataQueryParameters(fromDate = Some(period.firstDay), toDate = Some(LocalDate.now()))
 
         when(connector.getFinancialData(any(), equalTo(queryParameters))) thenReturn (
@@ -235,6 +236,9 @@ class FinancialDataServiceSpec extends AnyFreeSpec
 
         val commencementDate = LocalDate.now()
         val period = Period(2021, Q3)
+        val periodYear = PeriodYear(2021)
+        val test1 = Period(2021, Q2).firstDay
+        val test2 = Period(2021, Q2).lastDay
 
         val financialTransactions = Seq(
           FinancialTransaction(
@@ -251,11 +255,12 @@ class FinancialDataServiceSpec extends AnyFreeSpec
 
         val connector = mock[FinancialDataConnector]
         val vatReturnService = mock[VatReturnService]
-        val service = new FinancialDataService(connector, vatReturnService, stubClock)
-        val queryParameters = FinancialDataQueryParameters(fromDate = Some(commencementDate), toDate = Some(LocalDate.now(stubClock)), onlyOpenItems = Some(true))
+        val service = new FinancialDataService(connector, vatReturnService, stubPeriodService, stubClock)
+        val queryParameters = FinancialDataQueryParameters(fromDate = Some(periodYear.startOfYear), toDate = Some(periodYear.endOfYear), onlyOpenItems = Some(true))
 
-        when(connector.getFinancialData(any(), any())) thenReturn(
-          Future.successful(Right(Some(FinancialData(Some("VRN"), Some("123456789"), Some("?"), ZonedDateTime.now(stubClock), Option(financialTransactions))))))
+        when(stubPeriodService.getPeriodYears(any())) thenReturn Seq(periodYear)
+        when(connector.getFinancialData(any(), equalTo(queryParameters))) thenReturn(
+          Future.successful(Right(Some(FinancialData(Some("VRN"), Some("123456789"), Some("ECOM"), ZonedDateTime.now(stubClock), Option(financialTransactions))))))
 
         val response = service.getOutstandingAmounts(Vrn("123456789"), commencementDate).futureValue
 
@@ -271,16 +276,18 @@ class FinancialDataServiceSpec extends AnyFreeSpec
 
         val commencementDate = LocalDate.now()
         val period = Period(2021, Q3)
+        val periodYear = PeriodYear(2021)
 
         val financialTransactions = Seq.empty
 
         val connector = mock[FinancialDataConnector]
         val vatReturnService = mock[VatReturnService]
-        val service = new FinancialDataService(connector, vatReturnService, stubClock)
-        val queryParameters = FinancialDataQueryParameters(fromDate = Some(commencementDate), toDate = Some(LocalDate.now(stubClock)), onlyOpenItems = Some(true))
+        val service = new FinancialDataService(connector, vatReturnService, stubPeriodService, stubClock)
+        val queryParameters = FinancialDataQueryParameters(fromDate = Some(periodYear.startOfYear), toDate = Some(periodYear.endOfYear), onlyOpenItems = Some(true))
 
-        when(connector.getFinancialData(any(), any())) thenReturn(
-          Future.successful(Right(Some(FinancialData(Some("VRN"), Some("123456789"), Some("?"), ZonedDateTime.now(stubClock), Option(financialTransactions))))))
+        when(stubPeriodService.getPeriodYears(any())) thenReturn Seq(periodYear)
+        when(connector.getFinancialData(any(), equalTo(queryParameters))) thenReturn(
+          Future.successful(Right(Some(FinancialData(Some("VRN"), Some("123456789"), Some("ECOM"), ZonedDateTime.now(stubClock), Option(financialTransactions))))))
 
         val response = service.getOutstandingAmounts(Vrn("123456789"), commencementDate).futureValue
 
