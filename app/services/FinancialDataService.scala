@@ -35,7 +35,7 @@ class FinancialDataService @Inject()(
                                     )(implicit ec: ExecutionContext) extends Logging {
 
   def getCharge(vrn: Vrn, period: Period): Future[Option[Charge]] = {
-    getFinancialData(vrn, period.firstDay).map { maybeFinancialDataResponse =>
+    getFinancialData(vrn, period.firstDay, period.lastDay).map { maybeFinancialDataResponse =>
       maybeFinancialDataResponse.flatMap {
         financialDataResponse =>
           financialDataResponse.financialTransactions.flatMap {
@@ -78,8 +78,35 @@ class FinancialDataService @Inject()(
     }
   }
 
-  def getFinancialData(vrn: Vrn, commencementDate: LocalDate): Future[Option[FinancialData]] =
-    financialDataConnector.getFinancialData(vrn, FinancialDataQueryParameters(fromDate = Some(commencementDate), toDate = Some(LocalDate.now(clock)))).flatMap {
+  def getFinancialData(vrn: Vrn, fromDate: LocalDate): Future[Option[FinancialData]] = {
+    val financialDatas = Future.sequence(periodService.getPeriodYears(fromDate).map { taxYear =>
+      getFinancialData(vrn, taxYear.startOfYear, taxYear.endOfYear)
+    }).map(_.flatten)
+
+    financialDatas.map {
+      case firstFinancialData :: rest =>
+        val otherFinancialTransactions = rest.flatMap(_.financialTransactions).flatten
+        val allFinancialTransactions = (firstFinancialData.financialTransactions, otherFinancialTransactions) match {
+          case (Some(firstFinancialTransactions), Nil) => Some(firstFinancialTransactions)
+          case (Some(firstFinancialTransactions), items) => Some(items ++ firstFinancialTransactions)
+          case (None, Nil) => None
+          case (None, items) => Some(items)
+        }
+
+        Some(firstFinancialData.copy(financialTransactions = allFinancialTransactions))
+      case firstFinancialData :: Nil => Some(firstFinancialData)
+      case Nil => None
+    }
+  }
+
+  def getFinancialData(vrn: Vrn, fromDate: LocalDate, toDate: LocalDate): Future[Option[FinancialData]] =
+    financialDataConnector.getFinancialData(
+      vrn,
+      FinancialDataQueryParameters(
+        fromDate = Some(fromDate),
+        toDate = Some(toDate)
+      )
+    ).flatMap {
       case Right(value) => Future.successful(value)
       case Left(e) => Future.failed(DesException(s"An error occurred while getting financial Data: ${e.body}"))
     }
