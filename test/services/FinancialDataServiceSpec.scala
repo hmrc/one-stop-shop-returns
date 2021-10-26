@@ -337,7 +337,7 @@ class FinancialDataServiceSpec extends AnyFreeSpec
 
         val connector = mock[FinancialDataConnector]
         val vatReturnService = mock[VatReturnService]
-        val service = new FinancialDataService(connector, vatReturnService, stubClock)
+        val service = new FinancialDataService(connector, vatReturnService, stubPeriodService, stubClock)
         val queryParameters = FinancialDataQueryParameters(fromDate = Some(commencementDate), toDate = Some(LocalDate.now(stubClock)))
 
         when(connector.getFinancialData(any(), equalTo(queryParameters))) thenReturn (
