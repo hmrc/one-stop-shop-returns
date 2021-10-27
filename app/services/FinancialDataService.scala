@@ -86,14 +86,13 @@ class FinancialDataService @Inject()(
     financialDatas.map {
       case firstFinancialData :: rest =>
         val otherFinancialTransactions = rest.flatMap(_.financialTransactions).flatten
-        val allFinancialTransactions = (firstFinancialData.financialTransactions, otherFinancialTransactions) match {
-          case (Some(firstFinancialTransactions), Nil) => Some(firstFinancialTransactions)
-          case (Some(firstFinancialTransactions), items) => Some(items ++ firstFinancialTransactions)
-          case (None, Nil) => None
-          case (None, items) => Some(items)
-        }
 
-        Some(firstFinancialData.copy(financialTransactions = allFinancialTransactions))
+        val allTransactions =
+          firstFinancialData.financialTransactions.getOrElse(Nil) ++ otherFinancialTransactions
+
+        val maybeAllTransactions = if(allTransactions.isEmpty) None else Some(allTransactions)
+
+        Some(firstFinancialData.copy(financialTransactions = maybeAllTransactions))
       case firstFinancialData :: Nil => Some(firstFinancialData)
       case Nil => None
     }
