@@ -105,14 +105,13 @@ class FinancialDataControllerSpec
 
   }
 
-  ".getOutstandingAmounts(period)" - {
+  ".getOutstandingAmounts" - {
 
-    val commencementDate = LocalDate.now(stubClock)
     val period = Period(2021, Q3)
     val outstandingPayment = PeriodWithOutstandingAmount(period, BigDecimal(1000.50))
 
     lazy val request =
-      FakeRequest(GET, routes.FinancialDataController.getOutstandingAmounts(commencementDate).url)
+      FakeRequest(GET, routes.FinancialDataController.getOutstandingAmounts().url)
 
     "return a basic outstanding payment" in {
       val financialDataService = mock[FinancialDataService]
@@ -122,7 +121,7 @@ class FinancialDataControllerSpec
           .overrides(bind[FinancialDataService].to(financialDataService))
           .build()
 
-      when(financialDataService.getOutstandingAmounts(any(), any())) thenReturn Future.successful(Seq(outstandingPayment))
+      when(financialDataService.getOutstandingAmounts(any())) thenReturn Future.successful(Seq(outstandingPayment))
 
       running(app) {
 
@@ -141,7 +140,7 @@ class FinancialDataControllerSpec
           .overrides(bind[FinancialDataService].to(financialDataService))
           .build()
 
-      when(financialDataService.getOutstandingAmounts(any(), any())) thenReturn Future.failed(DesException("Some exception"))
+      when(financialDataService.getOutstandingAmounts(any())) thenReturn Future.failed(DesException("Some exception"))
 
       running(app) {
 
