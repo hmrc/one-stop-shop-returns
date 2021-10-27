@@ -16,7 +16,7 @@
 
 package services
 
-import models.Period
+import models.{Period, PeriodYear}
 import models.Quarter._
 
 import java.time.{Clock, LocalDate}
@@ -26,6 +26,9 @@ class PeriodService @Inject()(clock: Clock) {
 
   def getReturnPeriods(commencementDate: LocalDate): Seq[Period] =
     getAllPeriods.filterNot(_.lastDay.isBefore(commencementDate))
+
+  def getPeriodYears(commencementDate: LocalDate): Seq[PeriodYear] =
+    getReturnPeriods(commencementDate).map(PeriodYear.fromPeriod).distinct
 
   def getAllPeriods: Seq[Period] = {
     val firstPeriod = Period(2021, Q3)

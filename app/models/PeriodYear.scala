@@ -14,20 +14,16 @@
  * limitations under the License.
  */
 
-package models.financialdata
+package models
 
-import play.api.libs.json.{Format, Json}
+import java.time.LocalDate
 
-import java.time.ZonedDateTime
-
-case class FinancialData(
-                          idType: Option[String],
-                          idNumber: Option[String],
-                          regimeType: Option[String],
-                          processingDate: ZonedDateTime,
-                          financialTransactions: Option[Seq[FinancialTransaction]]
-                        )
-
-object FinancialData {
-  implicit val format: Format[FinancialData] = Json.format[FinancialData]
+case class PeriodYear(year: Int) {
+  val startOfYear: LocalDate = LocalDate.of(year, 1, 1)
+  val endOfYear: LocalDate = LocalDate.of(year, 12, 31)
 }
+
+object PeriodYear {
+  def fromPeriod(period: Period): PeriodYear = PeriodYear(period.year)
+}
+

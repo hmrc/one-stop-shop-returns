@@ -38,8 +38,11 @@ object FinancialDataHttpParser extends Logging {
               logger.warn("Failed trying to parse JSON", errors)
               Left(InvalidJson)
           }
+        case NOT_FOUND =>
+          logger.warn("Got not found from financial data")
+          Right(None)
         case status =>
-          logger.warn(s"Unexpected response from DES, received status $status")
+          logger.error(s"Unexpected response from DES, received status $status, body of response was: ${response.body}")
           Left(UnexpectedResponseStatus(status, s"Unexpected response from DES, received status $status"))
       }
   }

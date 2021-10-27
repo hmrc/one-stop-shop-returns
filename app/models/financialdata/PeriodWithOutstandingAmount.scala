@@ -15,19 +15,11 @@
  */
 
 package models.financialdata
+import play.api.libs.json.{Json, OFormat}
+import models.Period
 
-import play.api.libs.json.{Format, Json}
+case class PeriodWithOutstandingAmount(period: Period, outstandingAmount: BigDecimal)
 
-import java.time.ZonedDateTime
-
-case class FinancialData(
-                          idType: Option[String],
-                          idNumber: Option[String],
-                          regimeType: Option[String],
-                          processingDate: ZonedDateTime,
-                          financialTransactions: Option[Seq[FinancialTransaction]]
-                        )
-
-object FinancialData {
-  implicit val format: Format[FinancialData] = Json.format[FinancialData]
+object PeriodWithOutstandingAmount {
+  implicit val format: OFormat[PeriodWithOutstandingAmount] = Json.format[PeriodWithOutstandingAmount]
 }

@@ -16,18 +16,13 @@
 
 package models.financialdata
 
+import models.VatReturn
 import play.api.libs.json.{Format, Json}
 
-import java.time.ZonedDateTime
+case class VatReturnWithFinancialData(vatReturn: VatReturn, charge: Option[Charge], vatOwed: Option[Long])
 
-case class FinancialData(
-                          idType: Option[String],
-                          idNumber: Option[String],
-                          regimeType: Option[String],
-                          processingDate: ZonedDateTime,
-                          financialTransactions: Option[Seq[FinancialTransaction]]
-                        )
-
-object FinancialData {
-  implicit val format: Format[FinancialData] = Json.format[FinancialData]
+object VatReturnWithFinancialData {
+  implicit val format: Format[VatReturnWithFinancialData] = Json.format[VatReturnWithFinancialData]
 }
+
+
