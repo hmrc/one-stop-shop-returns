@@ -47,9 +47,9 @@ class FinancialDataController @Inject()(
       }
   }
 
-  def getOutstandingAmounts(commencementDate: LocalDate): Action[AnyContent] = auth.async {
+  def getOutstandingAmounts: Action[AnyContent] = auth.async {
     implicit request =>
-      service.getOutstandingAmounts(request.vrn, commencementDate).map { data =>
+      service.getOutstandingAmounts(request.vrn).map { data =>
         Ok(Json.toJson(data))
       }
   }
