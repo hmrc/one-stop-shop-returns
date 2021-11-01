@@ -131,11 +131,11 @@ class FinancialDataService @Inject()(
     for {
       taxYears <- vatReturnService.get(vrn).map(_.map(vatReturn => PeriodYear.fromPeriod(vatReturn.period)).distinct)
       periodsWithOutstandingAmounts <- {
-        logger.debug("TaxYears =" + taxYears)
+        logger.info("TaxYears =" + taxYears)
         Future.sequence(taxYears.map { taxYear =>
-          logger.debug("TaxYear =" + taxYear)
-          logger.debug("TaxYearStart =" + taxYear.startOfYear)
-          logger.debug("TaxYearEnd =" + taxYear.endOfYear)
+          logger.info("TaxYear =" + taxYear)
+          logger.info("TaxYearStart =" + taxYear.startOfYear)
+          logger.info("TaxYearEnd =" + taxYear.endOfYear)
           financialDataConnector.getFinancialData(vrn,
             FinancialDataQueryParameters(
               fromDate = Some(taxYear.startOfYear),
@@ -144,7 +144,7 @@ class FinancialDataService @Inject()(
             )).flatMap {
             case Right(maybeFinancialDataResponse) => maybeFinancialDataResponse match {
               case Some(financialData) =>
-                logger.debug("Successfully got FinancialData for taxYear =" + taxYear)
+                logger.info("Successfully got FinancialData for taxYear =" + taxYear)
                 Future.successful(financialData.financialTransactions.getOrElse(Seq.empty)
                   .filter(transaction => transaction.outstandingAmount.getOrElse(BigDecimal(0)) > BigDecimal(0))
                   .groupBy(transaction => transaction.taxPeriodFrom)
@@ -155,7 +155,7 @@ class FinancialDataService @Inject()(
                   .sortBy(_.period.toString).reverse
                 )
               case None =>
-                logger.debug("None Financial data for taxYear =" + taxYear)
+                logger.info("None Financial data for taxYear =" + taxYear)
                 Future.successful(Seq.empty)
             }
             case Left(e) =>
@@ -165,6 +165,4 @@ class FinancialDataService @Inject()(
       }
     } yield periodsWithOutstandingAmounts
   }
-
-
 }
