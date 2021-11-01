@@ -130,31 +130,39 @@ class FinancialDataService @Inject()(
     vatReturnService.get(vrn).map(_.map(vatReturn => PeriodYear.fromPeriod(vatReturn.period)).distinct)
     for {
       taxYears <- vatReturnService.get(vrn).map(_.map(vatReturn => PeriodYear.fromPeriod(vatReturn.period)).distinct)
-      periodsWithOutstandingAmounts <- Future.sequence(taxYears.map { taxYear =>
-        financialDataConnector.getFinancialData(vrn,
-          FinancialDataQueryParameters(
-            fromDate = Some(taxYear.startOfYear),
-            toDate = Some(taxYear.endOfYear),
-            onlyOpenItems = Some(true)
-          )).flatMap {
-          case Right(maybeFinancialDataResponse) => maybeFinancialDataResponse match {
-            case Some(financialData) =>
-              Future.successful(financialData.financialTransactions.getOrElse(Seq.empty)
-                .filter(transaction => transaction.outstandingAmount.getOrElse(BigDecimal(0)) > BigDecimal(0))
-                .groupBy(transaction => transaction.taxPeriodFrom)
-                .map {
-                  case (Some(periodStart), transactions: Seq[FinancialTransaction]) =>
-                    PeriodWithOutstandingAmount(Period(periodStart.getYear, Quarter.quarterFromStartMonth(periodStart.getMonth)), transactions.map(_.outstandingAmount.getOrElse(BigDecimal(0))).sum)
-                }.toSeq
-                .sortBy(_.period.toString).reverse
-              )
-            case None =>
-              Future.successful(Seq.empty)
+      periodsWithOutstandingAmounts <- {
+        logger.debug("TaxYears =" + taxYears)
+        Future.sequence(taxYears.map { taxYear =>
+          logger.debug("TaxYear =" + taxYear)
+          logger.debug("TaxYearStart =" + taxYear.startOfYear)
+          logger.debug("TaxYearEnd =" + taxYear.endOfYear)
+          financialDataConnector.getFinancialData(vrn,
+            FinancialDataQueryParameters(
+              fromDate = Some(taxYear.startOfYear),
+              toDate = Some(taxYear.endOfYear),
+              onlyOpenItems = Some(true)
+            )).flatMap {
+            case Right(maybeFinancialDataResponse) => maybeFinancialDataResponse match {
+              case Some(financialData) =>
+                logger.debug("Successfully got FinancialData for taxYear =" + taxYear)
+                Future.successful(financialData.financialTransactions.getOrElse(Seq.empty)
+                  .filter(transaction => transaction.outstandingAmount.getOrElse(BigDecimal(0)) > BigDecimal(0))
+                  .groupBy(transaction => transaction.taxPeriodFrom)
+                  .map {
+                    case (Some(periodStart), transactions: Seq[FinancialTransaction]) =>
+                      PeriodWithOutstandingAmount(Period(periodStart.getYear, Quarter.quarterFromStartMonth(periodStart.getMonth)), transactions.map(_.outstandingAmount.getOrElse(BigDecimal(0))).sum)
+                  }.toSeq
+                  .sortBy(_.period.toString).reverse
+                )
+              case None =>
+                logger.debug("None Financial data for taxYear =" + taxYear)
+                Future.successful(Seq.empty)
+            }
+            case Left(e) =>
+              Future.failed(DesException(s"An error occurred while getting financial Data: ${e.body}"))
           }
-          case Left(e) =>
-            Future.failed(DesException(s"An error occurred while getting financial Data: ${e.body}"))
-        }
-      }).map(_.flatten)
+        }).map(_.flatten)
+      }
     } yield periodsWithOutstandingAmounts
   }
 
