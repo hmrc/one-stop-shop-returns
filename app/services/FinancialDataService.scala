@@ -141,7 +141,7 @@ class FinancialDataService @Inject()(
                             Period(periodStart.getYear, Quarter.quarterFromStartMonth(periodStart.getMonth)),
                             transactions.map(_.outstandingAmount.getOrElse(BigDecimal(0))).sum
                           )
-                        //TODO match error if (None, _)
+                        case (None, _) => throw DesException("An error occurred while getting financial Data - periodStart was None")
                       }.toSeq
                       .sortBy(_.period.toString).reverse
                     )

@@ -368,6 +368,36 @@ class FinancialDataServiceSpec extends AnyFreeSpec
         financialDataService.getOutstandingAmounts(Vrn("123456789")).futureValue mustBe Seq.empty
       }
     }
+
+    "return DES exception when no tax period from exists" in {
+      val period = Period(2021, Q3)
+      val vatReturn = arbitrary[VatReturn].sample.value.copy(period = period)
+
+      val financialTransactions = Seq(
+        FinancialTransaction(
+          chargeType = Some("G Ret AT EU-OMS"),
+          mainType = None,
+          taxPeriodFrom = None,
+          taxPeriodTo = Some(period.lastDay),
+          originalAmount = Some(BigDecimal(1000)),
+          outstandingAmount = Some(BigDecimal(1000)),
+          clearedAmount = Some(BigDecimal(0)),
+          items = Some(Seq.empty)
+        )
+      )
+
+      val queryParameters =
+        FinancialDataQueryParameters(
+          fromDate = Some(periodYear2021.startOfYear), toDate = Some(periodYear2021.endOfYear), onlyOpenItems = Some(true)
+        )
+
+      when(vatReturnService.get(any())) thenReturn Future.successful(Seq(vatReturn))
+      when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters))).thenReturn(
+        Future.successful(Right(Some(FinancialData(
+          Some("VRN"), Some("123456789"), Some("ECOM"), ZonedDateTime.now(), Option(financialTransactions))
+        ))))
+      whenReady(financialDataService.getOutstandingAmounts(Vrn("123456789")).failed) { exp => exp mustBe DesException("An error occurred while getting financial Data - periodStart was None") }
+    }
   }
 
   ".getVatReturnWithFinancialData" - {
