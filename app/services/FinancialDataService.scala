@@ -30,12 +30,11 @@ import scala.concurrent.{ExecutionContext, Future}
 class FinancialDataService @Inject()(
                                       financialDataConnector: FinancialDataConnector,
                                       vatReturnService: VatReturnService,
-                                      periodService: PeriodService,
-                                      clock: Clock
+                                      periodService: PeriodService
                                     )(implicit ec: ExecutionContext) extends Logging {
 
   def getCharge(vrn: Vrn, period: Period): Future[Option[Charge]] = {
-    getFinancialData(vrn, period.firstDay, period.lastDay).map {
+    getFinancialDataForDateRange(vrn, period.firstDay, period.lastDay).map {
       _.flatMap {
         _.financialTransactions.flatMap {
           transactions =>
@@ -46,29 +45,16 @@ class FinancialDataService @Inject()(
   }
 
   def getVatReturnWithFinancialData(vrn: Vrn, commencementDate: LocalDate): Future[Seq[VatReturnWithFinancialData]] = {
-
-    val getFinancialDataResponse =
-      financialDataConnector.getFinancialData(
-        vrn,
-        FinancialDataQueryParameters(
-          fromDate = Some(commencementDate),
-          toDate = Some(LocalDate.now(clock))
-        )
-      ).map {
-        case Right(maybeFinancialData) => maybeFinancialData
-        case Left(_) => None
-      }.recover {
-        case _: Exception => None
-    }
-
     for {
       vatReturns <- vatReturnService.get(vrn)
-      maybeFinancialDataResponse <- getFinancialDataResponse
+      maybeFinancialDataResponse <- getFinancialData(vrn, commencementDate).recover {
+        case _: Exception => None
+      }
     } yield {
       vatReturns.map { vatReturn =>
         val charge = maybeFinancialDataResponse.flatMap {
           _.financialTransactions.flatMap {
-              transactions =>getChargeForPeriod(vatReturn.period, transactions)
+              transactions => getChargeForPeriod(vatReturn.period, transactions)
           }
         }
 
@@ -94,14 +80,15 @@ class FinancialDataService @Inject()(
   }
 
   def getFinancialData(vrn: Vrn, fromDate: LocalDate): Future[Option[FinancialData]] = {
-    val financialDatas =
+    val financialDatas: Future[Seq[FinancialData]] =
       Future.sequence(
         periodService.getPeriodYears(fromDate).map {
-          taxYear => getFinancialData(vrn, taxYear.startOfYear, taxYear.endOfYear)
+          taxYear => getFinancialDataForDateRange(vrn, taxYear.startOfYear, taxYear.endOfYear)
         }
       ).map(_.flatten)
 
     financialDatas.map {
+      case firstFinancialData :: Nil => Some(firstFinancialData)
       case firstFinancialData :: rest =>
         val otherFinancialTransactions = rest.flatMap(_.financialTransactions).flatten
 
@@ -111,12 +98,11 @@ class FinancialDataService @Inject()(
         val maybeAllTransactions = if (allTransactions.isEmpty) None else Some(allTransactions)
 
         Some(firstFinancialData.copy(financialTransactions = maybeAllTransactions))
-      case firstFinancialData :: Nil => Some(firstFinancialData) //TODO this is unreachable
       case Nil => None
     }
   }
 
-  def getFinancialData(vrn: Vrn, fromDate: LocalDate, toDate: LocalDate): Future[Option[FinancialData]] =
+  private def getFinancialDataForDateRange(vrn: Vrn, fromDate: LocalDate, toDate: LocalDate): Future[Option[FinancialData]] =
     financialDataConnector.getFinancialData(
       vrn,
       FinancialDataQueryParameters(
@@ -151,7 +137,11 @@ class FinancialDataService @Inject()(
                       .groupBy(transaction => transaction.taxPeriodFrom)
                       .map {
                         case (Some(periodStart), transactions: Seq[FinancialTransaction]) =>
-                          PeriodWithOutstandingAmount(Period(periodStart.getYear, Quarter.quarterFromStartMonth(periodStart.getMonth)), transactions.map(_.outstandingAmount.getOrElse(BigDecimal(0))).sum)
+                          PeriodWithOutstandingAmount(
+                            Period(periodStart.getYear, Quarter.quarterFromStartMonth(periodStart.getMonth)),
+                            transactions.map(_.outstandingAmount.getOrElse(BigDecimal(0))).sum
+                          )
+                        //TODO match error if (None, _)
                       }.toSeq
                       .sortBy(_.period.toString).reverse
                     )
