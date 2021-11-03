@@ -48,7 +48,9 @@ class FinancialDataService @Inject()(
     for {
       vatReturns <- vatReturnService.get(vrn)
       maybeFinancialDataResponse <- getFinancialData(vrn, commencementDate).recover {
-        case _: Exception => None
+        case e: Exception =>
+          logger.error(s"Error while getting vat return with financial data: ${e.getMessage}", e)
+          None
       }
     } yield {
       vatReturns.map { vatReturn =>
