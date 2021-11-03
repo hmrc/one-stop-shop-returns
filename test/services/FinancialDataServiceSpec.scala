@@ -5,7 +5,7 @@ import generators.Generators
 import models._
 import models.financialdata._
 import models.Quarter._
-import models.des.UnexpectedResponseStatus
+import models.des.{DesException, UnexpectedResponseStatus}
 import org.mockito.ArgumentMatchers.{any, eq => equalTo}
 import org.mockito.ArgumentMatchersSugar.eqTo
 import org.mockito.Mockito
