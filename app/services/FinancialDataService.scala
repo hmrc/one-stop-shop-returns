@@ -23,7 +23,7 @@ import models.des.DesException
 import models.financialdata._
 import uk.gov.hmrc.domain.Vrn
 
-import java.time.{Clock, LocalDate}
+import java.time.LocalDate
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -39,8 +39,8 @@ class FinancialDataService @Inject()(
         _.financialTransactions.flatMap {
           transactions =>
             getChargeForPeriod(period, transactions)
-          }
         }
+      }
     }
   }
 
@@ -56,7 +56,7 @@ class FinancialDataService @Inject()(
       vatReturns.map { vatReturn =>
         val charge = maybeFinancialDataResponse.flatMap {
           _.financialTransactions.flatMap {
-              transactions => getChargeForPeriod(vatReturn.period, transactions)
+            transactions => getChargeForPeriod(vatReturn.period, transactions)
           }
         }
 
@@ -118,43 +118,37 @@ class FinancialDataService @Inject()(
 
   def getOutstandingAmounts(vrn: Vrn): Future[Seq[PeriodWithOutstandingAmount]] = {
     for {
-      taxYears <- vatReturnService.get(vrn).map(_.map(vatReturn => PeriodYear.fromPeriod(vatReturn.period)).distinct)
-      periodsWithOutstandingAmounts <- {
-        Future.sequence(
-          taxYears.map { taxYear =>
-            financialDataConnector.getFinancialData(
-              vrn,
-              FinancialDataQueryParameters(
-                fromDate = None,
-                toDate = None,
-                onlyOpenItems = Some(true)
-              )
-            ).flatMap {
-              case Right(maybeFinancialDataResponse) =>
-                maybeFinancialDataResponse match {
-                  case Some(financialData) =>
-                    Future.successful(
-                      financialData.financialTransactions.getOrElse(Seq.empty)
-                      .filter(transaction => transaction.outstandingAmount.getOrElse(BigDecimal(0)) > BigDecimal(0))
-                      .groupBy(transaction => transaction.taxPeriodFrom)
-                      .map {
-                        case (Some(periodStart), transactions: Seq[FinancialTransaction]) =>
-                          PeriodWithOutstandingAmount(
-                            Period(periodStart.getYear, Quarter.quarterFromStartMonth(periodStart.getMonth)),
-                            transactions.map(_.outstandingAmount.getOrElse(BigDecimal(0))).sum
-                          )
-                        case (None, _) => throw DesException("An error occurred while getting financial Data - periodStart was None")
-                      }.toSeq
-                      .sortBy(_.period.toString).reverse
-                    )
-                  case None => Future.successful(Seq.empty)
-              }
-              case Left(e) =>
-                Future.failed(DesException(s"An error occurred while getting financial Data: ${e.body}"))
+      periodsWithOutstandingAmounts <-
+        financialDataConnector.getFinancialData(
+          vrn,
+          FinancialDataQueryParameters(
+            fromDate = None,
+            toDate = None,
+            onlyOpenItems = Some(true)
+          )
+        ).flatMap {
+          case Right(maybeFinancialDataResponse) =>
+            maybeFinancialDataResponse match {
+              case Some(financialData) =>
+                Future.successful(
+                  financialData.financialTransactions.getOrElse(Seq.empty)
+                    .filter(transaction => transaction.outstandingAmount.getOrElse(BigDecimal(0)) > BigDecimal(0))
+                    .groupBy(transaction => transaction.taxPeriodFrom)
+                    .map {
+                      case (Some(periodStart), transactions: Seq[FinancialTransaction]) =>
+                        PeriodWithOutstandingAmount(
+                          Period(periodStart.getYear, Quarter.quarterFromStartMonth(periodStart.getMonth)),
+                          transactions.map(_.outstandingAmount.getOrElse(BigDecimal(0))).sum
+                        )
+                      case (None, _) => throw DesException("An error occurred while getting financial Data - periodStart was None")
+                    }.toSeq
+                    .sortBy(_.period.toString).reverse
+                )
+              case None => Future.successful(Seq.empty)
             }
-          }
-        ).map(_.flatten)
-      }
+          case Left(e) =>
+            Future.failed(DesException(s"An error occurred while getting financial Data: ${e.body}"))
+        }
     } yield periodsWithOutstandingAmounts
   }
 }
