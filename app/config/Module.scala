@@ -25,6 +25,6 @@ class Module extends AbstractModule {
 
   override def configure(): Unit = {
     bind(classOf[AuthAction]).to(classOf[AuthActionImpl]).asEagerSingleton()
-    bind(classOf[Clock]).to(classOf[Clock]).asEagerSingleton()
+    bind(classOf[Clock]).toInstance(Clock.systemDefaultZone.withZone(ZoneOffset.UTC))
   }
 }
