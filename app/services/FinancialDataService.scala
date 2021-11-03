@@ -30,49 +30,36 @@ import scala.concurrent.{ExecutionContext, Future}
 class FinancialDataService @Inject()(
                                       financialDataConnector: FinancialDataConnector,
                                       vatReturnService: VatReturnService,
-                                      periodService: PeriodService,
-                                      clock: Clock
+                                      periodService: PeriodService
                                     )(implicit ec: ExecutionContext) extends Logging {
 
   def getCharge(vrn: Vrn, period: Period): Future[Option[Charge]] = {
-    getFinancialData(vrn, period.firstDay, period.lastDay).map { maybeFinancialDataResponse =>
-      maybeFinancialDataResponse.flatMap {
-        financialDataResponse =>
-          financialDataResponse.financialTransactions.flatMap {
-            transactions =>
-              getChargeForPeriod(period, transactions)
+    getFinancialDataForDateRange(vrn, period.firstDay, period.lastDay).map {
+      _.flatMap {
+        _.financialTransactions.flatMap {
+          transactions =>
+            getChargeForPeriod(period, transactions)
           }
-      }
+        }
     }
   }
 
   def getVatReturnWithFinancialData(vrn: Vrn, commencementDate: LocalDate): Future[Seq[VatReturnWithFinancialData]] = {
-
-    val getFinancialDataResponse = financialDataConnector
-      .getFinancialData(vrn,
-        FinancialDataQueryParameters(
-          fromDate = Some(commencementDate),
-          toDate = Some(LocalDate.now(clock))
-        )).map {
-      case Right(maybeFinancialData) => maybeFinancialData
-      case Left(_) => None
-    }.recover {
-      case _: Exception =>
-        None
-    }
-
     for {
       vatReturns <- vatReturnService.get(vrn)
-      maybeFinancialDataResponse <- getFinancialDataResponse
+      maybeFinancialDataResponse <- getFinancialData(vrn, commencementDate).recover {
+        case e: Exception =>
+          logger.error(s"Error while getting vat return with financial data: ${e.getMessage}", e)
+          None
+      }
     } yield {
       vatReturns.map { vatReturn =>
         val charge = maybeFinancialDataResponse.flatMap {
-          financialDataResponse =>
-            financialDataResponse.financialTransactions.flatMap {
-              transactions =>
-                getChargeForPeriod(vatReturn.period, transactions)
-            }
+          _.financialTransactions.flatMap {
+              transactions => getChargeForPeriod(vatReturn.period, transactions)
+          }
         }
+
         VatReturnWithFinancialData(vatReturn, charge, charge.map(c => (c.outstandingAmount * 100).toLong))
       }
     }
@@ -83,7 +70,7 @@ class FinancialDataService @Inject()(
     if (transactionsForPeriod.nonEmpty) {
       Some(
         Charge(
-          period = period,
+          period,
           originalAmount = transactionsForPeriod.map(_.originalAmount.getOrElse(BigDecimal(0))).sum,
           outstandingAmount = transactionsForPeriod.map(_.outstandingAmount.getOrElse(BigDecimal(0))).sum,
           clearedAmount = transactionsForPeriod.map(_.clearedAmount.getOrElse(BigDecimal(0))).sum
@@ -95,11 +82,15 @@ class FinancialDataService @Inject()(
   }
 
   def getFinancialData(vrn: Vrn, fromDate: LocalDate): Future[Option[FinancialData]] = {
-    val financialDatas = Future.sequence(periodService.getPeriodYears(fromDate).map { taxYear =>
-      getFinancialData(vrn, taxYear.startOfYear, taxYear.endOfYear)
-    }).map(_.flatten)
+    val financialDatas: Future[Seq[FinancialData]] =
+      Future.sequence(
+        periodService.getPeriodYears(fromDate).map {
+          taxYear => getFinancialDataForDateRange(vrn, taxYear.startOfYear, taxYear.endOfYear)
+        }
+      ).map(_.flatten)
 
     financialDatas.map {
+      case firstFinancialData :: Nil => Some(firstFinancialData)
       case firstFinancialData :: rest =>
         val otherFinancialTransactions = rest.flatMap(_.financialTransactions).flatten
 
@@ -109,12 +100,11 @@ class FinancialDataService @Inject()(
         val maybeAllTransactions = if (allTransactions.isEmpty) None else Some(allTransactions)
 
         Some(firstFinancialData.copy(financialTransactions = maybeAllTransactions))
-      case firstFinancialData :: Nil => Some(firstFinancialData)
       case Nil => None
     }
   }
 
-  def getFinancialData(vrn: Vrn, fromDate: LocalDate, toDate: LocalDate): Future[Option[FinancialData]] =
+  private def getFinancialDataForDateRange(vrn: Vrn, fromDate: LocalDate, toDate: LocalDate): Future[Option[FinancialData]] =
     financialDataConnector.getFinancialData(
       vrn,
       FinancialDataQueryParameters(
@@ -127,36 +117,44 @@ class FinancialDataService @Inject()(
     }
 
   def getOutstandingAmounts(vrn: Vrn): Future[Seq[PeriodWithOutstandingAmount]] = {
-    vatReturnService.get(vrn).map(_.map(vatReturn => PeriodYear.fromPeriod(vatReturn.period)).distinct)
     for {
       taxYears <- vatReturnService.get(vrn).map(_.map(vatReturn => PeriodYear.fromPeriod(vatReturn.period)).distinct)
-      periodsWithOutstandingAmounts <- Future.sequence(taxYears.map { taxYear =>
-        financialDataConnector.getFinancialData(vrn,
-          FinancialDataQueryParameters(
-            fromDate = Some(taxYear.startOfYear),
-            toDate = Some(taxYear.endOfYear),
-            onlyOpenItems = Some(true)
-          )).flatMap {
-          case Right(maybeFinancialDataResponse) => maybeFinancialDataResponse match {
-            case Some(financialData) =>
-              Future.successful(financialData.financialTransactions.getOrElse(Seq.empty)
-                .filter(transaction => transaction.outstandingAmount.getOrElse(BigDecimal(0)) > BigDecimal(0))
-                .groupBy(transaction => transaction.taxPeriodFrom)
-                .map {
-                  case (Some(periodStart), transactions: Seq[FinancialTransaction]) =>
-                    PeriodWithOutstandingAmount(Period(periodStart.getYear, Quarter.quarterFromStartMonth(periodStart.getMonth)), transactions.map(_.outstandingAmount.getOrElse(BigDecimal(0))).sum)
-                }.toSeq
-                .sortBy(_.period.toString).reverse
+      periodsWithOutstandingAmounts <- {
+        Future.sequence(
+          taxYears.map { taxYear =>
+            financialDataConnector.getFinancialData(
+              vrn,
+              FinancialDataQueryParameters(
+                fromDate = Some(taxYear.startOfYear),
+                toDate = Some(taxYear.endOfYear),
+                onlyOpenItems = Some(true)
               )
-            case None =>
-              Future.successful(Seq.empty)
+            ).flatMap {
+              case Right(maybeFinancialDataResponse) =>
+                maybeFinancialDataResponse match {
+                  case Some(financialData) =>
+                    Future.successful(
+                      financialData.financialTransactions.getOrElse(Seq.empty)
+                      .filter(transaction => transaction.outstandingAmount.getOrElse(BigDecimal(0)) > BigDecimal(0))
+                      .groupBy(transaction => transaction.taxPeriodFrom)
+                      .map {
+                        case (Some(periodStart), transactions: Seq[FinancialTransaction]) =>
+                          PeriodWithOutstandingAmount(
+                            Period(periodStart.getYear, Quarter.quarterFromStartMonth(periodStart.getMonth)),
+                            transactions.map(_.outstandingAmount.getOrElse(BigDecimal(0))).sum
+                          )
+                        case (None, _) => throw DesException("An error occurred while getting financial Data - periodStart was None")
+                      }.toSeq
+                      .sortBy(_.period.toString).reverse
+                    )
+                  case None => Future.successful(Seq.empty)
+              }
+              case Left(e) =>
+                Future.failed(DesException(s"An error occurred while getting financial Data: ${e.body}"))
+            }
           }
-          case Left(e) =>
-            Future.failed(DesException(s"An error occurred while getting financial Data: ${e.body}"))
-        }
-      }).map(_.flatten)
+        ).map(_.flatten)
+      }
     } yield periodsWithOutstandingAmounts
   }
-
-
 }
