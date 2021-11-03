@@ -326,7 +326,7 @@ class FinancialDataServiceSpec extends AnyFreeSpec
 
         val queryParameters =
           FinancialDataQueryParameters(
-            fromDate = Some(periodYear2021.startOfYear), toDate = Some(periodYear2021.endOfYear), onlyOpenItems = Some(true)
+            fromDate = None, toDate = None, onlyOpenItems = Some(true)
           )
 
         when(vatReturnService.get(any())) thenReturn Future.successful(Seq(vatReturn))
@@ -349,7 +349,7 @@ class FinancialDataServiceSpec extends AnyFreeSpec
         val financialTransactions = Seq.empty
         val queryParameters =
           FinancialDataQueryParameters(
-            fromDate = Some(periodYear2021.startOfYear), toDate = Some(periodYear2021.endOfYear), onlyOpenItems = Some(true)
+            fromDate = None, toDate = None, onlyOpenItems = Some(true)
           )
 
         when(vatReturnService.get(any())) thenReturn Future.successful(Seq(vatReturn))
@@ -388,7 +388,7 @@ class FinancialDataServiceSpec extends AnyFreeSpec
 
       val queryParameters =
         FinancialDataQueryParameters(
-          fromDate = Some(periodYear2021.startOfYear), toDate = Some(periodYear2021.endOfYear), onlyOpenItems = Some(true)
+          fromDate = None, toDate = None, onlyOpenItems = Some(true)
         )
 
       when(vatReturnService.get(any())) thenReturn Future.successful(Seq(vatReturn))

@@ -125,8 +125,8 @@ class FinancialDataService @Inject()(
             financialDataConnector.getFinancialData(
               vrn,
               FinancialDataQueryParameters(
-                fromDate = Some(taxYear.startOfYear),
-                toDate = Some(taxYear.endOfYear),
+                fromDate = None,
+                toDate = None,
                 onlyOpenItems = Some(true)
               )
             ).flatMap {
