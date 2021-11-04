@@ -326,7 +326,7 @@ class FinancialDataServiceSpec extends AnyFreeSpec
 
         val queryParameters =
           FinancialDataQueryParameters(
-            fromDate = Some(periodYear2021.startOfYear), toDate = Some(periodYear2021.endOfYear), onlyOpenItems = Some(true)
+            fromDate = None, toDate = None, onlyOpenItems = Some(true)
           )
 
         when(vatReturnService.get(any())) thenReturn Future.successful(Seq(vatReturn))
@@ -337,6 +337,55 @@ class FinancialDataServiceSpec extends AnyFreeSpec
 
         financialDataService.getOutstandingAmounts(Vrn("123456789")).futureValue
           .mustBe(Seq(PeriodWithOutstandingAmount(period, BigDecimal(1000))))
+
+        verify(financialDataConnector, times(1)).getFinancialData(any(), any())
+      }
+
+      "when there has been no payments for 2 periods with different years" in {
+
+        val period = Period(2021, Q4)
+        val period2 = Period(2022, Q1)
+        val vatReturn = arbitrary[VatReturn].sample.value.copy(period = period)
+        val vatReturn2 = arbitrary[VatReturn].sample.value.copy(period = period2)
+
+        val financialTransactions = Seq(
+          FinancialTransaction(
+            chargeType = Some("G Ret AT EU-OMS"),
+            mainType = None,
+            taxPeriodFrom = Some(period.firstDay),
+            taxPeriodTo = Some(period.lastDay),
+            originalAmount = Some(BigDecimal(1000)),
+            outstandingAmount = Some(BigDecimal(1000)),
+            clearedAmount = Some(BigDecimal(0)),
+            items = Some(Seq.empty)
+          ),
+          FinancialTransaction(
+            chargeType = Some("G Ret DE EU-OMS"),
+            mainType = None,
+            taxPeriodFrom = Some(period2.firstDay),
+            taxPeriodTo = Some(period2.lastDay),
+            originalAmount = Some(BigDecimal(2000)),
+            outstandingAmount = Some(BigDecimal(2000)),
+            clearedAmount = Some(BigDecimal(0)),
+            items = Some(Seq.empty)
+          )
+        )
+
+        val queryParameters =
+          FinancialDataQueryParameters(
+            fromDate = None, toDate = None, onlyOpenItems = Some(true)
+          )
+
+        when(vatReturnService.get(any())) thenReturn Future.successful(Seq(vatReturn))
+        when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters))).thenReturn(
+          Future.successful(Right(Some(FinancialData(
+            Some("VRN"), Some("123456789"), Some("ECOM"), ZonedDateTime.now(), Option(financialTransactions))
+          ))))
+
+        financialDataService.getOutstandingAmounts(Vrn("123456789")).futureValue
+          .mustBe(Seq(PeriodWithOutstandingAmount(period2, BigDecimal(2000)), PeriodWithOutstandingAmount(period, BigDecimal(1000))))
+
+        verify(financialDataConnector, times(1)).getFinancialData(any(), any())
       }
     }
 
@@ -349,7 +398,7 @@ class FinancialDataServiceSpec extends AnyFreeSpec
         val financialTransactions = Seq.empty
         val queryParameters =
           FinancialDataQueryParameters(
-            fromDate = Some(periodYear2021.startOfYear), toDate = Some(periodYear2021.endOfYear), onlyOpenItems = Some(true)
+            fromDate = None, toDate = None, onlyOpenItems = Some(true)
           )
 
         when(vatReturnService.get(any())) thenReturn Future.successful(Seq(vatReturn))
@@ -358,12 +407,6 @@ class FinancialDataServiceSpec extends AnyFreeSpec
             Some("VRN"), Some("123456789"), Some("ECOM"), ZonedDateTime.now(), Option(financialTransactions)
           ))))
         )
-
-        financialDataService.getOutstandingAmounts(Vrn("123456789")).futureValue mustBe Seq.empty
-      }
-
-      "when there are no completed returns" in {
-        when(vatReturnService.get(any())) thenReturn Future.successful(Seq.empty)
 
         financialDataService.getOutstandingAmounts(Vrn("123456789")).futureValue mustBe Seq.empty
       }
@@ -388,7 +431,7 @@ class FinancialDataServiceSpec extends AnyFreeSpec
 
       val queryParameters =
         FinancialDataQueryParameters(
-          fromDate = Some(periodYear2021.startOfYear), toDate = Some(periodYear2021.endOfYear), onlyOpenItems = Some(true)
+          fromDate = None, toDate = None, onlyOpenItems = Some(true)
         )
 
       when(vatReturnService.get(any())) thenReturn Future.successful(Seq(vatReturn))
@@ -396,7 +439,9 @@ class FinancialDataServiceSpec extends AnyFreeSpec
         Future.successful(Right(Some(FinancialData(
           Some("VRN"), Some("123456789"), Some("ECOM"), ZonedDateTime.now(), Option(financialTransactions))
         ))))
-      whenReady(financialDataService.getOutstandingAmounts(Vrn("123456789")).failed) { exp => exp mustBe DesException("An error occurred while getting financial Data - periodStart was None") }
+      whenReady(financialDataService.getOutstandingAmounts(Vrn("123456789")).failed) { exp =>
+        exp mustBe DesException("An error occurred while getting financial Data - periodStart was None")
+      }
     }
   }
 
