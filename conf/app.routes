@@ -12,3 +12,7 @@ GET         /financial-data/charge/:period                          controllers.
 GET         /financial-data/charge-history/:commencementDate        controllers.FinancialDataController.getVatReturnWithFinancialData(commencementDate: LocalDate)
 
 GET         /financial-data/outstanding-payments                    controllers.FinancialDataController.getOutstandingAmounts()
+
+POST        /corrections                                            controllers.CorrectionController.post
+GET         /corrections                                            controllers.CorrectionController.list
+GET         /corrections/:period                                    controllers.CorrectionController.get(period: Period)

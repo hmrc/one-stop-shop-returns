@@ -13,6 +13,7 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar.mock
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.mongo.test.{CleanMongoCollectionSupport, DefaultPlayMongoRepositorySupport}
+import utils.StringUtils
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -40,11 +41,6 @@ class VatReturnRepositorySpec
       appConfig = appConfig
     )
 
-  private def rotateDigitsInString(chars: String): String =
-    chars.map {
-      char =>
-        (char.asDigit + 1) % 10
-    }.mkString
 
   ".insert" - {
 
@@ -71,7 +67,7 @@ class VatReturnRepositorySpec
     "must insert returns for different VRNs in the same period" in {
 
       val vatReturn1 = arbitrary[VatReturn].sample.value
-      val vrn2       = Vrn(rotateDigitsInString(vatReturn1.vrn.vrn).mkString)
+      val vrn2       = Vrn(StringUtils.rotateDigitsInString(vatReturn1.vrn.vrn).mkString)
       val vatReturn2 = vatReturn1 copy (
         vrn       = vrn2,
         reference = ReturnReference(vrn2, vatReturn1.period)
@@ -115,7 +111,7 @@ class VatReturnRepositorySpec
         period    = return2Period,
         reference = ReturnReference(vatReturn1.vrn, return2Period)
       )
-      val vrn3       = Vrn(rotateDigitsInString(vatReturn1.vrn.vrn).mkString)
+      val vrn3       = Vrn(StringUtils.rotateDigitsInString(vatReturn1.vrn.vrn).mkString)
       val vatReturn3 = vatReturn1 copy (
         vrn       = vrn3,
         reference = ReturnReference(vrn3, vatReturn1.period)
