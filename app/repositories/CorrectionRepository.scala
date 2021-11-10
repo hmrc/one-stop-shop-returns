@@ -17,7 +17,7 @@
 package repositories
 
 import config.AppConfig
-import models.correction.CorrectionPayload
+import models.corrections.CorrectionPayload
 import models.Period
 import org.mongodb.scala.model.{Filters, Indexes, IndexModel, IndexOptions}
 import repositories.MongoErrors.Duplicate

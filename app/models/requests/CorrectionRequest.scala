@@ -17,7 +17,7 @@
 package models.requests
 
 import models.Period
-import models.correction.Correction
+import models.corrections.Correction
 import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.domain.Vrn
 

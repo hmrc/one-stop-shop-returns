@@ -22,7 +22,7 @@ import generators.Generators
 import models._
 import models.requests.CorrectionRequest
 import models.Quarter.Q3
-import models.correction.CorrectionPayload
+import models.corrections.CorrectionPayload
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito.{times, verify, when}
 import org.scalacheck.Arbitrary.arbitrary

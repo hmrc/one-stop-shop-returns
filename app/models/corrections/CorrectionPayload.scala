@@ -14,15 +14,24 @@
  * limitations under the License.
  */
 
-package models.correction
+package models.corrections
 
 import models.Period
 import play.api.libs.json.{Json, OFormat}
+import uk.gov.hmrc.domain.Vrn
 
-case class Correction(correctionReturnPeriod: Period, correctionToCountries: List[CorrectionToCountry])
+import java.time.Instant
 
-object Correction {
+case class CorrectionPayload(
+                              vrn: Vrn,
+                              period: Period,
+                              corrections: List[Correction],
+                              submissionReceived: Instant,
+                              lastUpdated: Instant
+                            )
 
-  implicit val format: OFormat[Correction] = Json.format[Correction]
+object CorrectionPayload {
+
+  implicit val format: OFormat[CorrectionPayload] = Json.format[CorrectionPayload]
 
 }

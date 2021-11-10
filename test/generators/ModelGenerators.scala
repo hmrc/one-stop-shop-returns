@@ -17,7 +17,7 @@
 package generators
 
 import models._
-import models.correction.{Correction, CorrectionPayload, CorrectionToCountry}
+import models.corrections.{Correction, CorrectionPayload, CorrectionToCountry}
 import models.financialdata.Charge
 import models.requests.{CorrectionRequest, VatReturnRequest}
 import org.scalacheck.{Arbitrary, Gen}

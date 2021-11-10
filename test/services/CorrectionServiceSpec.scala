@@ -18,7 +18,7 @@ package services
 
 import generators.Generators
 import models.VatReturn
-import models.correction.CorrectionPayload
+import models.corrections.CorrectionPayload
 import models.requests.{CorrectionRequest, VatReturnRequest}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{times, verify, when}

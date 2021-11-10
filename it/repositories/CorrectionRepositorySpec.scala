@@ -2,7 +2,7 @@ package repositories
 
 import config.AppConfig
 import generators.Generators
-import models.correction.CorrectionPayload
+import models.corrections.CorrectionPayload
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}

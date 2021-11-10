@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package models.correction
+package models.corrections
 
 import models.Country
 import play.api.libs.json.{Json, OFormat}

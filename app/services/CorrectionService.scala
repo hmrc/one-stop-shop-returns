@@ -17,7 +17,7 @@
 package services
 
 import models.Period
-import models.correction.CorrectionPayload
+import models.corrections.CorrectionPayload
 import models.requests.CorrectionRequest
 import repositories.CorrectionRepository
 import uk.gov.hmrc.domain.Vrn
