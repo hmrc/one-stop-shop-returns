@@ -19,10 +19,10 @@ package models.corrections
 import models.Period
 import play.api.libs.json.{Json, OFormat}
 
-case class Correction(correctionReturnPeriod: Period, correctionToCountries: List[CorrectionToCountry])
+case class PeriodWithCorrections(correctionReturnPeriod: Period, correctionToCountries: List[CorrectionToCountry])
 
-object Correction {
+object PeriodWithCorrections {
 
-  implicit val format: OFormat[Correction] = Json.format[Correction]
+  implicit val format: OFormat[PeriodWithCorrections] = Json.format[PeriodWithCorrections]
 
 }

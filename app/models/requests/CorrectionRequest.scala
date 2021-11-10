@@ -17,14 +17,14 @@
 package models.requests
 
 import models.Period
-import models.corrections.Correction
+import models.corrections.PeriodWithCorrections
 import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.domain.Vrn
 
 case class CorrectionRequest(
                               vrn: Vrn,
                               period: Period,
-                              corrections: List[Correction]
+                              corrections: List[PeriodWithCorrections]
                             )
 
 object CorrectionRequest {

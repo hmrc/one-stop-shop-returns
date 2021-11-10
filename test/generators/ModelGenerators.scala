@@ -17,7 +17,7 @@
 package generators
 
 import models._
-import models.corrections.{Correction, CorrectionPayload, CorrectionToCountry}
+import models.corrections.{PeriodWithCorrections, CorrectionPayload, CorrectionToCountry}
 import models.financialdata.Charge
 import models.requests.{CorrectionRequest, VatReturnRequest}
 import org.scalacheck.{Arbitrary, Gen}
@@ -56,13 +56,13 @@ trait ModelGenerators {
       } yield CorrectionToCountry(country, countryVatCorrection.setScale(2, RoundingMode.HALF_UP))
     }
 
-  implicit val arbitraryCorrection: Arbitrary[Correction] =
+  implicit val arbitraryPeriodWithCorrections: Arbitrary[PeriodWithCorrections] =
     Arbitrary {
       for {
         correctionPeriod <- arbitrary[Period]
         amount <- Gen.choose(1, 30)
         correctionToCountries <- Gen.listOfN(amount, arbitrary[CorrectionToCountry])
-      } yield Correction(correctionPeriod, correctionToCountries)
+      } yield PeriodWithCorrections(correctionPeriod, correctionToCountries)
     }
 
   implicit val arbitraryCorrectionPayload: Arbitrary[CorrectionPayload] =
@@ -71,7 +71,7 @@ trait ModelGenerators {
         vrn <- arbitrary[Vrn]
         period <- arbitrary[Period]
         amount <- Gen.choose(1, 30)
-        corrections <- Gen.listOfN(amount, arbitrary[Correction])
+        corrections <- Gen.listOfN(amount, arbitrary[PeriodWithCorrections])
         now = Instant.now
       } yield CorrectionPayload(vrn, period, corrections, now, now)
     }
@@ -82,7 +82,7 @@ trait ModelGenerators {
         vrn <- arbitrary[Vrn]
         period <- arbitrary[Period]
         amount <- Gen.choose(1, 30)
-        corrections <- Gen.listOfN(amount, arbitrary[Correction])
+        corrections <- Gen.listOfN(amount, arbitrary[PeriodWithCorrections])
       } yield CorrectionRequest(vrn, period, corrections)
     }
 

@@ -25,7 +25,7 @@ import java.time.Instant
 case class CorrectionPayload(
                               vrn: Vrn,
                               period: Period,
-                              corrections: List[Correction],
+                              corrections: List[PeriodWithCorrections],
                               submissionReceived: Instant,
                               lastUpdated: Instant
                             )
