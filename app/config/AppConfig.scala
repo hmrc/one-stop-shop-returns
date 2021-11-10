@@ -25,4 +25,6 @@ import javax.inject.{Inject, Singleton}
 class AppConfig @Inject()(config: Configuration, servicesConfig: ServicesConfig) {
 
   val encryptionKey: String = config.get[String]("mongodb.encryption.key")
+
+  val correctionToggle: Boolean = config.get[Boolean]("features.corrections-toggle")
 }

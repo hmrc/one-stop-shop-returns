@@ -48,15 +48,6 @@ class CorrectionControllerSpec
     val correctionRequest = arbitrary[CorrectionRequest].sample.value
     val correctionPayload = arbitrary[CorrectionPayload].sample.value
 
-    println("")
-    println("")
-    println(correctionRequest)
-    println("")
-    println("")
-    println(correctionPayload)
-    println("")
-    println("")
-
     lazy val request =
       FakeRequest(POST, routes.CorrectionController.post().url)
         .withJsonBody(Json.toJson(correctionRequest))

@@ -16,11 +16,11 @@
 
 package controllers
 
-import controllers.actions.AuthAction
-import models.requests.{CorrectionRequest, VatReturnRequest}
+import controllers.actions.{AuthAction, AuthenticatedControllerComponents}
+import models.requests.CorrectionRequest
 import models.Period
 import play.api.libs.json.Json
-import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import play.api.mvc.{Action, AnyContent}
 import services.CorrectionService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
@@ -28,13 +28,13 @@ import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
 class CorrectionController @Inject()(
-                                      cc: ControllerComponents,
+                                      cc: AuthenticatedControllerComponents,
                                       correctionService: CorrectionService,
                                       auth: AuthAction
                                     )(implicit ec: ExecutionContext)
   extends BackendController(cc) {
 
-  def post(): Action[CorrectionRequest] = auth(parse.json[CorrectionRequest]).async {
+  def post(): Action[CorrectionRequest] = cc.authAndCorrectionToggle(parse.json[CorrectionRequest]).async {
     implicit request =>
       correctionService.createCorrection(request.body).map {
         case Some(vatReturn) => Created(Json.toJson(vatReturn))
@@ -42,7 +42,7 @@ class CorrectionController @Inject()(
       }
   }
 
-  def list(): Action[AnyContent] = auth.async {
+  def list(): Action[AnyContent] = cc.authAndCorrectionToggle.async {
     implicit request =>
       correctionService.get(request.vrn).map {
         case Nil => NotFound
@@ -50,7 +50,7 @@ class CorrectionController @Inject()(
       }
   }
 
-  def get(period: Period): Action[AnyContent] = auth.async {
+  def get(period: Period): Action[AnyContent] = cc.authAndCorrectionToggle.async {
     implicit request =>
       correctionService.get(request.vrn, period).map {
         case None => NotFound
