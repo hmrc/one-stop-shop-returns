@@ -19,7 +19,7 @@ package models.corrections
 import models.Period
 import play.api.libs.json.{Json, OFormat}
 
-case class PeriodWithCorrections(correctionReturnPeriod: Period, correctionToCountries: List[CorrectionToCountry])
+case class PeriodWithCorrections(correctionReturnPeriod: Period, correctionsToCountry: List[CorrectionToCountry])
 
 object PeriodWithCorrections {
 
