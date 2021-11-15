@@ -17,11 +17,11 @@
 package services
 
 import generators.Generators
-import models.VatReturn
 import models.corrections.CorrectionPayload
-import models.requests.{CorrectionRequest, VatReturnRequest}
+import models.requests.CorrectionRequest
+import models.Period
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.{times, verify, when}
+import org.mockito.Mockito._
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatest.OptionValues
@@ -30,7 +30,8 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-import repositories.{CorrectionRepository, VatReturnRepository}
+import repositories.CorrectionRepository
+import uk.gov.hmrc.domain.Vrn
 
 import java.time.{Clock, Instant, ZoneId}
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -49,10 +50,10 @@ class CorrectionServiceSpec
 
     "must create a Correction, attempt to save it to the repository, and respond with the result of saving" in {
 
-      val now            = Instant.now
-      val stubClock      = Clock.fixed(now, ZoneId.systemDefault())
-      val correctionPayload      = arbitrary[CorrectionPayload].sample.value
-      val insertResult   = Gen.oneOf(Some(correctionPayload), None).sample.value
+      val now = Instant.now
+      val stubClock = Clock.fixed(now, ZoneId.systemDefault())
+      val correctionPayload = arbitrary[CorrectionPayload].sample.value
+      val insertResult = Gen.oneOf(Some(correctionPayload), None).sample.value
       val mockRepository = mock[CorrectionRepository]
 
       when(mockRepository.insert(any())) thenReturn Future.successful(insertResult)
@@ -65,5 +66,51 @@ class CorrectionServiceSpec
       result mustEqual insertResult
       verify(mockRepository, times(1)).insert(any())
     }
+  }
+  ".get vrn" - {
+
+    "must get a list of corrections" in {
+
+      val vrn = arbitrary[Vrn].sample.value
+
+      val now = Instant.now
+      val stubClock = Clock.fixed(now, ZoneId.systemDefault())
+      val mockRepository = mock[CorrectionRepository]
+      val correctionPayloads = Gen.listOfN(2, arbitrary[CorrectionPayload]).sample.value
+
+      when(mockRepository.get(any())) thenReturn Future.successful(correctionPayloads)
+
+      val service = new CorrectionService(mockRepository, stubClock)
+
+      val result = service.get(vrn).futureValue
+
+      result mustEqual correctionPayloads
+      verify(mockRepository, times(1)).get(any())
+    }
+
+  }
+
+  ".get vrn, period" - {
+
+    "must return a single correction" in {
+
+      val vrn = arbitrary[Vrn].sample.value
+      val period = arbitrary[Period].sample.value
+
+      val now = Instant.now
+      val stubClock = Clock.fixed(now, ZoneId.systemDefault())
+      val mockRepository = mock[CorrectionRepository]
+      val correctionPayload = arbitrary[CorrectionPayload].sample.value
+
+      when(mockRepository.get(any(), any())) thenReturn Future.successful(Some(correctionPayload))
+
+      val service = new CorrectionService(mockRepository, stubClock)
+
+      val result = service.get(vrn, period).futureValue
+
+      result mustBe Some(correctionPayload)
+      verify(mockRepository, times(1)).get(any(), any())
+    }
+
   }
 }

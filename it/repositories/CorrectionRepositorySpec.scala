@@ -3,6 +3,7 @@ package repositories
 import config.AppConfig
 import generators.Generators
 import models.corrections.CorrectionPayload
+import models.Period
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
@@ -85,6 +86,15 @@ class CorrectionRepositorySpec
 
       returns must contain theSameElementsAs Seq(correctionPayload1, correctionPayload2)
     }
+
+    "must return empty for the given VRN" in {
+
+      val vrn = arbitrary[Vrn].sample.value
+
+      val returns = repository.get(vrn).futureValue
+
+      returns must contain theSameElementsAs Seq.empty
+    }
   }
 
   ".get one" - {
@@ -98,6 +108,16 @@ class CorrectionRepositorySpec
       val result = repository.get(correctionPayload.vrn, correctionPayload.period).futureValue
 
       result.value mustEqual correctionPayload
+    }
+
+    "must return none when nothing exists for this VRN and period" in {
+
+      val vrn = arbitrary[Vrn].sample.value
+      val period = arbitrary[Period].sample.value
+
+      val result = repository.get(vrn, period).futureValue
+
+      result mustBe None
     }
   }
 
