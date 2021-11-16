@@ -17,7 +17,8 @@
 package services
 
 import models.{PaymentReference, Period, ReturnReference, VatReturn}
-import models.requests.VatReturnRequest
+import models.corrections.CorrectionPayload
+import models.requests.{VatReturnRequest, VatReturnWithCorrectionRequest}
 import repositories.VatReturnRepository
 import uk.gov.hmrc.domain.Vrn
 
@@ -46,6 +47,31 @@ class VatReturnService @Inject()(
     )
 
     repository.insert(vatReturn)
+  }
+
+  def createVatReturnWithCorrection(request: VatReturnWithCorrectionRequest): Future[Option[(VatReturn, CorrectionPayload)]] = {
+    val vatReturn = VatReturn(
+      vrn                = request.vatReturnRequest.vrn,
+      period             = request.vatReturnRequest.period,
+      reference          = ReturnReference(request.vatReturnRequest.vrn, request.vatReturnRequest.period),
+      paymentReference   = PaymentReference(request.vatReturnRequest.vrn, request.vatReturnRequest.period),
+      startDate          = request.vatReturnRequest.startDate,
+      endDate            = request.vatReturnRequest.endDate,
+      salesFromNi        = request.vatReturnRequest.salesFromNi,
+      salesFromEu        = request.vatReturnRequest.salesFromEu,
+      submissionReceived = Instant.now(clock),
+      lastUpdated        = Instant.now(clock)
+    )
+
+    val correctionPayload = CorrectionPayload(
+      request.correctionRequest.vrn,
+      request.correctionRequest.period,
+      request.correctionRequest.corrections,
+      submissionReceived = Instant.now(clock),
+      lastUpdated        = Instant.now(clock)
+    )
+
+    repository.insert(vatReturn, correctionPayload)
   }
 
   def get(vrn: Vrn): Future[Seq[VatReturn]] =

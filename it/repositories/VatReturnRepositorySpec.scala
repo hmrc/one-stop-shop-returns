@@ -4,6 +4,7 @@ import config.AppConfig
 import crypto.{ReturnEncrypter, SecureGCMCipher}
 import generators.Generators
 import models.{EncryptedVatReturn, Period, ReturnReference, VatReturn}
+import models.corrections.CorrectionPayload
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalatest.OptionValues
@@ -13,6 +14,7 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar.mock
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.mongo.test.{CleanMongoCollectionSupport, DefaultPlayMongoRepositorySupport}
+import uk.gov.hmrc.mongo.MongoComponent
 import utils.StringUtils
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -34,15 +36,17 @@ class VatReturnRepositorySpec
 
   when(appConfig.encryptionKey) thenReturn secretKey
 
+  val correctionRepository = new CorrectionRepository(mongoComponent, appConfig)
+
   override protected val repository =
     new VatReturnRepository(
       mongoComponent = mongoComponent,
       returnEncrypter = encrypter,
-      appConfig = appConfig
+      appConfig = appConfig,
+      correctionRepository
     )
 
-
-  ".insert" - {
+  ".insert vatReturn" - {
 
     "must insert returns for the same VRN but different periods" in {
 
@@ -92,6 +96,84 @@ class VatReturnRepositorySpec
       val insertResult2 = repository.insert(vatReturn).futureValue
 
       insertResult1 mustBe Some(vatReturn)
+      insertResult2 mustBe None
+
+      val decryptedDatabaseRecords =
+        findAll().futureValue.map(e => encrypter.decryptReturn(e, e.vrn, secretKey))
+
+      decryptedDatabaseRecords must contain only vatReturn
+    }
+  }
+
+  ".insert vatreturn and correction" - {
+
+    "must insert returns and corrections for the same VRN but different periods" in {
+
+      val vatReturn1    = arbitrary[VatReturn].sample.value
+      val correction1    = arbitrary[CorrectionPayload].sample.value.copy(period = vatReturn1.period)
+      val return2Period = vatReturn1.period copy (year = vatReturn1.period.year + 1)
+      val correction2Period = correction1.period copy (year = correction1.period.year + 1)
+      val vatReturn2    = vatReturn1 copy (
+        period    = return2Period,
+        reference = ReturnReference(vatReturn1.vrn, return2Period)
+      )
+      val correction2 = correction1.copy(
+        period = correction2Period
+      )
+
+      val insertResult1 = repository.insert(vatReturn1, correction1).futureValue
+      val insertReturn2 = repository.insert(vatReturn2, correction2).futureValue
+      val databaseRecords = findAll().futureValue
+      val decryptedDatabaseRecords =
+        databaseRecords.map(e => encrypter.decryptReturn(e, e.vrn, secretKey))
+
+      /* TODO some form of this should work for this test
+      val insertedCorrection1 = correctionRepository.get(correction1.vrn)
+      val insertedCorrection2 = correctionRepository.get(correction2.vrn)
+
+      insertedCorrection1 mustBe Some(correction1)
+      insertedCorrection2 mustBe Some(correction2)
+      */
+
+      insertResult1 mustBe Some(vatReturn1, correction1)
+      insertReturn2 mustBe Some(vatReturn2, correction2)
+
+      decryptedDatabaseRecords must contain theSameElementsAs Seq(vatReturn1, vatReturn2)
+    }
+
+    "must insert returns and corrections for different VRNs in the same period" in {
+
+      val vatReturn1 = arbitrary[VatReturn].sample.value
+      val correction1 = arbitrary[CorrectionPayload].sample.value.copy(period = vatReturn1.period)
+      val vrn2       = Vrn(StringUtils.rotateDigitsInString(vatReturn1.vrn.vrn).mkString)
+      val vatReturn2 = vatReturn1 copy (
+        vrn       = vrn2,
+        reference = ReturnReference(vrn2, vatReturn1.period)
+      )
+      val correction2 = correction1 copy (
+        vrn       = vrn2
+      )
+
+      val insertResult1 = repository.insert(vatReturn1, correction1).futureValue
+      val insertReturn2 = repository.insert(vatReturn2, correction2).futureValue
+      val databaseRecords = findAll().futureValue
+      val decryptedDatabaseRecords =
+        databaseRecords.map(e => encrypter.decryptReturn(e, e.vrn, secretKey))
+
+      insertResult1 mustBe Some(vatReturn1, correction1)
+      insertReturn2 mustBe Some(vatReturn2, correction2)
+      decryptedDatabaseRecords must contain theSameElementsAs Seq(vatReturn1, vatReturn2)
+    }
+
+    "must not insert a return and correction with the same VRN and period" in {
+
+      val vatReturn = arbitrary[VatReturn].sample.value
+      val correction = arbitrary[CorrectionPayload].sample.value.copy(period = vatReturn.period)
+
+      val insertResult1 = repository.insert(vatReturn, correction).futureValue
+      val insertResult2 = repository.insert(vatReturn, correction).futureValue
+
+      insertResult1 mustBe Some(vatReturn, correction)
       insertResult2 mustBe None
 
       val decryptedDatabaseRecords =

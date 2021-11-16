@@ -20,8 +20,9 @@ import base.SpecBase
 import controllers.actions.FakeFailingAuthConnector
 import generators.Generators
 import models._
-import models.requests.VatReturnRequest
+import models.requests.{VatReturnRequest, VatReturnWithCorrectionRequest}
 import models.Quarter.Q3
+import models.corrections.CorrectionPayload
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito.{times, verify, when}
 import org.scalacheck.Arbitrary.arbitrary
@@ -76,6 +77,70 @@ class VatReturnControllerSpec
 
       val mockService = mock[VatReturnService]
       when(mockService.createVatReturn(any())).thenReturn(Future.successful(None))
+
+      val app =
+        applicationBuilder
+          .overrides(bind[VatReturnService].toInstance(mockService))
+          .build()
+
+      running(app) {
+
+        val result = route(app, request).value
+
+        status(result) mustEqual CONFLICT
+      }
+    }
+
+    "must respond with Unauthorized when the user is not authorised" in {
+
+      val app =
+        new GuiceApplicationBuilder()
+          .overrides(bind[AuthConnector].toInstance(new FakeFailingAuthConnector(new MissingBearerToken)))
+          .build()
+
+      running(app) {
+
+        val result = route(app, request).value
+        status(result) mustEqual UNAUTHORIZED
+      }
+    }
+  }
+
+  ".postWithCorrection" - {
+
+    val vatReturnWithCorrectionRequest = arbitrary[VatReturnWithCorrectionRequest].sample.value
+    val vatReturn        = arbitrary[VatReturn].sample.value
+    val correctionPayload        = arbitrary[CorrectionPayload].sample.value
+
+    lazy val request =
+      FakeRequest(POST, routes.VatReturnController.postWithCorrection().url)
+        .withJsonBody(Json.toJson(vatReturnWithCorrectionRequest))
+
+    "must save a VAT return and respond with Created" in {
+      val mockService = mock[VatReturnService]
+
+      when(mockService.createVatReturnWithCorrection(any()))
+        .thenReturn(Future.successful(Some(vatReturn, correctionPayload)))
+
+      val app =
+        applicationBuilder
+          .overrides(bind[VatReturnService].toInstance(mockService))
+          .build()
+
+      running(app) {
+
+        val result = route(app, request).value
+
+        status(result) mustEqual CREATED
+        contentAsJson(result) mustBe Json.toJson(vatReturn, correctionPayload)
+        verify(mockService, times(1)).createVatReturnWithCorrection(eqTo(vatReturnWithCorrectionRequest))
+      }
+    }
+
+    "must respond with Conflict when trying to save a duplicate" in {
+
+      val mockService = mock[VatReturnService]
+      when(mockService.createVatReturnWithCorrection(any())).thenReturn(Future.successful(None))
 
       val app =
         applicationBuilder

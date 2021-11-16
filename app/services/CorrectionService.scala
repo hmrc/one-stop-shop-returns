@@ -32,18 +32,6 @@ class CorrectionService @Inject()(
                                  )
                                  (implicit ec: ExecutionContext) {
 
-  def createCorrection(request: CorrectionRequest): Future[Option[CorrectionPayload]] = {
-    val correctionPayload = CorrectionPayload(
-      vrn = request.vrn,
-      period = request.period,
-      corrections = request.corrections,
-      submissionReceived = Instant.now(clock),
-      lastUpdated = Instant.now(clock)
-    )
-
-    repository.insert(correctionPayload)
-  }
-
   def get(vrn: Vrn): Future[Seq[CorrectionPayload]] =
     repository.get(vrn)
 

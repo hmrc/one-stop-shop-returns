@@ -46,27 +46,6 @@ class CorrectionServiceSpec
     with OptionValues
     with ScalaFutures {
 
-  ".createCorrection" - {
-
-    "must create a Correction, attempt to save it to the repository, and respond with the result of saving" in {
-
-      val now = Instant.now
-      val stubClock = Clock.fixed(now, ZoneId.systemDefault())
-      val correctionPayload = arbitrary[CorrectionPayload].sample.value
-      val insertResult = Gen.oneOf(Some(correctionPayload), None).sample.value
-      val mockRepository = mock[CorrectionRepository]
-
-      when(mockRepository.insert(any())) thenReturn Future.successful(insertResult)
-
-      val request = arbitrary[CorrectionRequest].sample.value
-      val service = new CorrectionService(mockRepository, stubClock)
-
-      val result = service.createCorrection(request).futureValue
-
-      result mustEqual insertResult
-      verify(mockRepository, times(1)).insert(any())
-    }
-  }
   ".get vrn" - {
 
     "must get a list of corrections" in {

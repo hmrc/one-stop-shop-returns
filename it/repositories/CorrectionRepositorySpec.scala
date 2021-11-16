@@ -33,38 +33,6 @@ class CorrectionRepositorySpec
     )
   private val appConfig = mock[AppConfig]
 
-  ".insert" - {
-
-    "must insert correction" in {
-
-      val correctionPayload = arbitrary[CorrectionPayload].sample.value
-
-      val insertResult1 = repository.insert(correctionPayload).futureValue
-      val databaseRecords = findAll().futureValue
-
-      insertResult1 mustBe Some(correctionPayload)
-      databaseRecords must contain theSameElementsAs Seq(correctionPayload)
-    }
-
-    "must insert multiple corrections for different VRNs in the same period" in {
-
-      val correctionPayload1 = arbitrary[CorrectionPayload].sample.value
-      val vrn2 = Vrn(StringUtils.rotateDigitsInString(correctionPayload1.vrn.vrn).mkString)
-      val correctionPayload2 = correctionPayload1.copy(
-        vrn = vrn2
-      )
-
-      val insertResult1 = repository.insert(correctionPayload1).futureValue
-      val insertReturn2 = repository.insert(correctionPayload2).futureValue
-      val databaseRecords = findAll().futureValue
-
-      insertResult1 mustBe Some(correctionPayload1)
-      insertReturn2 mustBe Some(correctionPayload2)
-      databaseRecords must contain theSameElementsAs Seq(correctionPayload1, correctionPayload2)
-    }
-
-  }
-
   ".get" - {
     "must return all records for the given VRN" in {
 

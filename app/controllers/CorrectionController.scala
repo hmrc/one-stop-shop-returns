@@ -34,14 +34,6 @@ class CorrectionController @Inject()(
                                     )(implicit ec: ExecutionContext)
   extends BackendController(cc) {
 
-  def post(): Action[CorrectionRequest] = cc.authAndCorrectionToggle(parse.json[CorrectionRequest]).async {
-    implicit request =>
-      correctionService.createCorrection(request.body).map {
-        case Some(vatReturn) => Created(Json.toJson(vatReturn))
-        case None => Conflict
-      }
-  }
-
   def list(): Action[AnyContent] = cc.authAndCorrectionToggle.async {
     implicit request =>
       correctionService.get(request.vrn).map {

@@ -17,9 +17,9 @@
 package generators
 
 import models._
-import models.corrections.{PeriodWithCorrections, CorrectionPayload, CorrectionToCountry}
+import models.corrections.{CorrectionPayload, CorrectionToCountry, PeriodWithCorrections}
 import models.financialdata.Charge
-import models.requests.{CorrectionRequest, VatReturnRequest}
+import models.requests.{CorrectionRequest, VatReturnRequest, VatReturnWithCorrectionRequest}
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalacheck.Arbitrary.arbitrary
 import uk.gov.hmrc.domain.Vrn
@@ -84,6 +84,14 @@ trait ModelGenerators {
         amount <- Gen.choose(1, 30)
         corrections <- Gen.listOfN(amount, arbitrary[PeriodWithCorrections])
       } yield CorrectionRequest(vrn, period, corrections)
+    }
+
+  implicit val arbitraryVatReturnWithCorrectionRequest: Arbitrary[VatReturnWithCorrectionRequest] =
+    Arbitrary {
+      for {
+        vatReturnRequest <- arbitrary[VatReturnRequest]
+        correctionRequest <- arbitrary[CorrectionRequest]
+      } yield VatReturnWithCorrectionRequest(vatReturnRequest, correctionRequest)
     }
 
   implicit val arbitraryCountry: Arbitrary[Country] =

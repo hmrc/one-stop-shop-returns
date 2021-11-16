@@ -4,6 +4,8 @@ POST        /vat-returns                                            controllers.
 GET         /vat-returns                                            controllers.VatReturnController.list
 GET         /vat-returns/:period                                    controllers.VatReturnController.get(period: Period)
 
+POST        /vat-return-with-corrections                            controllers.VatReturnController.postWithCorrection
+
 GET         /vat-returns/statuses/:commencementDate                 controllers.ReturnStatusController.listStatuses(commencementDate: LocalDate)
 
 GET         /financial-data/get/:commencementDate                   controllers.FinancialDataController.get(commencementDate: LocalDate)
@@ -13,6 +15,5 @@ GET         /financial-data/charge-history/:commencementDate        controllers.
 
 GET         /financial-data/outstanding-payments                    controllers.FinancialDataController.getOutstandingAmounts()
 
-POST        /corrections                                            controllers.CorrectionController.post
 GET         /corrections                                            controllers.CorrectionController.list
 GET         /corrections/:period                                    controllers.CorrectionController.get(period: Period)

@@ -47,16 +47,6 @@ class CorrectionRepository @Inject()(
   )
 ){
 
-  def insert(correction: CorrectionPayload): Future[Option[CorrectionPayload]] = {
-    collection
-      .insertOne(correction)
-      .toFuture()
-      .map(_ => Some(correction))
-      .recover {
-        case Duplicate(_) => None
-      }
-  }
-
   def get(vrn: Vrn): Future[Seq[CorrectionPayload]] =
     collection
       .find(Filters.equal("vrn", toBson(vrn)))

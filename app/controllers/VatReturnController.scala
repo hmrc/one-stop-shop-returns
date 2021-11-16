@@ -17,7 +17,7 @@
 package controllers
 
 import controllers.actions.AuthAction
-import models.requests.VatReturnRequest
+import models.requests.{VatReturnRequest, VatReturnWithCorrectionRequest}
 import models.Period
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
@@ -38,7 +38,15 @@ class VatReturnController @Inject()(
     implicit request =>
       vatReturnService.createVatReturn(request.body).map {
         case Some(vatReturn) => Created(Json.toJson(vatReturn))
-        case None            => Conflict
+        case None => Conflict
+      }
+  }
+
+  def postWithCorrection(): Action[VatReturnWithCorrectionRequest] = auth(parse.json[VatReturnWithCorrectionRequest]).async {
+    implicit request =>
+      vatReturnService.createVatReturnWithCorrection(request.body).map {
+        case Some(vatReturnWithCorrection) => Created(Json.toJson(vatReturnWithCorrection))
+        case None => Conflict
       }
   }
 

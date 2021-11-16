@@ -43,69 +43,6 @@ class CorrectionControllerSpec
     with ScalaCheckPropertyChecks
     with Generators {
 
-  ".post" - {
-
-    val correctionRequest = arbitrary[CorrectionRequest].sample.value
-    val correctionPayload = arbitrary[CorrectionPayload].sample.value
-
-    lazy val request =
-      FakeRequest(POST, routes.CorrectionController.post().url)
-        .withJsonBody(Json.toJson(correctionRequest))
-
-    "must save a VAT return and respond with Created" in {
-      val mockService = mock[CorrectionService]
-
-      when(mockService.createCorrection(any()))
-        .thenReturn(Future.successful(Some(correctionPayload)))
-
-      val app =
-        applicationBuilder
-          .overrides(bind[CorrectionService].toInstance(mockService))
-          .build()
-
-      running(app) {
-
-        val result = route(app, request).value
-
-        status(result) mustEqual CREATED
-        contentAsJson(result) mustBe Json.toJson(correctionPayload)
-        verify(mockService, times(1)).createCorrection(eqTo(correctionRequest))
-      }
-    }
-
-    "must respond with Conflict when trying to save a duplicate" in {
-
-      val mockService = mock[CorrectionService]
-      when(mockService.createCorrection(any())).thenReturn(Future.successful(None))
-
-      val app =
-        applicationBuilder
-          .overrides(bind[CorrectionService].toInstance(mockService))
-          .build()
-
-      running(app) {
-
-        val result = route(app, request).value
-
-        status(result) mustEqual CONFLICT
-      }
-    }
-
-    "must respond with Unauthorized when the user is not authorised" in {
-
-      val app =
-        new GuiceApplicationBuilder()
-          .overrides(bind[AuthConnector].toInstance(new FakeFailingAuthConnector(new MissingBearerToken)))
-          .build()
-
-      running(app) {
-
-        val result = route(app, request).value
-        status(result) mustEqual UNAUTHORIZED
-      }
-    }
-  }
-
   ".get" - {
 
     lazy val request = FakeRequest(GET, routes.CorrectionController.list().url)
