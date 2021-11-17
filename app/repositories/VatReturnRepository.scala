@@ -18,27 +18,31 @@ package repositories
 
 import config.AppConfig
 import crypto.ReturnEncrypter
+import logging.Logging
 import models.{EncryptedVatReturn, Period, VatReturn}
-import org.mongodb.scala.model.{Filters, IndexModel, IndexOptions, Indexes}
+import models.corrections.CorrectionPayload
+import org.mongodb.scala.model.{Filters, Indexes, IndexModel, IndexOptions}
 import repositories.MongoErrors.Duplicate
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
+import uk.gov.hmrc.mongo.transaction.{TransactionConfiguration, Transactions}
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class VatReturnRepository @Inject()(
-                                     mongoComponent: MongoComponent,
+                                     val mongoComponent: MongoComponent,
                                      returnEncrypter: ReturnEncrypter,
-                                     appConfig: AppConfig
+                                     appConfig: AppConfig,
+                                     correctionRepository: CorrectionRepository
                                    )(implicit ec: ExecutionContext)
-  extends PlayMongoRepository[EncryptedVatReturn] (
+  extends PlayMongoRepository[EncryptedVatReturn](
     collectionName = "returns",
     mongoComponent = mongoComponent,
-    domainFormat   = EncryptedVatReturn.format,
-    indexes        = Seq(
+    domainFormat = EncryptedVatReturn.format,
+    indexes = Seq(
       IndexModel(
         Indexes.ascending("vrn", "period"),
         IndexOptions()
@@ -46,11 +50,32 @@ class VatReturnRepository @Inject()(
           .unique(true)
       )
     )
-  ) {
+  ) with Transactions with Logging {
 
   import uk.gov.hmrc.mongo.play.json.Codecs.toBson
 
+  private implicit val tc: TransactionConfiguration = TransactionConfiguration.strict
   private val encryptionKey = appConfig.encryptionKey
+
+  def insert(vatReturn: VatReturn, correction: CorrectionPayload): Future[Option[(VatReturn, CorrectionPayload)]] = {
+    val encryptedVatReturn = returnEncrypter.encryptReturn(vatReturn, vatReturn.vrn, encryptionKey)
+
+    for {
+      _ <- ensureIndexes
+      _ <- correctionRepository.ensureIndexes
+      result <- withSessionAndTransaction { session =>
+          for {
+            _ <- collection.insertOne(session, encryptedVatReturn).toFuture()
+            _ <- correctionRepository.collection.insertOne(session, correction).toFuture()
+          } yield Some(vatReturn, correction)
+        }.recover {
+          case e: Exception =>
+            logger.warn(s"There was an error while inserting vat return with correction ${e.getMessage}", e)
+            None
+        }
+    } yield result
+
+  }
 
   def insert(vatReturn: VatReturn): Future[Option[VatReturn]] = {
     val encryptedVatReturn = returnEncrypter.encryptReturn(vatReturn, vatReturn.vrn, encryptionKey)

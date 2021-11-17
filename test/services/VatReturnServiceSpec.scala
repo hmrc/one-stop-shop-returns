@@ -18,7 +18,8 @@ package services
 
 import generators.Generators
 import models.VatReturn
-import models.requests.VatReturnRequest
+import models.corrections.CorrectionPayload
+import models.requests.{VatReturnRequest, VatReturnWithCorrectionRequest}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{times, verify, when}
 import org.scalacheck.Arbitrary.arbitrary
@@ -64,5 +65,28 @@ class VatReturnServiceSpec
       result mustEqual insertResult
       verify(mockRepository, times(1)).insert(any())
     }
+  }
+
+  ".createVatReturnWithCorrection" - {
+
+    "must create a VAT return and correction, attempt to save it to the repositories, and respond with the result of saving" in {
+      val now            = Instant.now
+      val stubClock      = Clock.fixed(now, ZoneId.systemDefault())
+      val vatReturn      = arbitrary[VatReturn].sample.value
+      val correctionPayload      = arbitrary[CorrectionPayload].sample.value
+      val insertResult   = Gen.oneOf(Some(vatReturn, correctionPayload), None).sample.value
+      val mockRepository = mock[VatReturnRepository]
+
+      when(mockRepository.insert(any(), any())) thenReturn Future.successful(insertResult)
+
+      val request = arbitrary[VatReturnWithCorrectionRequest].sample.value
+      val service = new VatReturnService(mockRepository, stubClock)
+
+      val result = service.createVatReturnWithCorrection(request).futureValue
+
+      result mustEqual insertResult
+      verify(mockRepository, times(1)).insert(any(), any())
+    }
+
   }
 }

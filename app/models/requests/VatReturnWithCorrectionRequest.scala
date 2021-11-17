@@ -14,18 +14,17 @@
  * limitations under the License.
  */
 
-package config
+package models.requests
 
-import com.google.inject.AbstractModule
-import controllers.actions.{AuthAction, AuthActionImpl, AuthenticatedControllerComponents, DefaultAuthenticatedControllerComponents}
+import play.api.libs.json.{Json, OFormat}
 
-import java.time.{Clock, ZoneOffset}
+case class VatReturnWithCorrectionRequest(
+                                           vatReturnRequest: VatReturnRequest,
+                                           correctionRequest: CorrectionRequest
+                                         )
 
-class Module extends AbstractModule {
+object VatReturnWithCorrectionRequest {
 
-  override def configure(): Unit = {
-    bind(classOf[AuthAction]).to(classOf[AuthActionImpl]).asEagerSingleton()
-    bind(classOf[Clock]).toInstance(Clock.systemDefaultZone.withZone(ZoneOffset.UTC))
-    bind(classOf[AuthenticatedControllerComponents]).to(classOf[DefaultAuthenticatedControllerComponents]).asEagerSingleton()
-  }
+  implicit val format: OFormat[VatReturnWithCorrectionRequest] = Json.format[VatReturnWithCorrectionRequest]
 }
+

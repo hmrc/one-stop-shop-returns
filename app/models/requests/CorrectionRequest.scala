@@ -14,18 +14,21 @@
  * limitations under the License.
  */
 
-package config
+package models.requests
 
-import com.google.inject.AbstractModule
-import controllers.actions.{AuthAction, AuthActionImpl, AuthenticatedControllerComponents, DefaultAuthenticatedControllerComponents}
+import models.Period
+import models.corrections.PeriodWithCorrections
+import play.api.libs.json.{Json, OFormat}
+import uk.gov.hmrc.domain.Vrn
 
-import java.time.{Clock, ZoneOffset}
+case class CorrectionRequest(
+                              vrn: Vrn,
+                              period: Period,
+                              corrections: List[PeriodWithCorrections]
+                            )
 
-class Module extends AbstractModule {
+object CorrectionRequest {
 
-  override def configure(): Unit = {
-    bind(classOf[AuthAction]).to(classOf[AuthActionImpl]).asEagerSingleton()
-    bind(classOf[Clock]).toInstance(Clock.systemDefaultZone.withZone(ZoneOffset.UTC))
-    bind(classOf[AuthenticatedControllerComponents]).to(classOf[DefaultAuthenticatedControllerComponents]).asEagerSingleton()
-  }
+  implicit val format: OFormat[CorrectionRequest] = Json.format[CorrectionRequest]
+
 }
