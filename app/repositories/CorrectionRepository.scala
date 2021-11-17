@@ -33,7 +33,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class CorrectionRepository @Inject()(
                                       mongoComponent: MongoComponent,
                                       appConfig: AppConfig
-                                    )(implicit ec: ExecutionContext)extends PlayMongoRepository[CorrectionPayload] (
+                                    )(implicit ec: ExecutionContext) extends PlayMongoRepository[CorrectionPayload] (
   collectionName = "corrections",
   mongoComponent = mongoComponent,
   domainFormat = CorrectionPayload.format,

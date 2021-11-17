@@ -59,17 +59,23 @@ class VatReturnRepository @Inject()(
 
   def insert(vatReturn: VatReturn, correction: CorrectionPayload): Future[Option[(VatReturn, CorrectionPayload)]] = {
     val encryptedVatReturn = returnEncrypter.encryptReturn(vatReturn, vatReturn.vrn, encryptionKey)
-    withSessionAndTransaction(session =>
-      for {
-        _ <- collection.insertOne(session, encryptedVatReturn).toFuture()
-        _ <- correctionRepository.collection.insertOne(session, correction).toFuture()
-      } yield Some(vatReturn, correction)
-    ).recover {
-      case e: Exception =>
-        logger.warn(s"There was an error while inserting vat return with correction ${e.getMessage}", e)
-        println(s"There was an error while inserting vat return with correction ${e.getMessage}")
-        None
-    }
+
+    for {
+      _ <- ensureIndexes
+      _ <- correctionRepository.ensureIndexes
+      result <- withSessionAndTransaction { session =>
+          for {
+            _ <- collection.insertOne(session, encryptedVatReturn).toFuture()
+            _ <- correctionRepository.collection.insertOne(session, correction).toFuture()
+          } yield Some(vatReturn, correction)
+        }.recover {
+          case e: Exception =>
+            logger.warn(s"There was an error while inserting vat return with correction ${e.getMessage}", e)
+            println(s"There was an error while inserting vat return with correction ${e.getMessage}")
+            None
+        }
+    } yield result
+
   }
 
   def insert(vatReturn: VatReturn): Future[Option[VatReturn]] = {
