@@ -71,7 +71,6 @@ class VatReturnRepository @Inject()(
         }.recover {
           case e: Exception =>
             logger.warn(s"There was an error while inserting vat return with correction ${e.getMessage}", e)
-            println(s"There was an error while inserting vat return with correction ${e.getMessage}")
             None
         }
     } yield result
