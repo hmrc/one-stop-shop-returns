@@ -92,4 +92,28 @@ class CorrectionServiceSpec
     }
 
   }
+
+  ".getByCorrectionPeriod" - {
+
+    "must return a list of corrections" in {
+
+      val vrn = arbitrary[Vrn].sample.value
+      val period = arbitrary[Period].sample.value
+
+      val now = Instant.now
+      val stubClock = Clock.fixed(now, ZoneId.systemDefault())
+      val mockRepository = mock[CorrectionRepository]
+      val correctionPayload = arbitrary[CorrectionPayload].sample.value
+
+      when(mockRepository.getByCorrectionPeriod(any(), any())) thenReturn Future.successful(List(correctionPayload))
+
+      val service = new CorrectionService(mockRepository, stubClock)
+
+      val result = service.getByCorrectionPeriod(vrn, period).futureValue
+
+      result mustBe List(correctionPayload)
+      verify(mockRepository, times(1)).getByCorrectionPeriod(any(), any())
+    }
+
+  }
 }

@@ -2,8 +2,8 @@ package repositories
 
 import config.AppConfig
 import generators.Generators
-import models.corrections.CorrectionPayload
-import models.Period
+import models.corrections.{CorrectionPayload, CorrectionToCountry, PeriodWithCorrections}
+import models.{Country, Period}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
@@ -14,6 +14,7 @@ import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.mongo.test.{CleanMongoCollectionSupport, DefaultPlayMongoRepositorySupport}
 import utils.StringUtils
 
+import java.time.Instant
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class CorrectionRepositorySpec
@@ -86,6 +87,41 @@ class CorrectionRepositorySpec
       val result = repository.get(vrn, period).futureValue
 
       result mustBe None
+    }
+  }
+
+  ".get corrections for period" - {
+
+    "must return a sequence of correction payloads when one exists for this VRN and period" in {
+
+      val correctionPayload = CorrectionPayload(
+        vrn = arbitraryVrn.arbitrary.sample.value,
+        period = arbitraryPeriod.arbitrary.sample.value,
+        corrections = List(
+          PeriodWithCorrections(correctionReturnPeriod = arbitraryPeriod.arbitrary.sample.value,
+            correctionsToCountry = List(CorrectionToCountry(correctionCountry = Country("DE", "Germany"), countryVatCorrection = BigDecimal(10))))
+        ),
+        submissionReceived = Instant.now(),
+        lastUpdated = Instant.now()
+      )
+
+      insert(correctionPayload).futureValue
+
+      val result = repository.getByCorrectionPeriod(correctionPayload.vrn, correctionPayload.corrections.head.correctionReturnPeriod).futureValue
+
+      result.nonEmpty mustBe(true)
+
+      result mustEqual List(correctionPayload)
+    }
+
+    "must return none when nothing exists for this VRN and period" in {
+
+      val vrn = arbitrary[Vrn].sample.value
+      val period = arbitrary[Period].sample.value
+
+      val result = repository.getByCorrectionPeriod(vrn, period).futureValue
+
+      result mustBe List.empty
     }
   }
 

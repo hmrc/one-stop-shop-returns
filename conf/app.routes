@@ -17,3 +17,4 @@ GET         /financial-data/outstanding-payments                    controllers.
 
 GET         /corrections                                            controllers.CorrectionController.list
 GET         /corrections/:period                                    controllers.CorrectionController.get(period: Period)
+GET         /corrections-for-period/:period                         controllers.CorrectionController.getByCorrectionPeriod(period: Period)

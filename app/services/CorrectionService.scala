@@ -37,4 +37,7 @@ class CorrectionService @Inject()(
 
   def get(vrn: Vrn, period: Period): Future[Option[CorrectionPayload]] =
     repository.get(vrn, period)
+
+  def getByCorrectionPeriod(vrn: Vrn, period: Period): Future[Seq[CorrectionPayload]] =
+    repository.getByCorrectionPeriod(vrn, period)
 }

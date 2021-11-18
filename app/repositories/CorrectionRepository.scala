@@ -60,4 +60,12 @@ class CorrectionRepository @Inject()(
       ))
       .headOption()
 
+  def getByCorrectionPeriod(vrn: Vrn, period: Period): Future[Seq[CorrectionPayload]] =
+    collection
+      .find(Filters.and(
+        Filters.equal("vrn", toBson(vrn)),
+        Filters.elemMatch("corrections", Filters.eq("correctionReturnPeriod", toBson(period)))
+      ))
+      .toFuture()
+
 }
