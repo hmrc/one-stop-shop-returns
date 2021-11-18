@@ -10,7 +10,7 @@ import javax.crypto.{Cipher, IllegalBlockSizeException, KeyGenerator, NoSuchPadd
 
 class SecureGCMCipherSpec extends AnyFreeSpec with Matchers {
 
-  private val encrypter      = new SecureGCMCipher
+  private val encryptor      = new SecureGCMCipher
   private val secretKey      = "VqmXp7yigDFxbCUdDdNZVIvbW6RgPNJsliv6swQNCL8="
   private val secretKey2     = "cXo7u0HuJK8B/52xLwW7eQ=="
   private val textToEncrypt  = "textNotEncrypted"
@@ -21,7 +21,7 @@ class SecureGCMCipherSpec extends AnyFreeSpec with Matchers {
   "encrypt" - {
 
     "must encrypt some text" in {
-      val encryptedValue = encrypter.encrypt(textToEncrypt, associatedText, secretKey)
+      val encryptedValue = encryptor.encrypt(textToEncrypt, associatedText, secretKey)
       encryptedValue mustBe an[EncryptedValue]
     }
   }
@@ -29,7 +29,7 @@ class SecureGCMCipherSpec extends AnyFreeSpec with Matchers {
   "decrypt" - {
 
     "must decrypt text when the same associatedText, nonce and secretKey were used to encrypt it" in {
-      val decryptedText  = encrypter.decrypt(encryptedText, associatedText, secretKey)
+      val decryptedText  = encryptor.decrypt(encryptedText, associatedText, secretKey)
       decryptedText mustEqual textToEncrypt
     }
 
@@ -38,7 +38,7 @@ class SecureGCMCipherSpec extends AnyFreeSpec with Matchers {
       val invalidEncryptedValue = EncryptedValue(invalidText, encryptedText.nonce)
 
       val decryptAttempt = intercept[EncryptionDecryptionException](
-        encrypter.decrypt(invalidEncryptedValue, associatedText, secretKey)
+        encryptor.decrypt(invalidEncryptedValue, associatedText, secretKey)
       )
 
       decryptAttempt.failureReason must include("Error occurred due to padding scheme")
@@ -49,7 +49,7 @@ class SecureGCMCipherSpec extends AnyFreeSpec with Matchers {
       val invalidEncryptedValue = EncryptedValue(encryptedText.value, invalidNonce)
 
       val decryptAttempt = intercept[EncryptionDecryptionException](
-        encrypter.decrypt(invalidEncryptedValue, associatedText, secretKey)
+        encryptor.decrypt(invalidEncryptedValue, associatedText, secretKey)
       )
 
       decryptAttempt.failureReason must include("Error occurred due to padding scheme")
@@ -57,7 +57,7 @@ class SecureGCMCipherSpec extends AnyFreeSpec with Matchers {
 
     "must return an EncryptionDecryptionException if the associated text is different" in {
       val decryptAttempt = intercept[EncryptionDecryptionException](
-        encrypter.decrypt(encryptedText, "invalid associated text", secretKey)
+        encryptor.decrypt(encryptedText, "invalid associated text", secretKey)
       )
 
       decryptAttempt.failureReason must include("Error occurred due to padding scheme")
@@ -65,7 +65,7 @@ class SecureGCMCipherSpec extends AnyFreeSpec with Matchers {
 
     "must return an EncryptionDecryptionException if the secret key is different" in {
       val decryptAttempt = intercept[EncryptionDecryptionException](
-        encrypter.decrypt(encryptedText, associatedText, secretKey2)
+        encryptor.decrypt(encryptedText, associatedText, secretKey2)
       )
 
       decryptAttempt.failureReason must include("Error occurred due to padding scheme")
@@ -73,7 +73,7 @@ class SecureGCMCipherSpec extends AnyFreeSpec with Matchers {
 
     "must return an EncryptionDecryptionException if the associated text is empty" in {
       val decryptAttempt = intercept[EncryptionDecryptionException](
-        encrypter.decrypt(encryptedText, "", secretKey)
+        encryptor.decrypt(encryptedText, "", secretKey)
       )
 
       decryptAttempt.failureReason must include("associated text must not be null")
@@ -81,7 +81,7 @@ class SecureGCMCipherSpec extends AnyFreeSpec with Matchers {
 
     "must return an EncryptionDecryptionException if the key is empty" in {
       val decryptAttempt = intercept[EncryptionDecryptionException](
-        encrypter.decrypt(encryptedText, associatedText, "")
+        encryptor.decrypt(encryptedText, associatedText, "")
       )
 
       decryptAttempt.failureReason must include("The key provided is invalid")
@@ -89,7 +89,7 @@ class SecureGCMCipherSpec extends AnyFreeSpec with Matchers {
 
     "must return an EncryptionDecryptionException if the key is invalid" in {
       val decryptAttempt = intercept[EncryptionDecryptionException](
-        encrypter.decrypt(encryptedText, associatedText, "invalidKey")
+        encryptor.decrypt(encryptedText, associatedText, "invalidKey")
       )
 
       decryptAttempt.failureReason must include("Key being used is not valid." +

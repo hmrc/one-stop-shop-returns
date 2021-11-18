@@ -14,23 +14,26 @@
  * limitations under the License.
  */
 
-package models.corrections
+package crypto
 
-import models.Period
-import play.api.libs.json.{Json, OFormat}
+import models.{Country, EncryptedCountry}
+import uk.gov.hmrc.domain.Vrn
 
-case class PeriodWithCorrections(correctionReturnPeriod: Period, correctionsToCountry: List[CorrectionToCountry])
+import javax.inject.Inject
 
-object PeriodWithCorrections {
+class CountryEncryptor @Inject()(crypto: SecureGCMCipher) {
 
-  implicit val format: OFormat[PeriodWithCorrections] = Json.format[PeriodWithCorrections]
+  def encryptCountry(country: Country, vrn: Vrn, key: String): EncryptedCountry = {
+    def e(field: String): EncryptedValue = crypto.encrypt(field, vrn.vrn, key)
 
-}
+    EncryptedCountry(e(country.code), e(country.name))
+  }
 
-case class EncryptedPeriodWithCorrections(correctionReturnPeriod: Period, correctionsToCountry: List[EncryptedCorrectionToCountry])
+  def decryptCountry(country: EncryptedCountry, vrn: Vrn, key: String): Country = {
+    def d(field: EncryptedValue): String = crypto.decrypt(field, vrn.vrn, key)
+    import country._
 
-object EncryptedPeriodWithCorrections {
-
-  implicit val format: OFormat[EncryptedPeriodWithCorrections] = Json.format[EncryptedPeriodWithCorrections]
+    Country(d(code), d(name))
+  }
 
 }

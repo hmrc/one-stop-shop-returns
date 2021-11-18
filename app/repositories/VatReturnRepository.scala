@@ -17,7 +17,7 @@
 package repositories
 
 import config.AppConfig
-import crypto.ReturnEncrypter
+import crypto.{CorrectionEncryptor, ReturnEncryptor}
 import logging.Logging
 import models.{EncryptedVatReturn, Period, VatReturn}
 import models.corrections.CorrectionPayload
@@ -34,7 +34,8 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class VatReturnRepository @Inject()(
                                      val mongoComponent: MongoComponent,
-                                     returnEncrypter: ReturnEncrypter,
+                                     returnEncryptor: ReturnEncryptor,
+                                     correctionEncryptor: CorrectionEncryptor,
                                      appConfig: AppConfig,
                                      correctionRepository: CorrectionRepository
                                    )(implicit ec: ExecutionContext)
@@ -58,27 +59,28 @@ class VatReturnRepository @Inject()(
   private val encryptionKey = appConfig.encryptionKey
 
   def insert(vatReturn: VatReturn, correction: CorrectionPayload): Future[Option[(VatReturn, CorrectionPayload)]] = {
-    val encryptedVatReturn = returnEncrypter.encryptReturn(vatReturn, vatReturn.vrn, encryptionKey)
+    val encryptedVatReturn = returnEncryptor.encryptReturn(vatReturn, vatReturn.vrn, encryptionKey)
+    val encryptedCorrectionPayload = correctionEncryptor.encryptCorrectionPayload(correction, vatReturn.vrn, encryptionKey)
 
     for {
       _ <- ensureIndexes
       _ <- correctionRepository.ensureIndexes
       result <- withSessionAndTransaction { session =>
-          for {
-            _ <- collection.insertOne(session, encryptedVatReturn).toFuture()
-            _ <- correctionRepository.collection.insertOne(session, correction).toFuture()
-          } yield Some(vatReturn, correction)
-        }.recover {
-          case e: Exception =>
-            logger.warn(s"There was an error while inserting vat return with correction ${e.getMessage}", e)
-            None
-        }
+        for {
+          _ <- collection.insertOne(session, encryptedVatReturn).toFuture()
+          _ <- correctionRepository.collection.insertOne(session, encryptedCorrectionPayload).toFuture()
+        } yield Some(vatReturn, correction)
+      }.recover {
+        case e: Exception =>
+          logger.warn(s"There was an error while inserting vat return with correction ${e.getMessage}", e)
+          None
+      }
     } yield result
 
   }
 
   def insert(vatReturn: VatReturn): Future[Option[VatReturn]] = {
-    val encryptedVatReturn = returnEncrypter.encryptReturn(vatReturn, vatReturn.vrn, encryptionKey)
+    val encryptedVatReturn = returnEncryptor.encryptReturn(vatReturn, vatReturn.vrn, encryptionKey)
 
     collection
       .insertOne(encryptedVatReturn)
@@ -95,7 +97,7 @@ class VatReturnRepository @Inject()(
       .toFuture
       .map(_.map {
         vatReturn =>
-          returnEncrypter.decryptReturn(vatReturn, vatReturn.vrn, encryptionKey)
+          returnEncryptor.decryptReturn(vatReturn, vatReturn.vrn, encryptionKey)
       })
 
   def get(vrn: Vrn, period: Period): Future[Option[VatReturn]] =
@@ -108,6 +110,6 @@ class VatReturnRepository @Inject()(
       ).headOption
       .map(_.map {
         vatReturn =>
-          returnEncrypter.decryptReturn(vatReturn, vatReturn.vrn, encryptionKey)
+          returnEncryptor.decryptReturn(vatReturn, vatReturn.vrn, encryptionKey)
       })
 }

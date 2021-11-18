@@ -35,3 +35,17 @@ object CorrectionPayload {
   implicit val format: OFormat[CorrectionPayload] = Json.format[CorrectionPayload]
 
 }
+
+case class EncryptedCorrectionPayload(
+                                       vrn: Vrn,
+                                       period: Period,
+                                       corrections: List[EncryptedPeriodWithCorrections],
+                                       submissionReceived: Instant,
+                                       lastUpdated: Instant
+                                     )
+
+object EncryptedCorrectionPayload {
+
+  implicit val format: OFormat[EncryptedCorrectionPayload] = Json.format[EncryptedCorrectionPayload]
+
+}
