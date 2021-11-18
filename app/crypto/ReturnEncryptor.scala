@@ -21,20 +21,12 @@ import uk.gov.hmrc.domain.Vrn
 
 import javax.inject.Inject
 
-class ReturnEncrypter @Inject()(crypto: SecureGCMCipher) {
+class ReturnEncryptor @Inject()(
+                                 countryEncryptor: CountryEncryptor,
+                                 crypto: SecureGCMCipher
+                               ) {
 
-  def encryptCountry(country: Country, vrn: Vrn, key: String): EncryptedCountry = {
-    def e(field: String): EncryptedValue = crypto.encrypt(field, vrn.vrn, key)
-
-    EncryptedCountry(e(country.code), e(country.name))
-  }
-
-  def decryptCountry(country: EncryptedCountry, vrn: Vrn, key: String): Country = {
-    def d(field: EncryptedValue): String = crypto.decrypt(field, vrn.vrn, key)
-    import country._
-
-    Country(d(code), d(name))
-  }
+  import countryEncryptor._
 
   def encryptVatOnSales(vatOnSales: VatOnSales, vrn: Vrn, key: String): EncryptedVatOnSales = {
     def e(field: String): EncryptedValue = crypto.encrypt(field, vrn.vrn, key)

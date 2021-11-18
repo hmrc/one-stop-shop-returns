@@ -1,7 +1,7 @@
 package repositories
 
 import config.AppConfig
-import crypto.{ReturnEncrypter, SecureGCMCipher}
+import crypto.{CorrectionEncryptor, CountryEncryptor, ReturnEncryptor, SecureGCMCipher}
 import generators.Generators
 import models.{EncryptedVatReturn, Period, ReturnReference, VatReturn}
 import models.corrections.CorrectionPayload
@@ -30,18 +30,21 @@ class VatReturnRepositorySpec
     with Generators {
 
   private val cipher    = new SecureGCMCipher
-  private val encrypter = new ReturnEncrypter(cipher)
+  private val countryEncryptor = new CountryEncryptor(cipher)
+  private val encryptor = new ReturnEncryptor(countryEncryptor, cipher)
+  private val correctionEncryptor = new CorrectionEncryptor(countryEncryptor, cipher)
   private val appConfig = mock[AppConfig]
   private val secretKey = "VqmXp7yigDFxbCUdDdNZVIvbW6RgPNJsliv6swQNCL8="
 
   when(appConfig.encryptionKey) thenReturn secretKey
 
-  val correctionRepository = new CorrectionRepository(mongoComponent, appConfig)
+  val correctionRepository = new CorrectionRepository(mongoComponent, correctionEncryptor, appConfig)
 
   override protected val repository =
     new VatReturnRepository(
       mongoComponent = mongoComponent,
-      returnEncrypter = encrypter,
+      returnEncryptor = encryptor,
+      correctionEncryptor = correctionEncryptor,
       appConfig = appConfig,
       correctionRepository
     )
@@ -61,7 +64,7 @@ class VatReturnRepositorySpec
       val insertReturn2 = repository.insert(vatReturn2).futureValue
       val databaseRecords = findAll().futureValue
       val decryptedDatabaseRecords =
-        databaseRecords.map(e => encrypter.decryptReturn(e, e.vrn, secretKey))
+        databaseRecords.map(e => encryptor.decryptReturn(e, e.vrn, secretKey))
 
       insertResult1 mustBe Some(vatReturn1)
       insertReturn2 mustBe Some(vatReturn2)
@@ -81,7 +84,7 @@ class VatReturnRepositorySpec
       val insertReturn2 = repository.insert(vatReturn2).futureValue
       val databaseRecords = findAll().futureValue
       val decryptedDatabaseRecords =
-        databaseRecords.map(e => encrypter.decryptReturn(e, e.vrn, secretKey))
+        databaseRecords.map(e => encryptor.decryptReturn(e, e.vrn, secretKey))
 
       insertResult1 mustBe Some(vatReturn1)
       insertReturn2 mustBe Some(vatReturn2)
@@ -99,7 +102,7 @@ class VatReturnRepositorySpec
       insertResult2 mustBe None
 
       val decryptedDatabaseRecords =
-        findAll().futureValue.map(e => encrypter.decryptReturn(e, e.vrn, secretKey))
+        findAll().futureValue.map(e => encryptor.decryptReturn(e, e.vrn, secretKey))
 
       decryptedDatabaseRecords must contain only vatReturn
     }
@@ -125,7 +128,7 @@ class VatReturnRepositorySpec
       val insertReturn2 = repository.insert(vatReturn2, correction2).futureValue
       val databaseRecords = findAll().futureValue
       val decryptedDatabaseRecords =
-        databaseRecords.map(e => encrypter.decryptReturn(e, e.vrn, secretKey))
+        databaseRecords.map(e => encryptor.decryptReturn(e, e.vrn, secretKey))
 
       /* TODO some form of this should work for this test
       val insertedCorrection1 = correctionRepository.get(correction1.vrn)
@@ -158,7 +161,7 @@ class VatReturnRepositorySpec
       val insertReturn2 = repository.insert(vatReturn2, correction2).futureValue
       val databaseRecords = findAll().futureValue
       val decryptedDatabaseRecords =
-        databaseRecords.map(e => encrypter.decryptReturn(e, e.vrn, secretKey))
+        databaseRecords.map(e => encryptor.decryptReturn(e, e.vrn, secretKey))
 
       insertResult1 mustBe Some(vatReturn1, correction1)
       insertReturn2 mustBe Some(vatReturn2, correction2)
@@ -177,7 +180,7 @@ class VatReturnRepositorySpec
       insertResult2 mustBe None
 
       val decryptedDatabaseRecords =
-        findAll().futureValue.map(e => encrypter.decryptReturn(e, e.vrn, secretKey))
+        findAll().futureValue.map(e => encryptor.decryptReturn(e, e.vrn, secretKey))
 
       decryptedDatabaseRecords must contain only vatReturn
     }
@@ -199,9 +202,9 @@ class VatReturnRepositorySpec
         reference = ReturnReference(vrn3, vatReturn1.period)
       )
 
-      insert(encrypter.encryptReturn(vatReturn1, vatReturn1.vrn, secretKey)).futureValue
-      insert(encrypter.encryptReturn(vatReturn2, vatReturn2.vrn, secretKey)).futureValue
-      insert(encrypter.encryptReturn(vatReturn3, vatReturn3.vrn, secretKey)).futureValue
+      insert(encryptor.encryptReturn(vatReturn1, vatReturn1.vrn, secretKey)).futureValue
+      insert(encryptor.encryptReturn(vatReturn2, vatReturn2.vrn, secretKey)).futureValue
+      insert(encryptor.encryptReturn(vatReturn3, vatReturn3.vrn, secretKey)).futureValue
 
       val returns = repository.get(vatReturn1.vrn).futureValue
 
@@ -215,7 +218,7 @@ class VatReturnRepositorySpec
 
       val vatReturn = arbitrary[VatReturn].sample.value
 
-      insert(encrypter.encryptReturn(vatReturn, vatReturn.vrn, secretKey)).futureValue
+      insert(encryptor.encryptReturn(vatReturn, vatReturn.vrn, secretKey)).futureValue
 
       val result = repository.get(vatReturn.vrn, vatReturn.period).futureValue
 

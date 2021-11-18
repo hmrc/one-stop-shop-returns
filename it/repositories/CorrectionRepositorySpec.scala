@@ -1,9 +1,11 @@
 package repositories
 
 import config.AppConfig
+import crypto.{CorrectionEncryptor, CountryEncryptor, SecureGCMCipher}
 import generators.Generators
-import models.corrections.CorrectionPayload
+import models.corrections.{CorrectionPayload, EncryptedCorrectionPayload}
 import models.Period
+import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
@@ -19,19 +21,27 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class CorrectionRepositorySpec
   extends AnyFreeSpec
     with Matchers
-    with DefaultPlayMongoRepositorySupport[CorrectionPayload]
+    with DefaultPlayMongoRepositorySupport[EncryptedCorrectionPayload]
     with CleanMongoCollectionSupport
     with ScalaFutures
     with IntegrationPatience
     with OptionValues
     with Generators {
 
+  private val cipher = new SecureGCMCipher
+  private val countryEncryptor = new CountryEncryptor(cipher)
+  private val correctionEncryptor = new CorrectionEncryptor(countryEncryptor, cipher)
+  private val secretKey = "VqmXp7yigDFxbCUdDdNZVIvbW6RgPNJsliv6swQNCL8="
+  private val appConfig = mock[AppConfig]
+
+  when(appConfig.encryptionKey) thenReturn secretKey
+
   override protected val repository =
     new CorrectionRepository(
       mongoComponent = mongoComponent,
-      appConfig = appConfig
+      appConfig = appConfig,
+      correctionEncryptor = correctionEncryptor
     )
-  private val appConfig = mock[AppConfig]
 
   ".get" - {
     "must return all records for the given VRN" in {
@@ -46,9 +56,9 @@ class CorrectionRepositorySpec
         vrn = vrn3
       )
 
-      insert(correctionPayload1).futureValue
-      insert(correctionPayload2).futureValue
-      insert(correctionPayload3).futureValue
+      insert(correctionEncryptor.encryptCorrectionPayload(correctionPayload1, correctionPayload1.vrn, secretKey)).futureValue
+      insert(correctionEncryptor.encryptCorrectionPayload(correctionPayload2, correctionPayload2.vrn, secretKey)).futureValue
+      insert(correctionEncryptor.encryptCorrectionPayload(correctionPayload3, correctionPayload3.vrn, secretKey)).futureValue
 
       val returns = repository.get(correctionPayload1.vrn).futureValue
 
@@ -71,7 +81,7 @@ class CorrectionRepositorySpec
 
       val correctionPayload = arbitrary[CorrectionPayload].sample.value
 
-      insert(correctionPayload).futureValue
+      insert(correctionEncryptor.encryptCorrectionPayload(correctionPayload, correctionPayload.vrn, secretKey)).futureValue
 
       val result = repository.get(correctionPayload.vrn, correctionPayload.period).futureValue
 
