@@ -49,4 +49,12 @@ class CorrectionController @Inject()(
         case value => Ok(Json.toJson(value))
       }
   }
+
+  def getByCorrectionPeriod(period: Period): Action[AnyContent] = cc.authAndCorrectionToggle.async {
+    implicit request =>
+      correctionService.getByCorrectionPeriod(request.vrn, period).map {
+        case Nil => NotFound
+        case value => Ok(Json.toJson(value))
+      }
+  }
 }

@@ -161,4 +161,64 @@ class CorrectionControllerSpec
       }
     }
   }
+
+  ".getByCorrectionPeriod(period)" - {
+    val period = Period(2021, Q3)
+
+    lazy val request = FakeRequest(GET, routes.CorrectionController.getByCorrectionPeriod(period).url)
+
+    "must respond with OK and a sequence of returns when some exist for this user" in {
+
+      val mockService = mock[CorrectionService]
+      val correction =
+        Gen
+          .nonEmptyListOf(arbitrary[CorrectionPayload])
+          .sample.value
+          .map(r => r copy (vrn = vrn)).head
+
+      when(mockService.getByCorrectionPeriod(any(), any())) thenReturn Future.successful(List(correction))
+
+      val app =
+        applicationBuilder
+          .overrides(bind[CorrectionService].toInstance(mockService))
+          .build()
+
+      running(app) {
+        val result = route(app, request).value
+
+        status(result) mustEqual OK
+        contentAsJson(result) mustEqual Json.toJson(List(correction))
+      }
+    }
+
+    "must respond with NOT FOUND when specified return doesn't exist" in {
+
+      val mockService = mock[CorrectionService]
+      when(mockService.getByCorrectionPeriod(any(), any())) thenReturn Future.successful(List.empty)
+
+      val app =
+        applicationBuilder
+          .overrides(bind[CorrectionService].toInstance(mockService))
+          .build()
+
+      running(app) {
+        val result = route(app, request).value
+
+        status(result) mustEqual NOT_FOUND
+      }
+    }
+
+    "must respond with Unauthorized when the user is not authorised" in {
+
+      val app =
+        new GuiceApplicationBuilder()
+          .overrides(bind[AuthConnector].toInstance(new FakeFailingAuthConnector(new MissingBearerToken)))
+          .build()
+
+      running(app) {
+        val result = route(app, request).value
+        status(result) mustEqual UNAUTHORIZED
+      }
+    }
+  }
 }
