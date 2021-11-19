@@ -115,7 +115,7 @@ class CorrectionRepositorySpec
         lastUpdated = Instant.now()
       )
 
-      insert(correctionPayload).futureValue
+      insert(correctionEncryptor.encryptCorrectionPayload(correctionPayload, correctionPayload.vrn, secretKey)).futureValue
 
       val result = repository.getByCorrectionPeriod(correctionPayload.vrn, correctionPayload.corrections.head.correctionReturnPeriod).futureValue
 
