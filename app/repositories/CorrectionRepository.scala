@@ -74,5 +74,5 @@ class CorrectionRepository @Inject()(
         Filters.elemMatch("corrections", Filters.eq("correctionReturnPeriod", toBson(period)))
       ))
       .toFuture()
-
+      .map(_.map(correctionEncryptor.decryptCorrectionPayload(_, vrn, encryptionKey)))
 }
