@@ -8,32 +8,20 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 import java.time.{Instant, LocalDate}
 
-class ReturnEncrypterSpec extends SpecBase with ScalaCheckPropertyChecks with Generators {
+class ReturnEncryptorSpec extends SpecBase with ScalaCheckPropertyChecks with Generators {
 
   private val cipher    = new SecureGCMCipher
-  private val encrypter = new ReturnEncrypter(cipher)
+  private val countryEncyrpter = new CountryEncryptor(cipher)
+  private val encryptor = new ReturnEncryptor(countryEncyrpter, cipher)
   private val secretKey = "VqmXp7yigDFxbCUdDdNZVIvbW6RgPNJsliv6swQNCL8="
-
-  "encrypt / decrypt country" - {
-
-    "must encrypt a country and decrypt it" in {
-      forAll(arbitrary[Country]) {
-        country =>
-          val e = encrypter.encryptCountry(country, vrn, secretKey)
-          val d = encrypter.decryptCountry(e, vrn, secretKey)
-
-          d mustEqual country
-      }
-    }
-  }
 
   "encrypt / decrypt SalesDetails" - {
 
     "must encrypt salesDetails and decrypt it" in {
       forAll(arbitrary[SalesDetails]) {
         salesDetails =>
-          val e = encrypter.encryptSalesDetails(salesDetails, vrn, secretKey)
-          val d = encrypter.decryptSalesDetails(e, vrn, secretKey)
+          val e = encryptor.encryptSalesDetails(salesDetails, vrn, secretKey)
+          val d = encryptor.decryptSalesDetails(e, vrn, secretKey)
 
           d mustEqual salesDetails
       }
@@ -45,8 +33,8 @@ class ReturnEncrypterSpec extends SpecBase with ScalaCheckPropertyChecks with Ge
     "must encrypt vatOnSales and decrypt it" in {
       forAll(arbitrary[VatOnSales]) {
         vatOnSales =>
-          val e = encrypter.encryptVatOnSales(vatOnSales, vrn, secretKey)
-          val d = encrypter.decryptVatOnSales(e, vrn, secretKey)
+          val e = encryptor.encryptVatOnSales(vatOnSales, vrn, secretKey)
+          val d = encryptor.decryptVatOnSales(e, vrn, secretKey)
 
           d mustEqual vatOnSales
       }
@@ -58,8 +46,8 @@ class ReturnEncrypterSpec extends SpecBase with ScalaCheckPropertyChecks with Ge
     "must encrypt vatRate and decrypt it" in {
       forAll(arbitrary[VatRate]) {
         vatRate =>
-          val e = encrypter.encryptVatRate(vatRate, vrn, secretKey)
-          val d = encrypter.decryptVatRate(e, vrn, secretKey)
+          val e = encryptor.encryptVatRate(vatRate, vrn, secretKey)
+          val d = encryptor.decryptVatRate(e, vrn, secretKey)
 
           d mustEqual vatRate
       }
@@ -71,8 +59,8 @@ class ReturnEncrypterSpec extends SpecBase with ScalaCheckPropertyChecks with Ge
     "must encrypt a SalesToCountry and decrypt them" in {
       forAll(arbitrary[SalesToCountry]) {
         salesToCountry =>
-          val e = encrypter.encryptSalesToCountry(salesToCountry, vrn, secretKey)
-          val d = encrypter.decryptSalesToCountry(e, vrn, secretKey)
+          val e = encryptor.encryptSalesToCountry(salesToCountry, vrn, secretKey)
+          val d = encryptor.decryptSalesToCountry(e, vrn, secretKey)
 
           d mustEqual salesToCountry
       }
@@ -84,8 +72,8 @@ class ReturnEncrypterSpec extends SpecBase with ScalaCheckPropertyChecks with Ge
     "must encrypt a EuTaxIdentifier and decrypt them" in {
       forAll(arbitrary[EuTaxIdentifier]) {
         euTaxIdentifier =>
-          val e = encrypter.encryptEuTaxIdentifier(euTaxIdentifier, vrn, secretKey)
-          val d = encrypter.decryptEuTaxIdentifier(e, vrn, secretKey)
+          val e = encryptor.encryptEuTaxIdentifier(euTaxIdentifier, vrn, secretKey)
+          val d = encryptor.decryptEuTaxIdentifier(e, vrn, secretKey)
 
           d mustEqual euTaxIdentifier
       }
@@ -97,8 +85,8 @@ class ReturnEncrypterSpec extends SpecBase with ScalaCheckPropertyChecks with Ge
     "must encrypt a SalesFromEuCountry and decrypt them" in {
       forAll(arbitrary[SalesFromEuCountry]) {
         salesFromEuCountry =>
-          val e = encrypter.encryptSalesFromEuCountry(salesFromEuCountry, vrn, secretKey)
-          val d = encrypter.decryptSalesFromEuCountry(e, vrn, secretKey)
+          val e = encryptor.encryptSalesFromEuCountry(salesFromEuCountry, vrn, secretKey)
+          val d = encryptor.decryptSalesFromEuCountry(e, vrn, secretKey)
 
           d mustEqual salesFromEuCountry
       }
@@ -125,8 +113,8 @@ class ReturnEncrypterSpec extends SpecBase with ScalaCheckPropertyChecks with Ge
         lastUpdated = Instant.now(stubClock)
       )
 
-      val e = encrypter.encryptReturn(vatReturn, vrn, secretKey)
-      val d = encrypter.decryptReturn(e, vrn, secretKey)
+      val e = encryptor.encryptReturn(vatReturn, vrn, secretKey)
+      val d = encryptor.decryptReturn(e, vrn, secretKey)
 
       d mustEqual vatReturn
     }
@@ -161,8 +149,8 @@ class ReturnEncrypterSpec extends SpecBase with ScalaCheckPropertyChecks with Ge
         lastUpdated = Instant.now(stubClock)
       )
 
-      val e = encrypter.encryptReturn(vatReturn, vrn, secretKey)
-      val d = encrypter.decryptReturn(e, vrn, secretKey)
+      val e = encryptor.encryptReturn(vatReturn, vrn, secretKey)
+      val d = encryptor.decryptReturn(e, vrn, secretKey)
 
       d mustEqual vatReturn
     }

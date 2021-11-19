@@ -17,10 +17,10 @@
 package repositories
 
 import config.AppConfig
-import models.corrections.CorrectionPayload
+import crypto.CorrectionEncryptor
+import models.corrections.{CorrectionPayload, EncryptedCorrectionPayload}
 import models.Period
 import org.mongodb.scala.model.{Filters, Indexes, IndexModel, IndexOptions}
-import repositories.MongoErrors.Duplicate
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.mongo.MongoComponent
@@ -32,25 +32,30 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class CorrectionRepository @Inject()(
                                       mongoComponent: MongoComponent,
+                                      correctionEncryptor: CorrectionEncryptor,
                                       appConfig: AppConfig
-                                    )(implicit ec: ExecutionContext) extends PlayMongoRepository[CorrectionPayload] (
-  collectionName = "corrections",
-  mongoComponent = mongoComponent,
-  domainFormat = CorrectionPayload.format,
-  indexes = Seq(
-    IndexModel(
-      Indexes.ascending("vrn", "period"),
-      IndexOptions()
-        .name("correctionReferenceIndex")
-        .unique(true)
+                                    )(implicit ec: ExecutionContext)
+  extends PlayMongoRepository[EncryptedCorrectionPayload](
+    collectionName = "corrections",
+    mongoComponent = mongoComponent,
+    domainFormat = EncryptedCorrectionPayload.format,
+    indexes = Seq(
+      IndexModel(
+        Indexes.ascending("vrn", "period"),
+        IndexOptions()
+          .name("correctionReferenceIndex")
+          .unique(true)
+      )
     )
-  )
-){
+  ) {
+
+  private val encryptionKey = appConfig.encryptionKey
 
   def get(vrn: Vrn): Future[Seq[CorrectionPayload]] =
     collection
       .find(Filters.equal("vrn", toBson(vrn)))
       .toFuture()
+      .map(_.map(correctionEncryptor.decryptCorrectionPayload(_, vrn, encryptionKey)))
 
   def get(vrn: Vrn, period: Period): Future[Option[CorrectionPayload]] =
     collection
@@ -59,6 +64,8 @@ class CorrectionRepository @Inject()(
         Filters.equal("period", toBson(period))
       ))
       .headOption()
+      .map(_.map(correctionEncryptor.decryptCorrectionPayload(_, vrn, encryptionKey)))
+
 
   def getByCorrectionPeriod(vrn: Vrn, period: Period): Future[Seq[CorrectionPayload]] =
     collection
