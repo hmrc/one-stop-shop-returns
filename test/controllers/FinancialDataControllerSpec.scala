@@ -161,7 +161,7 @@ class FinancialDataControllerSpec
     val vatOwed = 1000
     val commencementDate = LocalDate.now()
 
-    val vatReturnWithFinancialData = VatReturnWithFinancialData(vatReturn, Some(charge), Some(vatOwed))
+    val vatReturnWithFinancialData = VatReturnWithFinancialData(vatReturn, Some(charge), Some(vatOwed), None)
 
     lazy val request =
       FakeRequest(GET, routes.FinancialDataController.getVatReturnWithFinancialData(commencementDate).url)

@@ -18,19 +18,24 @@ package services
 
 import connectors.FinancialDataConnector
 import logging.Logging
-import models.{Period, PeriodYear, Quarter}
-import models.des.DesException
+import models.corrections.CorrectionPayload
+import models.{Period, Quarter}
+import models.des.{DesException, NotFound}
 import models.financialdata._
+import play.api.libs.json.Json
+import play.api.mvc.Results.Ok
 import uk.gov.hmrc.domain.Vrn
 
 import java.time.LocalDate
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Success
 
 class FinancialDataService @Inject()(
                                       financialDataConnector: FinancialDataConnector,
                                       vatReturnService: VatReturnService,
-                                      periodService: PeriodService
+                                      periodService: PeriodService,
+                                      correctionService: CorrectionService
                                     )(implicit ec: ExecutionContext) extends Logging {
 
   def getCharge(vrn: Vrn, period: Period): Future[Option[Charge]] = {
@@ -60,7 +65,11 @@ class FinancialDataService @Inject()(
           }
         }
 
-        VatReturnWithFinancialData(vatReturn, charge, charge.map(c => (c.outstandingAmount * 100).toLong))
+        //          correctionService.get(vatReturn.vrn, vatReturn.period).map {
+        //            VatReturnWithFinancialData(vatReturn, charge, charge.map(c => (c.outstandingAmount * 100).toLong), _)
+        //          }
+
+        VatReturnWithFinancialData(vatReturn, charge, charge.map(c => (c.outstandingAmount * 100).toLong), ???)
       }
     }
   }

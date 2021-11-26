@@ -56,9 +56,8 @@ class FinancialDataController @Inject()(
 
   def getVatReturnWithFinancialData(commencementDate: LocalDate): Action[AnyContent] = auth.async {
     implicit request =>
-      service.getVatReturnWithFinancialData(request.vrn, commencementDate).map{
+      service.getVatReturnWithFinancialData(request.vrn, commencementDate).map {
         data => Ok(Json.toJson(data))
       }
-
   }
 }

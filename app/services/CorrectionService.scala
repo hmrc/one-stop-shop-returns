@@ -18,11 +18,10 @@ package services
 
 import models.Period
 import models.corrections.CorrectionPayload
-import models.requests.CorrectionRequest
 import repositories.CorrectionRepository
 import uk.gov.hmrc.domain.Vrn
 
-import java.time.{Clock, Instant}
+import java.time.Clock
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
