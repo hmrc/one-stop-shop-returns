@@ -50,7 +50,7 @@ class FinancialDataService @Inject()(
   }
 
   def getVatReturnWithFinancialData(vrn: Vrn, commencementDate: LocalDate): Future[Seq[VatReturnWithFinancialData]] = {
-    for {
+    (for {
       vatReturns <- vatReturnService.get(vrn)
       maybeFinancialDataResponse <- getFinancialData(vrn, commencementDate).recover {
         case e: Exception =>
@@ -58,20 +58,18 @@ class FinancialDataService @Inject()(
           None
       }
     } yield {
-      vatReturns.map { vatReturn =>
+      Future.sequence(vatReturns.map { vatReturn =>
         val charge = maybeFinancialDataResponse.flatMap {
           _.financialTransactions.flatMap {
             transactions => getChargeForPeriod(vatReturn.period, transactions)
           }
         }
 
-        //          correctionService.get(vatReturn.vrn, vatReturn.period).map {
-        //            VatReturnWithFinancialData(vatReturn, charge, charge.map(c => (c.outstandingAmount * 100).toLong), _)
-        //          }
-
-        VatReturnWithFinancialData(vatReturn, charge, charge.map(c => (c.outstandingAmount * 100).toLong), ???)
-      }
-    }
+        correctionService.get(vatReturn.vrn, vatReturn.period).map {
+          VatReturnWithFinancialData(vatReturn, charge, charge.map(c => (c.outstandingAmount * 100).toLong), _)
+        }
+      })
+    }).flatten
   }
 
   private def getChargeForPeriod(period: Period, transactions: Seq[FinancialTransaction]): Option[Charge] = {
