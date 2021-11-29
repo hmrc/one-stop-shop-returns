@@ -44,6 +44,20 @@ class FinancialDataServiceSpec extends AnyFreeSpec
   private val periodYear2021 = PeriodYear(2021)
   private val queryParameters2021 =
     FinancialDataQueryParameters(fromDate = Some(periodYear2021.startOfYear), toDate = Some(periodYear2021.endOfYear))
+  val vrn: Vrn = Vrn("123456789")
+  val period: Period = Period(2021, Q3)
+  val vatReturn: VatReturn = arbitrary[VatReturn].sample.value.copy(vrn, period = period)
+  val correctionPayload: CorrectionPayload =
+    CorrectionPayload(
+      vatReturn.vrn,
+      Period(2021, Q4),
+      List(PeriodWithCorrections(
+        period,
+        List(Arbitrary.arbitrary[CorrectionToCountry].sample.value)
+      )),
+      Instant.ofEpochSecond(1630670836),
+      Instant.ofEpochSecond(1630670836)
+    )
 
   override def beforeEach(): Unit = {
     Mockito.reset(periodService)
@@ -453,7 +467,6 @@ class FinancialDataServiceSpec extends AnyFreeSpec
 
     "must return one VatReturnWithFinancialData when there is one vatReturn and one charge" in {
       val commencementDate = LocalDate.now()
-      val period = Period(2021, Q3)
 
       val financialTransactions = Seq(
         FinancialTransaction(
@@ -468,7 +481,6 @@ class FinancialDataServiceSpec extends AnyFreeSpec
         )
       )
 
-      val vatReturn = arbitrary[VatReturn].sample.value.copy(period = period)
       val financialData =
         FinancialData(
           Some("VRN"),
@@ -482,6 +494,8 @@ class FinancialDataServiceSpec extends AnyFreeSpec
         Future.successful(Right(Some(financialData)))
       )
       when(vatReturnService.get(any())) thenReturn Future.successful(Seq(vatReturn))
+      when(correctionsService.get(any(), any())) thenReturn Future.successful(None)
+
 
       val response = financialDataService.getVatReturnWithFinancialData(Vrn("123456789"), commencementDate).futureValue
       val expectedResponse =
@@ -493,17 +507,19 @@ class FinancialDataServiceSpec extends AnyFreeSpec
       verify(financialDataConnector, times(1)).getFinancialData(any(), eqTo(queryParameters2021))
       verify(periodService, times(1)).getPeriodYears(eqTo(commencementDate))
       verify(vatReturnService, times(1)).get(any())
+      verify(correctionsService, times(1)).get(eqTo(Vrn("123456789")), eqTo(period))
+
     }
 
     "must return one VatReturnWithFinancialData with no charge when there is one vatReturn and no charge" in {
       val commencementDate = LocalDate.now()
-      val period = Period(2021, Q3)
-      val vatReturn = arbitrary[VatReturn].sample.value.copy(period = period)
 
       when(periodService.getPeriodYears(any())) thenReturn Seq(periodYear2021)
       when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters2021)))
         .thenReturn(Future.successful(Right(None)))
       when(vatReturnService.get(any())) thenReturn Future.successful(Seq(vatReturn))
+      when(correctionsService.get(any(), any())) thenReturn Future.successful(None)
+
 
       val response = financialDataService.getVatReturnWithFinancialData(Vrn("123456789"), commencementDate).futureValue
       val expectedResponse =
@@ -513,19 +529,19 @@ class FinancialDataServiceSpec extends AnyFreeSpec
       verify(financialDataConnector, times(1)).getFinancialData(any(), eqTo(queryParameters2021))
       verify(periodService, times(1)).getPeriodYears(eqTo(commencementDate))
       verify(vatReturnService, times(1)).get(any())
+      verify(correctionsService, times(1)).get(eqTo(Vrn("123456789")), eqTo(period))
     }
 
     "must return one VatReturnWithFinancialData when there is one vatReturn and financialDataConnector call fails" in {
       val commencementDate = LocalDate.now()
-      val period = Period(2021, Q3)
-
-      val vatReturn = arbitrary[VatReturn].sample.value.copy(period = period)
 
       when(periodService.getPeriodYears(any())) thenReturn Seq(periodYear2021)
       when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters2021))).thenReturn(
         Future.successful(Left(UnexpectedResponseStatus(400, "Error")))
       )
       when(vatReturnService.get(any())) thenReturn Future.successful(Seq(vatReturn))
+      when(correctionsService.get(any(), any())) thenReturn Future.successful(None)
+
 
       val response = financialDataService.getVatReturnWithFinancialData(Vrn("123456789"), commencementDate).futureValue
       val expectedResponse = Seq(VatReturnWithFinancialData(vatReturn, None, None, None))
@@ -534,6 +550,8 @@ class FinancialDataServiceSpec extends AnyFreeSpec
       verify(financialDataConnector, times(1)).getFinancialData(any(), eqTo(queryParameters2021))
       verify(periodService, times(1)).getPeriodYears(eqTo(commencementDate))
       verify(vatReturnService, times(1)).get(any())
+      verify(correctionsService, times(1)).get(eqTo(Vrn("123456789")), eqTo(period))
+
     }
 
     "must return Seq.empty when there are no vatReturns" in {
@@ -578,7 +596,7 @@ class FinancialDataServiceSpec extends AnyFreeSpec
         )
       )
 
-      val vatReturn = arbitrary[VatReturn].sample.value.copy(period = period)
+      val vatReturn = arbitrary[VatReturn].sample.value.copy(vrn, period = period)
 
       when(periodService.getPeriodYears(any())) thenReturn Seq(periodYear2021)
       when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters2021))).thenReturn(
@@ -595,6 +613,7 @@ class FinancialDataServiceSpec extends AnyFreeSpec
       when(vatReturnService.get(any())).thenReturn(
         Future.successful(Seq(vatReturn, vatReturn.copy(period = period2)))
       )
+      when(correctionsService.get(any(), any())) thenReturn Future.successful(None)
 
       val response = financialDataService.getVatReturnWithFinancialData(Vrn("123456789"), commencementDate).futureValue
       val expectedResponse =
@@ -614,6 +633,7 @@ class FinancialDataServiceSpec extends AnyFreeSpec
       verify(financialDataConnector, times(1)).getFinancialData(any(), eqTo(queryParameters2021))
       verify(periodService, times(1)).getPeriodYears(eqTo(commencementDate))
       verify(vatReturnService, times(1)).get(any())
+      verify(correctionsService, times(1)).get(eqTo(Vrn("123456789")), eqTo(period))
     }
 
     "must return multiple VatReturnWithFinancialDatas when there is multiple vatReturns in the different period years and charges" in {
@@ -642,7 +662,7 @@ class FinancialDataServiceSpec extends AnyFreeSpec
       val financialTransactions = Seq(financialTransaction)
       val financialTransactions2 = Seq(financialTransaction2)
 
-      val vatReturn = arbitrary[VatReturn].sample.value.copy(period = period)
+      val vatReturn = arbitrary[VatReturn].sample.value.copy(vrn, period = period)
       val periodYear2 = PeriodYear(2022)
       val queryParameters2 =
         FinancialDataQueryParameters(fromDate = Some(periodYear2.startOfYear), toDate = Some(periodYear2.endOfYear))
@@ -673,6 +693,7 @@ class FinancialDataServiceSpec extends AnyFreeSpec
       when(vatReturnService.get(any())).thenReturn(
         Future.successful(Seq(vatReturn, vatReturn.copy(period = period2)))
       )
+      when(correctionsService.get(any(), any())) thenReturn Future.successful(None)
 
       val response = financialDataService.getVatReturnWithFinancialData(Vrn("123456789"), commencementDate).futureValue
       val expectedResponse =
@@ -693,26 +714,15 @@ class FinancialDataServiceSpec extends AnyFreeSpec
       verify(financialDataConnector, times(1)).getFinancialData(any(), eqTo(queryParameters2))
       verify(periodService, times(1)).getPeriodYears(eqTo(commencementDate))
       verify(vatReturnService, times(1)).get(any())
+      verify(correctionsService, times(2)).get(eqTo(Vrn("123456789")), any())
     }
 
-    "must return one VatReturnWithFinancialData with no charge when there is one vatReturn and no charge and one correction" in {
+    "must return one VatReturnWithFinancialData with no charge when there is one vatReturn and no charge with correction" in {
       val commencementDate = LocalDate.now()
-      val period = Period(2021, Q3)
-      val vatReturn = arbitrary[VatReturn].sample.value.copy(period = period)
-      val correctionPayload: CorrectionPayload =
-        CorrectionPayload(
-          vatReturn.vrn,
-          Period(2021, Q4),
-          List(PeriodWithCorrections(
-            period,
-            List(Arbitrary.arbitrary[CorrectionToCountry].sample.value)
-          )),
-          Instant.ofEpochSecond(1630670836),
-          Instant.ofEpochSecond(1630670836)
-        )
 
-      when(financialDataConnector.getFinancialData(any(), any())).thenReturn(Future.successful(Right(None)))
+      when(financialDataConnector.getFinancialData(any(), eqTo(queryParameters2021))).thenReturn(Future.successful(Right(None)))
       when(vatReturnService.get(any())) thenReturn Future.successful(Seq(vatReturn))
+      when(periodService.getPeriodYears(any())) thenReturn Seq(periodYear2021)
       when(correctionsService.get(any(), any())) thenReturn Future.successful(Some(correctionPayload))
 
       val expectedResponse =
@@ -723,6 +733,7 @@ class FinancialDataServiceSpec extends AnyFreeSpec
       response mustBe expectedResponse
       verify(financialDataConnector, times(1)).getFinancialData(any(), eqTo(queryParameters2021))
       verify(vatReturnService, times(1)).get(eqTo(Vrn("123456789")))
+      verify(periodService, times(1)).getPeriodYears(eqTo(commencementDate))
       verify(correctionsService, times(1)).get(eqTo(Vrn("123456789")), eqTo(period))
     }
   }

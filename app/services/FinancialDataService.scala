@@ -18,18 +18,14 @@ package services
 
 import connectors.FinancialDataConnector
 import logging.Logging
-import models.corrections.CorrectionPayload
-import models.{Period, Quarter}
-import models.des.{DesException, NotFound}
+import models.des.DesException
 import models.financialdata._
-import play.api.libs.json.Json
-import play.api.mvc.Results.Ok
+import models.{Period, Quarter}
 import uk.gov.hmrc.domain.Vrn
 
 import java.time.LocalDate
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.Success
 
 class FinancialDataService @Inject()(
                                       financialDataConnector: FinancialDataConnector,
