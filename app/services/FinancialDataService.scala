@@ -18,9 +18,9 @@ package services
 
 import connectors.FinancialDataConnector
 import logging.Logging
-import models.{Period, PeriodYear, Quarter}
 import models.des.DesException
 import models.financialdata._
+import models.{Period, Quarter}
 import uk.gov.hmrc.domain.Vrn
 
 import java.time.LocalDate
@@ -30,7 +30,8 @@ import scala.concurrent.{ExecutionContext, Future}
 class FinancialDataService @Inject()(
                                       financialDataConnector: FinancialDataConnector,
                                       vatReturnService: VatReturnService,
-                                      periodService: PeriodService
+                                      periodService: PeriodService,
+                                      correctionService: CorrectionService
                                     )(implicit ec: ExecutionContext) extends Logging {
 
   def getCharge(vrn: Vrn, period: Period): Future[Option[Charge]] = {
@@ -45,7 +46,7 @@ class FinancialDataService @Inject()(
   }
 
   def getVatReturnWithFinancialData(vrn: Vrn, commencementDate: LocalDate): Future[Seq[VatReturnWithFinancialData]] = {
-    for {
+    (for {
       vatReturns <- vatReturnService.get(vrn)
       maybeFinancialDataResponse <- getFinancialData(vrn, commencementDate).recover {
         case e: Exception =>
@@ -53,16 +54,18 @@ class FinancialDataService @Inject()(
           None
       }
     } yield {
-      vatReturns.map { vatReturn =>
+      Future.sequence(vatReturns.map { vatReturn =>
         val charge = maybeFinancialDataResponse.flatMap {
           _.financialTransactions.flatMap {
             transactions => getChargeForPeriod(vatReturn.period, transactions)
           }
         }
 
-        VatReturnWithFinancialData(vatReturn, charge, charge.map(c => (c.outstandingAmount * 100).toLong))
-      }
-    }
+        correctionService.get(vatReturn.vrn, vatReturn.period).map {
+          VatReturnWithFinancialData(vatReturn, charge, charge.map(c => (c.outstandingAmount * 100).toLong), _)
+        }
+      })
+    }).flatten
   }
 
   private def getChargeForPeriod(period: Period, transactions: Seq[FinancialTransaction]): Option[Charge] = {
