@@ -33,7 +33,6 @@ import services.{PeriodService, VatReturnService}
 
 import java.time.LocalDate
 import scala.concurrent.Future
-import scala.language.implicitConversions
 
 class ReturnStatusControllerSpec
   extends SpecBase

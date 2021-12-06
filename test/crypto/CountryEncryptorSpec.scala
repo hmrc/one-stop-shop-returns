@@ -6,8 +6,6 @@ import models._
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
-import java.time.{Instant, LocalDate}
-
 class CountryEncryptorSpec extends SpecBase with ScalaCheckPropertyChecks with Generators {
 
   private val cipher    = new SecureGCMCipher

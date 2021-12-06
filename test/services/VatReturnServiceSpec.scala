@@ -74,7 +74,7 @@ class VatReturnServiceSpec
       val stubClock      = Clock.fixed(now, ZoneId.systemDefault())
       val vatReturn      = arbitrary[VatReturn].sample.value
       val correctionPayload      = arbitrary[CorrectionPayload].sample.value
-      val insertResult   = Gen.oneOf(Some(vatReturn, correctionPayload), None).sample.value
+      val insertResult   = Gen.oneOf(Some((vatReturn, correctionPayload)), None).sample.value
       val mockRepository = mock[VatReturnRepository]
 
       when(mockRepository.insert(any(), any())) thenReturn Future.successful(insertResult)

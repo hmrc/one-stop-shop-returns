@@ -14,7 +14,6 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar.mock
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.mongo.test.{CleanMongoCollectionSupport, DefaultPlayMongoRepositorySupport}
-import uk.gov.hmrc.mongo.MongoComponent
 import utils.StringUtils
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -138,8 +137,8 @@ class VatReturnRepositorySpec
       insertedCorrection2 mustBe Some(correction2)
       */
 
-      insertResult1 mustBe Some(vatReturn1, correction1)
-      insertReturn2 mustBe Some(vatReturn2, correction2)
+      insertResult1 mustBe Some((vatReturn1, correction1))
+      insertReturn2 mustBe Some((vatReturn2, correction2))
 
       decryptedDatabaseRecords must contain theSameElementsAs Seq(vatReturn1, vatReturn2)
     }
@@ -163,8 +162,8 @@ class VatReturnRepositorySpec
       val decryptedDatabaseRecords =
         databaseRecords.map(e => encryptor.decryptReturn(e, e.vrn, secretKey))
 
-      insertResult1 mustBe Some(vatReturn1, correction1)
-      insertReturn2 mustBe Some(vatReturn2, correction2)
+      insertResult1 mustBe Some((vatReturn1, correction1))
+      insertReturn2 mustBe Some((vatReturn2, correction2))
       decryptedDatabaseRecords must contain theSameElementsAs Seq(vatReturn1, vatReturn2)
     }
 
@@ -176,7 +175,7 @@ class VatReturnRepositorySpec
       val insertResult1 = repository.insert(vatReturn, correction).futureValue
       val insertResult2 = repository.insert(vatReturn, correction).futureValue
 
-      insertResult1 mustBe Some(vatReturn, correction)
+      insertResult1 mustBe Some((vatReturn, correction))
       insertResult2 mustBe None
 
       val decryptedDatabaseRecords =
