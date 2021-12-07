@@ -20,11 +20,10 @@ import base.SpecBase
 import controllers.actions.FakeFailingAuthConnector
 import generators.Generators
 import models._
-import models.requests.CorrectionRequest
 import models.Quarter.Q3
 import models.corrections.CorrectionPayload
-import org.mockito.ArgumentMatchers.{any, eq => eqTo}
-import org.mockito.Mockito.{times, verify, when}
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks

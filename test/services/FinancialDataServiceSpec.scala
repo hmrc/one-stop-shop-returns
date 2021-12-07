@@ -364,7 +364,6 @@ class FinancialDataServiceSpec extends AnyFreeSpec
         val period = Period(2021, Q4)
         val period2 = Period(2022, Q1)
         val vatReturn = arbitrary[VatReturn].sample.value.copy(period = period)
-        val vatReturn2 = arbitrary[VatReturn].sample.value.copy(period = period2)
 
         val financialTransactions = Seq(
           FinancialTransaction(

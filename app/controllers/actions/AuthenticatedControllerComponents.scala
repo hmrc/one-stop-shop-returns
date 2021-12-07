@@ -27,10 +27,6 @@ trait AuthenticatedControllerComponents extends ControllerComponents {
 
   def actionBuilder: DefaultActionBuilder
   def identify: AuthAction
-  def checkCorrectionsToggle: CheckCorrectionsToggleFilterProvider
-
-  def authAndCorrectionToggle: ActionBuilder[AuthorisedRequest, AnyContent] =
-    auth andThen checkCorrectionsToggle()
 
   def auth: ActionBuilder[AuthorisedRequest, AnyContent] =
     actionBuilder andThen identify
@@ -43,6 +39,5 @@ case class DefaultAuthenticatedControllerComponents @Inject()(
                                                                langs: Langs,
                                                                fileMimeTypes: FileMimeTypes,
                                                                executionContext: ExecutionContext,
-                                                               identify: AuthAction,
-                                                               checkCorrectionsToggle: CheckCorrectionsToggleFilterProvider
+                                                               identify: AuthAction
                                                              ) extends AuthenticatedControllerComponents

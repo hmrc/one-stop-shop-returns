@@ -120,7 +120,7 @@ class VatReturnControllerSpec
       val mockService = mock[VatReturnService]
 
       when(mockService.createVatReturnWithCorrection(any()))
-        .thenReturn(Future.successful(Some(vatReturn, correctionPayload)))
+        .thenReturn(Future.successful(Some((vatReturn, correctionPayload))))
 
       val app =
         applicationBuilder
@@ -132,7 +132,7 @@ class VatReturnControllerSpec
         val result = route(app, request).value
 
         status(result) mustEqual CREATED
-        contentAsJson(result) mustBe Json.toJson(vatReturn, correctionPayload)
+        contentAsJson(result) mustBe Json.toJson((vatReturn, correctionPayload))
         verify(mockService, times(1)).createVatReturnWithCorrection(eqTo(vatReturnWithCorrectionRequest))
       }
     }

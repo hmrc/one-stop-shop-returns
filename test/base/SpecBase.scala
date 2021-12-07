@@ -1,6 +1,6 @@
 package base
 
-import controllers.actions.{AuthAction, CheckCorrectionsToggleFilterProvider, FakeAuthAction, FakeCheckCorrectionsToggleFilterProvider}
+import controllers.actions.{AuthAction, FakeAuthAction}
 import org.scalatest.{OptionValues, TryValues}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
@@ -28,7 +28,6 @@ trait SpecBase
   protected def applicationBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
       .overrides(
-        bind[AuthAction].to[FakeAuthAction],
-        bind[CheckCorrectionsToggleFilterProvider].toInstance(new FakeCheckCorrectionsToggleFilterProvider())
+        bind[AuthAction].to[FakeAuthAction]
       )
 }

@@ -29,12 +29,11 @@ import scala.concurrent.ExecutionContext
 
 class CorrectionController @Inject()(
                                       cc: AuthenticatedControllerComponents,
-                                      correctionService: CorrectionService,
-                                      auth: AuthAction
+                                      correctionService: CorrectionService
                                     )(implicit ec: ExecutionContext)
   extends BackendController(cc) {
 
-  def list(): Action[AnyContent] = cc.authAndCorrectionToggle.async {
+  def list(): Action[AnyContent] = cc.auth.async {
     implicit request =>
       correctionService.get(request.vrn).map {
         case Nil => NotFound
@@ -42,7 +41,7 @@ class CorrectionController @Inject()(
       }
   }
 
-  def get(period: Period): Action[AnyContent] = cc.authAndCorrectionToggle.async {
+  def get(period: Period): Action[AnyContent] = cc.auth.async {
     implicit request =>
       correctionService.get(request.vrn, period).map {
         case None => NotFound
@@ -50,7 +49,7 @@ class CorrectionController @Inject()(
       }
   }
 
-  def getByCorrectionPeriod(period: Period): Action[AnyContent] = cc.authAndCorrectionToggle.async {
+  def getByCorrectionPeriod(period: Period): Action[AnyContent] = cc.auth.async {
     implicit request =>
       correctionService.getByCorrectionPeriod(request.vrn, period).map {
         case Nil => NotFound
