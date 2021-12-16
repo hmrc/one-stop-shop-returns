@@ -26,4 +26,6 @@ class AppConfig @Inject()(config: Configuration, servicesConfig: ServicesConfig)
 
   val encryptionKey: String = config.get[String]("mongodb.encryption.key")
 
+  val coreVatReturnsEnabled: Boolean = config.get[Boolean]("features.coreVatReturns")
+
 }

@@ -16,7 +16,10 @@
 
 package services
 
+import config.AppConfig
+import connectors.CoreVatReturnConnector
 import models.{PaymentReference, Period, ReturnReference, VatReturn}
+import models.core.CoreVatReturn
 import models.corrections.CorrectionPayload
 import models.requests.{VatReturnRequest, VatReturnWithCorrectionRequest}
 import repositories.VatReturnRepository
@@ -28,6 +31,8 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class VatReturnService @Inject()(
                                   repository: VatReturnRepository,
+                                  coreVatReturnConnector: CoreVatReturnConnector,
+                                  appConfig: AppConfig,
                                   clock: Clock
                                 )
                                 (implicit ec: ExecutionContext) {
@@ -71,7 +76,16 @@ class VatReturnService @Inject()(
       lastUpdated        = Instant.now(clock)
     )
 
-    repository.insert(vatReturn, correctionPayload)
+    val toCoreIfEnabled = if (appConfig.coreVatReturnsEnabled) {
+      val coreVatReturn = CoreVatReturn(vatReturn, correctionPayload)
+      coreVatReturnConnector.submit(coreVatReturn)
+    } else {
+      Future.successful()
+    }
+
+    toCoreIfEnabled.flatMap{ _ =>
+      repository.insert(vatReturn, correctionPayload)
+    } // TODO if errors, what do?
   }
 
   def get(vrn: Vrn): Future[Seq[VatReturn]] =
