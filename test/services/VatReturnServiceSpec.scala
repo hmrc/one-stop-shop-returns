@@ -16,6 +16,8 @@
 
 package services
 
+import config.AppConfig
+import connectors.CoreVatReturnConnector
 import generators.Generators
 import models.VatReturn
 import models.corrections.CorrectionPayload
@@ -45,20 +47,24 @@ class VatReturnServiceSpec
     with OptionValues
     with ScalaFutures {
 
+  private val now = Instant.now
+  private val stubClock = Clock.fixed(now, ZoneId.systemDefault())
+  private val coreVatReturnService = mock[CoreVatReturnService]
+  private val coreVatReturnConnector = mock[CoreVatReturnConnector]
+  private val appConfig = mock[AppConfig]
+  private val vatReturn = arbitrary[VatReturn].sample.value
+
   ".createVatReturn" - {
 
     "must create a VAT return, attempt to save it to the repository, and respond with the result of saving" in {
 
-      val now            = Instant.now
-      val stubClock      = Clock.fixed(now, ZoneId.systemDefault())
-      val vatReturn      = arbitrary[VatReturn].sample.value
-      val insertResult   = Gen.oneOf(Some(vatReturn), None).sample.value
+      val insertResult = Gen.oneOf(Some(vatReturn), None).sample.value
       val mockRepository = mock[VatReturnRepository]
 
       when(mockRepository.insert(any())) thenReturn Future.successful(insertResult)
 
       val request = arbitrary[VatReturnRequest].sample.value
-      val service = new VatReturnService(mockRepository, stubClock)
+      val service = new VatReturnService(mockRepository, coreVatReturnService, coreVatReturnConnector, appConfig, stubClock)
 
       val result = service.createVatReturn(request).futureValue
 
@@ -70,17 +76,14 @@ class VatReturnServiceSpec
   ".createVatReturnWithCorrection" - {
 
     "must create a VAT return and correction, attempt to save it to the repositories, and respond with the result of saving" in {
-      val now            = Instant.now
-      val stubClock      = Clock.fixed(now, ZoneId.systemDefault())
-      val vatReturn      = arbitrary[VatReturn].sample.value
-      val correctionPayload      = arbitrary[CorrectionPayload].sample.value
-      val insertResult   = Gen.oneOf(Some((vatReturn, correctionPayload)), None).sample.value
+      val correctionPayload = arbitrary[CorrectionPayload].sample.value
+      val insertResult = Gen.oneOf(Some((vatReturn, correctionPayload)), None).sample.value
       val mockRepository = mock[VatReturnRepository]
 
       when(mockRepository.insert(any(), any())) thenReturn Future.successful(insertResult)
 
       val request = arbitrary[VatReturnWithCorrectionRequest].sample.value
-      val service = new VatReturnService(mockRepository, stubClock)
+      val service = new VatReturnService(mockRepository, coreVatReturnService, coreVatReturnConnector, appConfig, stubClock)
 
       val result = service.createVatReturnWithCorrection(request).futureValue
 

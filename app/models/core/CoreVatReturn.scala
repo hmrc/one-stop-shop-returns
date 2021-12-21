@@ -1,8 +1,8 @@
 package models.core
 
-import models.corrections.CorrectionPayload
-import models.VatReturn
-import play.api.libs.json.{Json, OFormat}
+import models.{Country, Period, SalesDetails, SalesFromEuCountry, SalesToCountry, VatReturn}
+import models.corrections.{CorrectionPayload, PeriodWithCorrections}
+import play.api.libs.json.{__, Json, OFormat}
 
 import java.time.{Instant, LocalDate}
 import java.util.UUID
@@ -86,23 +86,6 @@ case class CoreVatReturn(
 object CoreVatReturn {
   implicit val format: OFormat[CoreVatReturn] = Json.format[CoreVatReturn]
 
-  def apply(vatReturn: VatReturn, correctionPayload: CorrectionPayload): CoreVatReturn =
-    CoreVatReturn(
-      vatReturnReferenceNumber = vatReturn.reference.value,
-      version = "",
-      traderId = CoreTraderId(
-        vatNumber = vatReturn.vrn.vrn, issuedBy = ""
-      ),
-      period = CorePeriod(
-        year = vatReturn.period.year,
-        quarter = vatReturn.period.quarter.toString.indexOf(1) // TODO
-      ),
-      startDate = vatReturn.startDate,
-      endDate = vatReturn.endDate,
-      submissionDateTime = vatReturn.submissionReceived,
-      totalAmountVatDueGBP = ???,
-      msconSupplies = List.empty // TODO
-    )
 }
 
 case class CoreErrorResponse(

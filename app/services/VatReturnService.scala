@@ -31,6 +31,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class VatReturnService @Inject()(
                                   repository: VatReturnRepository,
+                                  coreVatReturnService: CoreVatReturnService,
                                   coreVatReturnConnector: CoreVatReturnConnector,
                                   appConfig: AppConfig,
                                   clock: Clock
@@ -77,7 +78,7 @@ class VatReturnService @Inject()(
     )
 
     val toCoreIfEnabled = if (appConfig.coreVatReturnsEnabled) {
-      val coreVatReturn = CoreVatReturn(vatReturn, correctionPayload)
+      val coreVatReturn = coreVatReturnService.toCore(vatReturn, correctionPayload)
       coreVatReturnConnector.submit(coreVatReturn)
     } else {
       Future.successful()
