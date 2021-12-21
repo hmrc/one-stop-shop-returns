@@ -135,7 +135,7 @@ class CoreVatReturnConnectorSpec extends SpecBase with WireMockHelper {
           val connector = app.injector.instanceOf[CoreVatReturnConnector]
           val result = connector.submit(coreVatReturn).futureValue
 
-          val expectedResponse = CoreErrorResponse(Instant.now(), result.left.get.transactionId, s"UNEXPECTED_404", errorResponseJson)
+          val expectedResponse = CoreErrorResponse(result.left.get.timestamp, result.left.get.transactionId, s"UNEXPECTED_404", errorResponseJson)
 
           result mustBe Left(expectedResponse)
         }
