@@ -79,7 +79,7 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach {
 
       val expectedResultCoreVatReturn = CoreVatReturn(
         vatReturnReferenceNumber = returnReference.value,
-        version = "", // TODO
+        version = vatReturn.lastUpdated.toString,
         traderId = CoreTraderId(vrn.vrn, "XI"),
         period = CorePeriod(period.year, period.quarter.toString.tail.toInt),
         startDate = period.firstDay,
@@ -180,7 +180,7 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach {
 
       val expectedResultCoreVatReturn = CoreVatReturn(
         vatReturnReferenceNumber = returnReference.value,
-        version = "", // TODO
+        version = vatReturn.lastUpdated.toString,
         traderId = CoreTraderId(vrn.vrn, "XI"),
         period = CorePeriod(period.year, period.quarter.toString.tail.toInt),
         startDate = period.firstDay,

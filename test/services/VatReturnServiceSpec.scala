@@ -20,6 +20,7 @@ import config.AppConfig
 import connectors.CoreVatReturnConnector
 import generators.Generators
 import models.VatReturn
+import models.core.CoreErrorResponse
 import models.corrections.CorrectionPayload
 import models.requests.{VatReturnRequest, VatReturnWithCorrectionRequest}
 import org.mockito.ArgumentMatchers.any
@@ -35,8 +36,9 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import repositories.VatReturnRepository
 
 import java.time.{Clock, Instant, ZoneId}
+import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
 
 class VatReturnServiceSpec
   extends AnyFreeSpec
@@ -89,6 +91,22 @@ class VatReturnServiceSpec
 
       result mustEqual insertResult
       verify(mockRepository, times(1)).insert(any(), any())
+    }
+
+    "must error when core enabled and fails to send to core" in {
+      val coreErrorResponse = CoreErrorResponse(Instant.now(), UUID.randomUUID(), "ERROR", "There was an error")
+      val mockRepository = mock[VatReturnRepository]
+
+      when(appConfig.coreVatReturnsEnabled) thenReturn true
+      when(coreVatReturnConnector.submit(any())) thenReturn Future.failed(coreErrorResponse.asException)
+
+
+      val request = arbitrary[VatReturnWithCorrectionRequest].sample.value
+      val service = new VatReturnService(mockRepository, coreVatReturnService, coreVatReturnConnector, appConfig, stubClock)
+
+      val result = service.createVatReturnWithCorrection(request)
+
+      whenReady(result.failed) { exp => exp mustBe coreErrorResponse.asException }
     }
 
   }
