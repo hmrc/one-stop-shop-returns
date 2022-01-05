@@ -118,11 +118,9 @@ class CoreVatReturnService @Inject()(
 
       val coreMsestSuppliesForCountry = onlyNonEmptySalesForCountry.map { case (countrySoldFrom, sales) =>
         CoreMsestSupply(
-          CoreEuTraderId(
-            "", // TODO
-            countrySoldFrom.code
-          ),
-          sales
+          countryCode = Some(countrySoldFrom.code),
+          euTraderId = None,
+          supplies = sales
         )
       }
 

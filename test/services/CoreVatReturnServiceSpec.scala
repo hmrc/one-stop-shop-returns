@@ -104,7 +104,8 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach {
             ),
             msestSupplies = List(
               CoreMsestSupply(
-                CoreEuTraderId("", country2.code),
+                Some(country2.code),
+                None,
                 List(CoreSupply(
                   supplyType = "GOODS",
                   vatRate = salesDetails2.vatRate.rate,
@@ -125,7 +126,8 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach {
             msidSupplies = List.empty,
             msestSupplies = List(
               CoreMsestSupply(
-                CoreEuTraderId("", country2.code),
+                Some(country2.code),
+                None,
                 List(CoreSupply(
                   supplyType = "GOODS",
                   vatRate = salesDetails3.vatRate.rate,
@@ -205,7 +207,8 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach {
             ),
             msestSupplies = List(
               CoreMsestSupply(
-                CoreEuTraderId("", country2.code),
+                Some(country2.code),
+                None,
                 List(CoreSupply(
                   supplyType = "GOODS",
                   vatRate = salesDetails2.vatRate.rate,
@@ -231,7 +234,8 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach {
             msidSupplies = List.empty,
             msestSupplies = List(
               CoreMsestSupply(
-                CoreEuTraderId("", country2.code),
+                Some(country2.code),
+                None,
                 List(CoreSupply(
                   supplyType = "GOODS",
                   vatRate = salesDetails3.vatRate.rate,

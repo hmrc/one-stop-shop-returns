@@ -54,7 +54,8 @@ object CoreEuTraderId {
 }
 
 case class CoreMsestSupply(
-                            euTraderId: CoreEuTraderId,
+                            countryCode: Option[String],
+                            euTraderId: Option[CoreEuTraderId],
                             supplies: List[CoreSupply]
                           )
 

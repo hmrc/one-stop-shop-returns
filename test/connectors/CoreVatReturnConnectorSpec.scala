@@ -47,7 +47,8 @@ class CoreVatReturnConnectorSpec extends SpecBase with WireMockHelper {
         BigDecimal(10)
       )),
       List(CoreMsestSupply(
-        CoreEuTraderId("", ""),
+        Some(""),
+        None,
         List(CoreSupply(
           "",
           BigDecimal(10),

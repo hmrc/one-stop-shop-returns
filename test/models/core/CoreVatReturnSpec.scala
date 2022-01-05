@@ -43,10 +43,7 @@ class CoreVatReturnSpec extends SpecBase {
           |      ],
           |      "msestSupplies": [
           |        {
-          |          "euTraderId": {
-          |            "vatIdNumber": "1234",
-          |            "issuedBy": "DE"
-          |          },
+          |          "countryCode": "DE",
           |          "supplies": [
           |            {
           |              "supplyType": "GOODS",
@@ -96,10 +93,8 @@ class CoreVatReturnSpec extends SpecBase {
             vatAmountGBP = BigDecimal(134)
           )),
           msestSupplies = List(CoreMsestSupply(
-            euTraderId = CoreEuTraderId(
-              vatIdNumber = "1234",
-              issuedBy = "DE"
-            ),
+            countryCode = Some("DE"),
+            euTraderId = None,
             supplies = List(CoreSupply(
               supplyType = "GOODS",
               vatRate = BigDecimal(12.4),
