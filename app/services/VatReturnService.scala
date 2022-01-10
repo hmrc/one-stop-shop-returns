@@ -96,12 +96,15 @@ class VatReturnService @Inject()(
     if (appConfig.coreVatReturnsEnabled) {
       val coreVatReturn = coreVatReturnService.toCore(vatReturn, correctionPayload)
       coreVatReturnConnector.submit(coreVatReturn).flatMap {
-        case Right(_) => block
+        case Right(_) =>
+          logger.info("Successful submission of vat return to core")
+          block
         case Left(coreErrorResponse) =>
           logger.error(s"Error occurred while submitting to core $coreErrorResponse", coreErrorResponse.asException)
           Future.failed(new Exception(coreErrorResponse.asException))
       }
     } else {
+      logger.info("Skipping submission of vat return to core")
       block
     }
   }
