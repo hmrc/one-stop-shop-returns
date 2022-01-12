@@ -1,7 +1,7 @@
 package services
 
+import base.SpecBase
 import connectors.FinancialDataConnector
-import generators.Generators
 import models._
 import models.financialdata._
 import models.Quarter._
@@ -13,25 +13,14 @@ import org.mockito.Mockito
 import org.mockito.Mockito.{times, verify, when}
 import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary.arbitrary
-import org.scalatest.{BeforeAndAfterEach, OptionValues}
-import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.freespec.AnyFreeSpec
-import org.scalatest.matchers.must.Matchers
-import org.scalatestplus.mockito.MockitoSugar
-import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+import org.scalatest.BeforeAndAfterEach
 import uk.gov.hmrc.domain.Vrn
 
 import java.time.{Instant, LocalDate, ZonedDateTime}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class FinancialDataServiceSpec extends AnyFreeSpec
-  with Matchers
-  with MockitoSugar
-  with ScalaCheckPropertyChecks
-  with Generators
-  with OptionValues
-  with ScalaFutures
+class FinancialDataServiceSpec extends SpecBase
   with BeforeAndAfterEach {
 
   private val periodService = mock[PeriodService]
@@ -44,8 +33,6 @@ class FinancialDataServiceSpec extends AnyFreeSpec
   private val periodYear2021 = PeriodYear(2021)
   private val queryParameters2021 =
     FinancialDataQueryParameters(fromDate = Some(periodYear2021.startOfYear), toDate = Some(periodYear2021.endOfYear))
-  val vrn: Vrn = Vrn("123456789")
-  val period: Period = Period(2021, Q3)
   val vatReturn: VatReturn = arbitrary[VatReturn].sample.value.copy(vrn, period = period)
   val correctionPayload: CorrectionPayload =
     CorrectionPayload(

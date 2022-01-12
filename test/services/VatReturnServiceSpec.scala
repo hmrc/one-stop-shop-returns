@@ -16,8 +16,11 @@
 
 package services
 
+import config.AppConfig
+import connectors.CoreVatReturnConnector
 import generators.Generators
 import models.VatReturn
+import models.core.CoreErrorResponse
 import models.corrections.CorrectionPayload
 import models.requests.{VatReturnRequest, VatReturnWithCorrectionRequest}
 import org.mockito.ArgumentMatchers.any
@@ -33,8 +36,9 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import repositories.VatReturnRepository
 
 import java.time.{Clock, Instant, ZoneId}
+import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
 
 class VatReturnServiceSpec
   extends AnyFreeSpec
@@ -45,20 +49,24 @@ class VatReturnServiceSpec
     with OptionValues
     with ScalaFutures {
 
+  private val now = Instant.now
+  private val stubClock = Clock.fixed(now, ZoneId.systemDefault())
+  private val coreVatReturnService = mock[CoreVatReturnService]
+  private val coreVatReturnConnector = mock[CoreVatReturnConnector]
+  private val appConfig = mock[AppConfig]
+  private val vatReturn = arbitrary[VatReturn].sample.value
+
   ".createVatReturn" - {
 
     "must create a VAT return, attempt to save it to the repository, and respond with the result of saving" in {
 
-      val now            = Instant.now
-      val stubClock      = Clock.fixed(now, ZoneId.systemDefault())
-      val vatReturn      = arbitrary[VatReturn].sample.value
-      val insertResult   = Gen.oneOf(Some(vatReturn), None).sample.value
+      val insertResult = Gen.oneOf(Some(vatReturn), None).sample.value
       val mockRepository = mock[VatReturnRepository]
 
       when(mockRepository.insert(any())) thenReturn Future.successful(insertResult)
 
       val request = arbitrary[VatReturnRequest].sample.value
-      val service = new VatReturnService(mockRepository, stubClock)
+      val service = new VatReturnService(mockRepository, coreVatReturnService, coreVatReturnConnector, appConfig, stubClock)
 
       val result = service.createVatReturn(request).futureValue
 
@@ -70,22 +78,35 @@ class VatReturnServiceSpec
   ".createVatReturnWithCorrection" - {
 
     "must create a VAT return and correction, attempt to save it to the repositories, and respond with the result of saving" in {
-      val now            = Instant.now
-      val stubClock      = Clock.fixed(now, ZoneId.systemDefault())
-      val vatReturn      = arbitrary[VatReturn].sample.value
-      val correctionPayload      = arbitrary[CorrectionPayload].sample.value
-      val insertResult   = Gen.oneOf(Some((vatReturn, correctionPayload)), None).sample.value
+      val correctionPayload = arbitrary[CorrectionPayload].sample.value
+      val insertResult = Gen.oneOf(Some((vatReturn, correctionPayload)), None).sample.value
       val mockRepository = mock[VatReturnRepository]
 
       when(mockRepository.insert(any(), any())) thenReturn Future.successful(insertResult)
 
       val request = arbitrary[VatReturnWithCorrectionRequest].sample.value
-      val service = new VatReturnService(mockRepository, stubClock)
+      val service = new VatReturnService(mockRepository, coreVatReturnService, coreVatReturnConnector, appConfig, stubClock)
 
       val result = service.createVatReturnWithCorrection(request).futureValue
 
       result mustEqual insertResult
       verify(mockRepository, times(1)).insert(any(), any())
+    }
+
+    "must error when core enabled and fails to send to core" in {
+      val coreErrorResponse = CoreErrorResponse(Instant.now(), UUID.randomUUID(), "ERROR", "There was an error")
+      val mockRepository = mock[VatReturnRepository]
+
+      when(appConfig.coreVatReturnsEnabled) thenReturn true
+      when(coreVatReturnConnector.submit(any())) thenReturn Future.failed(coreErrorResponse.asException)
+
+
+      val request = arbitrary[VatReturnWithCorrectionRequest].sample.value
+      val service = new VatReturnService(mockRepository, coreVatReturnService, coreVatReturnConnector, appConfig, stubClock)
+
+      val result = service.createVatReturnWithCorrection(request)
+
+      whenReady(result.failed) { exp => exp mustBe coreErrorResponse.asException }
     }
 
   }

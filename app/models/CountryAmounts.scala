@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,9 @@
  * limitations under the License.
  */
 
-package config
+package models
 
-import play.api.Configuration
-import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
-
-import javax.inject.{Inject, Singleton}
-
-@Singleton
-class AppConfig @Inject()(config: Configuration, servicesConfig: ServicesConfig) {
-
-  val encryptionKey: String = config.get[String]("mongodb.encryption.key")
-
-  val coreVatReturnsEnabled: Boolean = config.get[Boolean]("features.coreVatReturns")
-
+case class CountryAmounts(totalVatFromNi: BigDecimal, totalVatFromEu: BigDecimal, totalVatFromCorrection: BigDecimal) {
+  val totalVat: BigDecimal = totalVatFromNi + totalVatFromEu + totalVatFromCorrection
 }
+
