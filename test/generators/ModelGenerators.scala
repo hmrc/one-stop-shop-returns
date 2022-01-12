@@ -19,9 +19,10 @@ package generators
 import models._
 import models.corrections.{CorrectionPayload, CorrectionToCountry, PeriodWithCorrections}
 import models.financialdata.Charge
-import models.requests.{CorrectionRequest, VatReturnRequest, VatReturnWithCorrectionRequest}
+import models.requests.{CorrectionRequest, SaveForLaterRequest, VatReturnRequest, VatReturnWithCorrectionRequest}
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalacheck.Arbitrary.arbitrary
+import play.api.libs.json.{JsObject, Json}
 import uk.gov.hmrc.domain.Vrn
 
 import java.time.Instant
@@ -192,5 +193,30 @@ trait ModelGenerators {
         outstandingAmount <- arbitrary[BigDecimal]
         clearedAmount <- arbitrary[BigDecimal]
       } yield Charge(period, originalAmount, outstandingAmount, clearedAmount)
+    }
+
+  implicit val arbitrarySavedUserAnswers: Arbitrary[SavedUserAnswers] =
+    Arbitrary {
+      for {
+        vrn <- arbitrary[Vrn]
+        period <- arbitrary[Period]
+        data = JsObject(Seq(
+          "test" -> Json.toJson("test")
+        ))
+        now = Instant.now
+      } yield SavedUserAnswers(
+        vrn, period, data, now)
+    }
+
+  implicit val arbitrarySaveForLaterRequest: Arbitrary[SaveForLaterRequest] =
+    Arbitrary {
+      for {
+        vrn <- arbitrary[Vrn]
+        period <- arbitrary[Period]
+        data = JsObject(Seq(
+          "test" -> Json.toJson("test")
+        ))
+        now = Instant.now
+      } yield SaveForLaterRequest(vrn, period, data, now)
     }
 }
