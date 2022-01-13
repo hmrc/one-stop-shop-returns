@@ -42,4 +42,7 @@ class SaveForLaterService @Inject()(
     repository.set(answers)
   }
 
+  def get(vrn: Vrn, period: Period) : Future[Option[SavedUserAnswers]] =
+    repository.get(vrn, period)
+
 }

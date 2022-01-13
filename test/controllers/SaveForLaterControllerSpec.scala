@@ -88,4 +88,52 @@ class SaveForLaterControllerSpec
     }
   }
 
+  ".get" - {
+    val period = arbitrary[Period].sample.value
+    val savedAnswers        = arbitrary[SavedUserAnswers].sample.value
+    lazy val request =
+      FakeRequest(GET, routes.SaveForLaterController.get(period).url)
+
+    "must return OK and a response when Saved User Answers are found for the vrn and period" - {
+      val mockService = mock[SaveForLaterService]
+
+      when(mockService.get(any(), any()))
+        .thenReturn(Future.successful(Some(savedAnswers)))
+
+      val app =
+        applicationBuilder
+          .overrides(bind[SaveForLaterService].toInstance(mockService))
+          .build()
+
+      running(app) {
+
+        val result = route(app, request).value
+
+        status(result) mustEqual OK
+        contentAsJson(result) mustBe Json.toJson(savedAnswers)
+        verify(mockService, times(1)).get(any(), any())
+      }
+    }
+
+    "must return Not Found" - {
+      val mockService = mock[SaveForLaterService]
+
+      when(mockService.get(any(), any()))
+        .thenReturn(Future.successful(None))
+
+      val app =
+        applicationBuilder
+          .overrides(bind[SaveForLaterService].toInstance(mockService))
+          .build()
+
+      running(app) {
+
+        val result = route(app, request).value
+
+        status(result) mustEqual NOT_FOUND
+        verify(mockService, times(1)).get(any(), any())
+      }
+    }
+  }
+
 }

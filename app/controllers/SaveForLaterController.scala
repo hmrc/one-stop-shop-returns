@@ -17,9 +17,10 @@
 package controllers
 
 import controllers.actions.{AuthAction, AuthenticatedControllerComponents}
+import models.Period
 import models.requests.SaveForLaterRequest
 import play.api.libs.json.Json
-import play.api.mvc.Action
+import play.api.mvc.{Action, AnyContent}
 import services.SaveForLaterService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
@@ -37,6 +38,14 @@ class SaveForLaterController @Inject()(
     implicit request =>
       saveForLaterService.saveAnswers(request.body).map {
          answers => Created(Json.toJson(answers))
+      }
+  }
+
+  def get(period: Period): Action[AnyContent] = auth.async {
+    implicit request =>
+      saveForLaterService.get(request.vrn, period).map {
+        case None => NotFound
+        case value => Ok(Json.toJson(value))
       }
   }
 }

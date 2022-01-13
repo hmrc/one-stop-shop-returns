@@ -17,7 +17,7 @@
 package services
 
 import generators.Generators
-import models.{SavedUserAnswers, VatReturn}
+import models.{Period, SavedUserAnswers, VatReturn}
 import models.corrections.CorrectionPayload
 import models.requests.{SaveForLaterRequest, VatReturnRequest, VatReturnWithCorrectionRequest}
 import org.mockito.ArgumentMatchers.any
@@ -31,6 +31,7 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import repositories.{SaveForLaterRepository, VatReturnRepository}
+import uk.gov.hmrc.domain.Vrn
 
 import java.time.{Clock, Instant, ZoneId}
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -64,6 +65,27 @@ class SaveForLaterServiceSpec
 
       result mustEqual insertResult
       verify(mockRepository, times(1)).set(any())
+    }
+  }
+
+  ".get" - {
+
+    "must retrieve a single Saved User Answers record" in {
+      val now            = Instant.now
+      val stubClock      = Clock.fixed(now, ZoneId.systemDefault())
+      val answers      = arbitrary[SavedUserAnswers].sample.value
+      val insertResult   = answers
+      val mockRepository = mock[SaveForLaterRepository]
+      val vrn = arbitrary[Vrn].sample.value
+      val period = arbitrary[Period].sample.value
+
+      when(mockRepository.get(any(), any())) thenReturn Future.successful(Some(answers))
+      val service = new SaveForLaterService(mockRepository, stubClock)
+
+      val result = service.get(vrn, period).futureValue
+      result mustBe Some(answers)
+      verify(mockRepository, times(1)).get(vrn, period)
+
     }
   }
 }
