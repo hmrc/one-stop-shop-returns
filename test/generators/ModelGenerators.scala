@@ -217,6 +217,6 @@ trait ModelGenerators {
           "test" -> Json.toJson("test")
         ))
         now = Instant.now
-      } yield SaveForLaterRequest(vrn, period, data, now)
+      } yield SaveForLaterRequest(vrn, period, data)
     }
 }

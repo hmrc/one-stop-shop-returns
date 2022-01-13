@@ -52,10 +52,10 @@ class SaveForLaterServiceSpec
       val now            = Instant.now
       val stubClock      = Clock.fixed(now, ZoneId.systemDefault())
       val answers      = arbitrary[SavedUserAnswers].sample.value
-      val insertResult   = Gen.oneOf(Some(answers), None).sample.value
+      val insertResult   = answers
       val mockRepository = mock[SaveForLaterRepository]
 
-      when(mockRepository.insert(any())) thenReturn Future.successful(insertResult)
+      when(mockRepository.set(any())) thenReturn Future.successful(insertResult)
 
       val request = arbitrary[SaveForLaterRequest].sample.value
       val service = new SaveForLaterService(mockRepository, stubClock)
@@ -63,7 +63,7 @@ class SaveForLaterServiceSpec
       val result = service.saveAnswers(request).futureValue
 
       result mustEqual insertResult
-      verify(mockRepository, times(1)).insert(any())
+      verify(mockRepository, times(1)).set(any())
     }
   }
 }

@@ -15,6 +15,7 @@ import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.mongo.test.{CleanMongoCollectionSupport, DefaultPlayMongoRepositorySupport}
 import utils.StringUtils
 
+import java.time.{Clock, Instant, ZoneId}
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class SaveForLaterRepositorySpec
@@ -31,6 +32,8 @@ class SaveForLaterRepositorySpec
   private val encryptor = new SavedUserAnswersEncryptor(cipher)
   private val appConfig = mock[AppConfig]
   private val secretKey = "VqmXp7yigDFxbCUdDdNZVIvbW6RgPNJsliv6swQNCL8="
+  private val instant = Instant.now
+  private val stubClock: Clock = Clock.fixed(instant, ZoneId.systemDefault)
 
   when(appConfig.encryptionKey) thenReturn secretKey
   
@@ -41,7 +44,7 @@ class SaveForLaterRepositorySpec
       appConfig = appConfig
     )
 
-  ".insert savedAnswers" - {
+  ".set savedAnswers" - {
 
     "must insert returns for the same VRN but different periods" in {
 
@@ -51,14 +54,14 @@ class SaveForLaterRepositorySpec
         period    = answers2Period
       )
 
-      val insertResult1 = repository.insert(answers1).futureValue
-      val insertReturn2 = repository.insert(answers2).futureValue
+      val insertResult1 = repository.set(answers1).futureValue
+      val insertReturn2 = repository.set(answers2).futureValue
       val databaseRecords = findAll().futureValue
       val decryptedDatabaseRecords =
         databaseRecords.map(e => encryptor.decryptAnswers(e, e.vrn, secretKey))
 
-      insertResult1 mustBe Some(answers1)
-      insertReturn2 mustBe Some(answers2)
+      insertResult1 mustBe (answers1)
+      insertReturn2 mustBe (answers2)
       decryptedDatabaseRecords must contain theSameElementsAs Seq(answers1, answers2)
     }
 
@@ -69,31 +72,31 @@ class SaveForLaterRepositorySpec
         vrn       = vrn2
         )
 
-      val insertResult1 = repository.insert(answers1).futureValue
-      val insertReturn2 = repository.insert(answers2).futureValue
+      val insertResult1 = repository.set(answers1).futureValue
+      val insertReturn2 = repository.set(answers2).futureValue
       val databaseRecords = findAll().futureValue
       val decryptedDatabaseRecords =
         databaseRecords.map(e => encryptor.decryptAnswers(e, e.vrn, secretKey))
 
-      insertResult1 mustBe Some(answers1)
-      insertReturn2 mustBe Some(answers2)
+      insertResult1 mustBe (answers1)
+      insertReturn2 mustBe (answers2)
       decryptedDatabaseRecords must contain theSameElementsAs Seq(answers1, answers2)
     }
 
-    "must not insert a saved answers with the same VRN and period" in {
+    "must replace saved answers with the same VRN and period" in {
 
       val answers = arbitrary[SavedUserAnswers].sample.value
+      val answers2 = answers.copy(lastUpdated = Instant.now())
+      val insertResult1 = repository.set(answers).futureValue
+      val insertResult2 = repository.set(answers2).futureValue
 
-      val insertResult1 = repository.insert(answers).futureValue
-      val insertResult2 = repository.insert(answers).futureValue
-
-      insertResult1 mustBe Some(answers)
-      insertResult2 mustBe None
+      insertResult1 mustBe answers
+      insertResult2 mustBe answers2
 
       val decryptedDatabaseRecords =
         findAll().futureValue.map(e => encryptor.decryptAnswers(e, e.vrn, secretKey))
 
-      decryptedDatabaseRecords must contain only answers
+      decryptedDatabaseRecords must contain only answers2
     }
   }
   

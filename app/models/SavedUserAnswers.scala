@@ -17,8 +17,10 @@
 package models
 
 import crypto.EncryptedValue
-import play.api.libs.json.{JsObject, JsValue, Json, OFormat}
+import play.api.libs.json.JsPath.\
+import play.api.libs.json.{JsObject, JsValue, Json, OFormat, OWrites, Reads, __}
 import uk.gov.hmrc.domain.Vrn
+import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 
 import java.time.{Instant, LocalDate}
 
@@ -43,5 +45,29 @@ case class EncryptedSavedUserAnswers(
 
 object EncryptedSavedUserAnswers {
 
-  implicit val format: OFormat[EncryptedSavedUserAnswers] = Json.format[EncryptedSavedUserAnswers]
+  val reads: Reads[EncryptedSavedUserAnswers] = {
+
+    import play.api.libs.functional.syntax._
+
+    (
+      (__ \ "vrn").read[Vrn] and
+        (__ \ "period").read[Period] and
+        (__ \ "data").read[EncryptedValue] and
+        (__ \ "lastUpdated").read(MongoJavatimeFormats.instantFormat)
+      ) (EncryptedSavedUserAnswers.apply _)
+  }
+
+  val writes: OWrites[EncryptedSavedUserAnswers] = {
+
+    import play.api.libs.functional.syntax._
+
+    (
+      (__ \ "vrn").write[Vrn] and
+        (__ \ "period").write[Period] and
+        (__ \ "data").write[EncryptedValue] and
+        (__ \ "lastUpdated").write(MongoJavatimeFormats.instantFormat)
+      ) (unlift(EncryptedSavedUserAnswers.unapply))
+  }
+
+  implicit val format: OFormat[EncryptedSavedUserAnswers] = OFormat(reads, writes)
 }

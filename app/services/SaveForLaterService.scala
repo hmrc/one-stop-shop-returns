@@ -32,14 +32,14 @@ class SaveForLaterService @Inject()(
                                 )
                                    (implicit ec: ExecutionContext) {
 
-  def saveAnswers(request: SaveForLaterRequest): Future[Option[SavedUserAnswers]] = {
+  def saveAnswers(request: SaveForLaterRequest): Future[SavedUserAnswers] = {
     val answers = SavedUserAnswers(
       vrn = request.vrn,
       period = request.period,
       data = request.data,
-      lastUpdated = request.lastUpdated
+      lastUpdated = Instant.now(clock)
     )
-    repository.insert(answers)
+    repository.set(answers)
   }
 
 }

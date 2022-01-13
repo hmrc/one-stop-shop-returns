@@ -20,12 +20,18 @@ import config.AppConfig
 import crypto.SavedUserAnswersEncryptor
 import logging.Logging
 import models.{EncryptedSavedUserAnswers, Period, SavedUserAnswers}
-import org.mongodb.scala.model.{Filters, IndexModel, IndexOptions, Indexes}
+import org.mongodb.scala.bson.conversions.Bson
+import org.mongodb.scala.model.{Filters, IndexModel, IndexOptions, Indexes, ReplaceOptions}
+import play.api.libs.json.Format
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.mongo.MongoComponent
+import uk.gov.hmrc.mongo.play.json.Codecs.JsonOps
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
+import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 import uk.gov.hmrc.mongo.transaction.{TransactionConfiguration, Transactions}
 
+import java.time.{Clock, Instant}
+import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -41,35 +47,46 @@ class SaveForLaterRepository @Inject()(
     domainFormat = EncryptedSavedUserAnswers.format,
     indexes = Seq(
       IndexModel(
+        Indexes.ascending("lastUpdated"),
+        IndexOptions()
+          .name("lastUpdatedIdx")
+          .expireAfter(appConfig.cacheTtl, TimeUnit.DAYS)
+      ),
+      IndexModel(
         Indexes.ascending("vrn", "period"),
         IndexOptions()
           .name("userAnswersReferenceIndex")
           .unique(true)
       )
     )
-  ) with Transactions with Logging {
+  ) with Logging {
 
   import uk.gov.hmrc.mongo.play.json.Codecs.toBson
 
-  private implicit val tc: TransactionConfiguration = TransactionConfiguration.strict
+  implicit val instantFormat: Format[Instant] = MongoJavatimeFormats.instantFormat
+
   private val encryptionKey = appConfig.encryptionKey
 
-  def insert(savedUserAnswers: SavedUserAnswers): Future[Option[(SavedUserAnswers)]] = {
+  private def byId(id: String): Bson = Filters.equal("_id", id)
+
+  private def byVrnAndPeriod(vrn: Vrn, period: Period): Bson =
+    Filters.and(
+      Filters.equal("vrn", vrn.vrn),
+      Filters.equal("period", period.toBson(legacyNumbers = false))
+    )
+
+  def set(savedUserAnswers: SavedUserAnswers): Future[SavedUserAnswers] = {
+
     val encryptedAnswers = encryptor.encryptAnswers(savedUserAnswers, savedUserAnswers.vrn, encryptionKey)
 
-    for {
-      _ <- ensureIndexes
-      result <- withSessionAndTransaction { session =>
-        for {
-          _ <- collection.insertOne(session, encryptedAnswers).toFuture()
-        } yield Some(savedUserAnswers)
-      }.recover {
-        case e: Exception =>
-          logger.warn(s"There was an error while inserting saved user answers ${e.getMessage}", e)
-          None
-      }
-    } yield result
-
+    collection
+      .replaceOne(
+        filter      = byVrnAndPeriod(savedUserAnswers.vrn, savedUserAnswers.period),
+        replacement = encryptedAnswers,
+        options     = ReplaceOptions().upsert(true)
+      )
+      .toFuture
+      .map(_ => savedUserAnswers)
   }
 
   def get(vrn: Vrn): Future[Seq[SavedUserAnswers]] =
@@ -93,4 +110,10 @@ class SaveForLaterRepository @Inject()(
         answers =>
           encryptor.decryptAnswers(answers, answers.vrn, encryptionKey)
       })
+
+  def clear(id: String): Future[Boolean] =
+    collection
+      .deleteOne(byId(id))
+      .toFuture
+      .map(_ => true)
 }

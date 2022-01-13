@@ -56,7 +56,7 @@ class SaveForLaterControllerSpec
       val mockService = mock[SaveForLaterService]
 
       when(mockService.saveAnswers(any()))
-        .thenReturn(Future.successful(Some(savedAnswers)))
+        .thenReturn(Future.successful(savedAnswers))
 
       val app =
         applicationBuilder
@@ -70,24 +70,6 @@ class SaveForLaterControllerSpec
         status(result) mustEqual CREATED
         contentAsJson(result) mustBe Json.toJson(savedAnswers)
         verify(mockService, times(1)).saveAnswers(eqTo(s4lRequest))
-      }
-    }
-
-    "must respond with Conflict when trying to save a duplicate" in {
-
-      val mockService = mock[SaveForLaterService]
-      when(mockService.saveAnswers(any())).thenReturn(Future.successful(None))
-
-      val app =
-        applicationBuilder
-          .overrides(bind[SaveForLaterService].toInstance(mockService))
-          .build()
-
-      running(app) {
-
-        val result = route(app, request).value
-
-        status(result) mustEqual CONFLICT
       }
     }
 
