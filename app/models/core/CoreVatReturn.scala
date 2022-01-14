@@ -107,7 +107,7 @@ object CoreVatReturn {
 
 case class CoreErrorResponse(
                               timestamp: Instant,
-                              transactionId: UUID,
+                              transactionId: Option[UUID],
                               error: String,
                               errorMessage: String
                             ) {

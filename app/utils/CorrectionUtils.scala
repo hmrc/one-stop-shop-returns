@@ -16,8 +16,8 @@
 
 package utils
 
-import models.corrections.CorrectionPayload
 import models.{Country, CountryAmounts, VatReturn}
+import models.corrections.CorrectionPayload
 
 object CorrectionUtils {
 
@@ -37,12 +37,12 @@ object CorrectionUtils {
 
     correctionAmountsToAllCountries ++ groupByCountryAndSum(vatReturn).map {
       case (country, amount) =>
-        val correctionTotalAmount =correctionAmountsToAllCountries.getOrElse(country, CountryAmounts(0, 0, 0)).totalVatFromCorrection
+        val correctionTotalAmount = correctionAmountsToAllCountries.getOrElse(country, CountryAmounts(0, 0, 0)).totalVatFromCorrection
         country -> amount.copy(totalVatFromCorrection = correctionTotalAmount)
     }
   }
 
-  def groupByCountryAndSum(vatReturn: VatReturn): Map[Country, CountryAmounts] = {
+  private def groupByCountryAndSum(vatReturn: VatReturn): Map[Country, CountryAmounts] = {
     val returnAmountsToAllCountriesFromNi = (for {
       salesFromNi <- vatReturn.salesFromNi
     } yield {

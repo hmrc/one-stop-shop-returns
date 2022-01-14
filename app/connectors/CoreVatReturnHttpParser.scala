@@ -41,7 +41,7 @@ object CoreVatReturnHttpParser extends Logging {
               Left(value)
             case _ =>
               logger.error(s"Unexpected error response from core $url, received status $status, body of response was: ${response.body}")
-              Left(CoreErrorResponse(Instant.now(), UUID.randomUUID(), s"UNEXPECTED_$status", response.body))
+              Left(CoreErrorResponse(Instant.now(), None, s"UNEXPECTED_$status", response.body))
           }
       }
   }
