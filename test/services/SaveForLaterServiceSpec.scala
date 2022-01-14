@@ -88,4 +88,23 @@ class SaveForLaterServiceSpec
 
     }
   }
+
+  ".delete" - {
+
+    "must delete a single Saved User Answers record" in {
+      val now            = Instant.now
+      val stubClock      = Clock.fixed(now, ZoneId.systemDefault())
+      val mockRepository = mock[SaveForLaterRepository]
+      val vrn = arbitrary[Vrn].sample.value
+      val period = arbitrary[Period].sample.value
+
+      when(mockRepository.clear(any(), any())) thenReturn Future.successful(true)
+      val service = new SaveForLaterService(mockRepository, stubClock)
+
+      val result = service.delete(vrn, period).futureValue
+      result mustBe true
+      verify(mockRepository, times(1)).clear(vrn, period)
+
+    }
+  }
 }

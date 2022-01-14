@@ -136,4 +136,31 @@ class SaveForLaterControllerSpec
     }
   }
 
+  ".delete" - {
+    val period = arbitrary[Period].sample.value
+    lazy val request =
+      FakeRequest(GET, routes.SaveForLaterController.delete(period).url)
+
+    "must return OK" - {
+      val mockService = mock[SaveForLaterService]
+
+      when(mockService.delete(any(), any()))
+        .thenReturn(Future.successful(true))
+
+      val app =
+        applicationBuilder
+          .overrides(bind[SaveForLaterService].toInstance(mockService))
+          .build()
+
+      running(app) {
+
+        val result = route(app, request).value
+
+        status(result) mustEqual OK
+        contentAsJson(result) mustBe Json.toJson(true)
+        verify(mockService, times(1)).delete(any(), any())
+      }
+    }
+  }
+
 }

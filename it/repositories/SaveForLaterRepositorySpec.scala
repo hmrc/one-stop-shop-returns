@@ -148,4 +148,18 @@ class SaveForLaterRepositorySpec
       result must not be defined
     }
   }
+
+  ".clear" - {
+
+    "must return true when Saved Answers Record is deleted" in {
+
+      val answers = arbitrary[SavedUserAnswers].sample.value
+
+      insert(encryptor.encryptAnswers(answers, answers.vrn, secretKey)).futureValue
+
+      val result = repository.clear(answers.vrn, answers.period).futureValue
+
+      result mustEqual true
+    }
+  }
 }
