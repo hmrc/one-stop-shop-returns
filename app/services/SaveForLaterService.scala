@@ -45,4 +45,7 @@ class SaveForLaterService @Inject()(
   def get(vrn: Vrn, period: Period) : Future[Option[SavedUserAnswers]] =
     repository.get(vrn, period)
 
+  def delete(vrn: Vrn, period: Period): Future[Boolean] =
+    repository.clear(vrn, period)
+
 }

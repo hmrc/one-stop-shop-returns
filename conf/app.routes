@@ -20,3 +20,4 @@ GET         /corrections/:period                                    controllers.
 GET         /corrections-for-period/:period                         controllers.CorrectionController.getByCorrectionPeriod(period: Period)
 POST        /save-for-later                                         controllers.SaveForLaterController.post
 GET         /save-for-later/:period                                 controllers.SaveForLaterController.get(period:Period)
+GET         /save-for-later/delete/:period                          controllers.SaveForLaterController.delete(period:Period)

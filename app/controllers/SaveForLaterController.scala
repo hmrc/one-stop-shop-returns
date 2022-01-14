@@ -48,4 +48,10 @@ class SaveForLaterController @Inject()(
         case value => Ok(Json.toJson(value))
       }
   }
+
+  def delete(period: Period): Action[AnyContent] = auth.async {
+    implicit request =>
+      saveForLaterService.delete(request.vrn, period).map(
+        result => Ok(Json.toJson(result)))
+  }
 }

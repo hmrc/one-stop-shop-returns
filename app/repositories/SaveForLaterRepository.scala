@@ -67,8 +67,6 @@ class SaveForLaterRepository @Inject()(
 
   private val encryptionKey = appConfig.encryptionKey
 
-  private def byId(id: String): Bson = Filters.equal("_id", id)
-
   private def byVrnAndPeriod(vrn: Vrn, period: Period): Bson =
     Filters.and(
       Filters.equal("vrn", vrn.vrn),
@@ -111,9 +109,9 @@ class SaveForLaterRepository @Inject()(
           encryptor.decryptAnswers(answers, answers.vrn, encryptionKey)
       })
 
-  def clear(id: String): Future[Boolean] =
+  def clear(vrn: Vrn, period: Period): Future[Boolean] =
     collection
-      .deleteOne(byId(id))
+      .deleteOne(byVrnAndPeriod(vrn, period))
       .toFuture
       .map(_ => true)
 }
