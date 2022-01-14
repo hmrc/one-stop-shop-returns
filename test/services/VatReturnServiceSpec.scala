@@ -94,7 +94,7 @@ class VatReturnServiceSpec
     }
 
     "must error when core enabled and fails to send to core" in {
-      val coreErrorResponse = CoreErrorResponse(Instant.now(), UUID.randomUUID(), "ERROR", "There was an error")
+      val coreErrorResponse = CoreErrorResponse(Instant.now(), None, "ERROR", "There was an error")
       val mockRepository = mock[VatReturnRepository]
 
       when(appConfig.coreVatReturnsEnabled) thenReturn true
