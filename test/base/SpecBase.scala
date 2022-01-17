@@ -4,6 +4,7 @@ import controllers.actions.{AuthAction, FakeAuthAction}
 import generators.Generators
 import models.{Country, EuTaxIdentifier, EuTaxIdentifierType, PaymentReference, Period, Quarter, ReturnReference, SalesDetails, SalesFromEuCountry, SalesToCountry, VatOnSales, VatRate, VatRateType, VatReturn}
 import models.VatOnSalesChoice.Standard
+import models.core.{CoreCorrection, CoreMsconSupply, CoreMsestSupply, CorePeriod, CoreSupply, CoreTraderId, CoreVatReturn}
 import models.corrections.CorrectionPayload
 import org.scalatest.{OptionValues, TryValues}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
@@ -101,6 +102,46 @@ trait SpecBase
     )
 
   val stubClock: Clock = Clock.fixed(LocalDate.now.atStartOfDay(ZoneId.systemDefault).toInstant, ZoneId.systemDefault)
+
+  val coreVatReturn: CoreVatReturn = CoreVatReturn(
+    vatReturnReferenceNumber = completeVatReturn.reference.value,
+    version = completeVatReturn.lastUpdated.toString,
+    traderId = CoreTraderId(vrn.vrn, "XI"),
+    period = CorePeriod(2021, 3),
+    startDate = LocalDate.now(stubClock),
+    endDate = LocalDate.now(stubClock),
+    submissionDateTime = Instant.now(stubClock),
+    totalAmountVatDueGBP = BigDecimal(10),
+    msconSupplies = List(CoreMsconSupply(
+      "DE",
+      BigDecimal(10),
+      BigDecimal(10),
+      BigDecimal(10),
+      BigDecimal(-10),
+      List(CoreSupply(
+        "GOODS",
+        BigDecimal(10),
+        "STANDARD",
+        BigDecimal(10),
+        BigDecimal(10)
+      )),
+      List(CoreMsestSupply(
+        Some("FR"),
+        None,
+        List(CoreSupply(
+          "GOODS",
+          BigDecimal(10),
+          "STANDARD",
+          BigDecimal(10),
+          BigDecimal(10)
+        ))
+      )),
+      List(CoreCorrection(
+        CorePeriod(2021, 2),
+        BigDecimal(-10)
+      ))
+    ))
+  )
 
   protected def applicationBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()

@@ -24,6 +24,7 @@ import models.corrections.CorrectionPayload
 import models.requests.{VatReturnRequest, VatReturnWithCorrectionRequest}
 import repositories.VatReturnRepository
 import uk.gov.hmrc.domain.Vrn
+import uk.gov.hmrc.http.HeaderCarrier
 
 import java.time.{Clock, Instant}
 import javax.inject.Inject
@@ -38,7 +39,7 @@ class VatReturnService @Inject()(
                                 )
                                 (implicit ec: ExecutionContext) extends Logging {
 
-  def createVatReturn(request: VatReturnRequest): Future[Option[VatReturn]] = {
+  def createVatReturn(request: VatReturnRequest)(implicit hc: HeaderCarrier): Future[Option[VatReturn]] = {
     val vatReturn = VatReturn(
       vrn = request.vrn,
       period = request.period,
@@ -65,7 +66,28 @@ class VatReturnService @Inject()(
     sendToCoreIfEnabled(vatReturn, emptyCorrectionPayload, insertPayload)
   }
 
-  def createVatReturnWithCorrection(request: VatReturnWithCorrectionRequest): Future[Option[(VatReturn, CorrectionPayload)]] = {
+  private def sendToCoreIfEnabled[A](vatReturn: VatReturn, correctionPayload: CorrectionPayload, block: => Future[A])(implicit hc: HeaderCarrier): Future[A] = {
+    if (appConfig.coreVatReturnsEnabled) {
+
+      for {
+        coreVatReturn <- coreVatReturnService.toCore(vatReturn, correctionPayload)
+        submissionResult <- coreVatReturnConnector.submit(coreVatReturn).flatMap {
+          case Right(_) =>
+            logger.info("Successful submission of vat return to core")
+            block
+          case Left(coreErrorResponse) =>
+            logger.error(s"Error occurred while submitting to core $coreErrorResponse", coreErrorResponse.asException)
+            Future.failed(new Exception(coreErrorResponse.asException))
+        }
+      } yield submissionResult
+
+    } else {
+      logger.info("Skipping submission of vat return to core")
+      block
+    }
+  }
+
+  def createVatReturnWithCorrection(request: VatReturnWithCorrectionRequest)(implicit hc: HeaderCarrier): Future[Option[(VatReturn, CorrectionPayload)]] = {
     val vatReturn = VatReturn(
       vrn = request.vatReturnRequest.vrn,
       period = request.vatReturnRequest.period,
@@ -90,23 +112,6 @@ class VatReturnService @Inject()(
     val insertPayload = repository.insert(vatReturn, correctionPayload)
 
     sendToCoreIfEnabled(vatReturn, correctionPayload, insertPayload)
-  }
-
-  private def sendToCoreIfEnabled[A](vatReturn: VatReturn, correctionPayload: CorrectionPayload, block: => Future[A]): Future[A] = {
-    if (appConfig.coreVatReturnsEnabled) {
-      val coreVatReturn = coreVatReturnService.toCore(vatReturn, correctionPayload)
-      coreVatReturnConnector.submit(coreVatReturn).flatMap {
-        case Right(_) =>
-          logger.info("Successful submission of vat return to core")
-          block
-        case Left(coreErrorResponse) =>
-          logger.error(s"Error occurred while submitting to core $coreErrorResponse", coreErrorResponse.asException)
-          Future.failed(new Exception(coreErrorResponse.asException))
-      }
-    } else {
-      logger.info("Skipping submission of vat return to core")
-      block
-    }
   }
 
   def get(vrn: Vrn): Future[Seq[VatReturn]] =

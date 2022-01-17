@@ -16,9 +16,9 @@
 
 package services
 
+import base.SpecBase
 import config.AppConfig
 import connectors.CoreVatReturnConnector
-import generators.Generators
 import models.VatReturn
 import models.core.CoreErrorResponse
 import models.corrections.CorrectionPayload
@@ -27,34 +27,22 @@ import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{times, verify, when}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
-import org.scalatest.OptionValues
-import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.freespec.AnyFreeSpec
-import org.scalatest.matchers.must.Matchers
-import org.scalatestplus.mockito.MockitoSugar
-import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import repositories.VatReturnRepository
+import uk.gov.hmrc.http.HeaderCarrier
 
-import java.time.{Clock, Instant, ZoneId}
+import java.time.Instant
 import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 
 class VatReturnServiceSpec
-  extends AnyFreeSpec
-    with Matchers
-    with MockitoSugar
-    with ScalaCheckPropertyChecks
-    with Generators
-    with OptionValues
-    with ScalaFutures {
+  extends SpecBase {
 
-  private val now = Instant.now
-  private val stubClock = Clock.fixed(now, ZoneId.systemDefault())
   private val coreVatReturnService = mock[CoreVatReturnService]
   private val coreVatReturnConnector = mock[CoreVatReturnConnector]
   private val appConfig = mock[AppConfig]
   private val vatReturn = arbitrary[VatReturn].sample.value
+  implicit private lazy val hc: HeaderCarrier = HeaderCarrier()
 
   ".createVatReturn" - {
 
@@ -99,7 +87,7 @@ class VatReturnServiceSpec
 
       when(appConfig.coreVatReturnsEnabled) thenReturn true
       when(coreVatReturnConnector.submit(any())) thenReturn Future.failed(coreErrorResponse.asException)
-
+      when(coreVatReturnService.toCore(any(), any())(any())) thenReturn Future.successful(coreVatReturn)
 
       val request = arbitrary[VatReturnWithCorrectionRequest].sample.value
       val service = new VatReturnService(mockRepository, coreVatReturnService, coreVatReturnConnector, appConfig, stubClock)

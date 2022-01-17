@@ -1,6 +1,7 @@
 package services
 
 import base.SpecBase
+import connectors.RegistrationConnector
 import models.corrections.{CorrectionPayload, CorrectionToCountry, PeriodWithCorrections}
 import models.core.{CoreCorrection, CoreEuTraderId, CoreMsconSupply, CoreMsestSupply, CorePeriod, CoreSupply, CoreTraderId, CoreVatReturn}
 import models.{Country, PaymentReference, Period, Quarter, ReturnReference, SalesDetails, SalesFromEuCountry, SalesToCountry, VatReturn}
@@ -8,6 +9,7 @@ import org.mockito.Mockito
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalatest.BeforeAndAfterEach
+import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import java.time.Instant
@@ -16,7 +18,9 @@ import scala.math.BigDecimal.RoundingMode
 class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach {
 
   private val vatReturnSalesService = mock[VatReturnSalesService]
-  private val service = new CoreVatReturnService(vatReturnSalesService)
+  private val registrationConnector = mock[RegistrationConnector]
+  private val service = new CoreVatReturnService(vatReturnSalesService, registrationConnector)
+  implicit private lazy val hc: HeaderCarrier = HeaderCarrier()
 
   override def beforeEach(): Unit = {
     Mockito.reset(vatReturnSalesService)
