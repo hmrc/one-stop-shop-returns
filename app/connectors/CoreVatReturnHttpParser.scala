@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ object CoreVatReturnHttpParser extends Logging {
               Left(value)
             case _ =>
               logger.error(s"Unexpected error response from core $url, received status $status, body of response was: ${response.body}")
-              Left(CoreErrorResponse(Instant.now(), UUID.randomUUID(), s"UNEXPECTED_$status", response.body))
+              Left(CoreErrorResponse(Instant.now(), None, s"UNEXPECTED_$status", response.body))
           }
       }
   }

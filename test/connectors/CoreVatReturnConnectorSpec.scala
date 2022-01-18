@@ -111,7 +111,7 @@ class CoreVatReturnConnectorSpec extends SpecBase with WireMockHelper {
           val connector = app.injector.instanceOf[CoreVatReturnConnector]
           val result = connector.submit(coreVatReturn).futureValue
 
-          val expectedResponse = CoreErrorResponse(Instant.parse(timestamp),  UUID.fromString(uuid), "OSS_405", "Method Not Allowed")
+          val expectedResponse = CoreErrorResponse(Instant.parse(timestamp),  Some(UUID.fromString(uuid)), "OSS_405", "Method Not Allowed")
 
           result mustBe Left(expectedResponse)
         }
