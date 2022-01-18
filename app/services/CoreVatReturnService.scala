@@ -21,7 +21,7 @@ import logging.Logging
 import models._
 import models.core._
 import models.corrections.{CorrectionPayload, PeriodWithCorrections}
-import models.domain.{Registration, RegistrationWithFixedEstablishment, RegistrationWithoutFixedEstablishment}
+import models.domain.{EuVatRegistration, Registration, RegistrationWithFixedEstablishment, RegistrationWithoutFixedEstablishment}
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.CorrectionUtils
 
@@ -154,11 +154,13 @@ class CoreVatReturnService @Inject()(
 
   private def getEuTraderIdForCountry(country: Country, registration: Registration): Option[CoreEuTraderId] = {
     val matchedRegistration = registration.euRegistrations.filter {
-      case registrationWithFE: RegistrationWithFixedEstablishment => registrationWithFE.country == country
-      case registrationWithoutFE: RegistrationWithoutFixedEstablishment => registrationWithoutFE.country == country
+      case euRegistration: EuVatRegistration => euRegistration.country == country
+      case euRegistrationWithFE: RegistrationWithFixedEstablishment => euRegistrationWithFE.country == country
+      case euRegistrationWithoutFE: RegistrationWithoutFixedEstablishment => euRegistrationWithoutFE.country == country
     }
 
     matchedRegistration.headOption.flatMap {
+      case euRegistration: EuVatRegistration => Some(CoreEuTraderId(euRegistration.vatNumber, euRegistration.country.code))
       case registrationWithFE: RegistrationWithFixedEstablishment => Some(CoreEuTraderId(registrationWithFE.taxIdentifier.value, registrationWithFE.country.code))
       case _: RegistrationWithoutFixedEstablishment => None
     }

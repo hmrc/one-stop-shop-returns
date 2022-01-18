@@ -2,17 +2,20 @@ package services
 
 import base.SpecBase
 import connectors.RegistrationConnector
+import models._
+import models.core._
 import models.corrections.{CorrectionPayload, CorrectionToCountry, PeriodWithCorrections}
-import models.core.{CoreCorrection, CoreEuTraderId, CoreMsconSupply, CoreMsestSupply, CorePeriod, CoreSupply, CoreTraderId, CoreVatReturn}
-import models.{Country, PaymentReference, Period, Quarter, ReturnReference, SalesDetails, SalesFromEuCountry, SalesToCountry, VatReturn}
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalatest.BeforeAndAfterEach
+import testutils.RegistrationData
 import uk.gov.hmrc.http.HeaderCarrier
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import java.time.Instant
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 import scala.math.BigDecimal.RoundingMode
 
 class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach {
@@ -71,15 +74,11 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach {
       lastUpdated = now
     )
 
-    "convert from VatReturn to CoreVatReturn" in {
+    "convert from VatReturn to CoreVatReturn" - {
 
       val correctionPayload = CorrectionPayload(vrn, period, List.empty, now, now)
 
       val expectedTotal = salesDetails1.vatOnSales.amount + salesDetails2.vatOnSales.amount + salesDetails3.vatOnSales.amount
-
-      when(vatReturnSalesService.getTotalVatOnSalesAfterCorrection(vatReturn, Some(correctionPayload))).thenReturn(
-        expectedTotal
-      )
 
       val expectedResultCoreVatReturn = CoreVatReturn(
         vatReturnReferenceNumber = returnReference.value,
@@ -146,9 +145,28 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach {
         )
       )
 
-      val result = service.toCore(vatReturn, correctionPayload)
+      "successful when registration returns a registration" in {
+        when(vatReturnSalesService.getTotalVatOnSalesAfterCorrection(vatReturn, Some(correctionPayload))).thenReturn(
+          expectedTotal
+        )
+        when(registrationConnector.getRegistration()(any())) thenReturn Future.successful(Some(RegistrationData.registration))
 
-      result mustBe expectedResultCoreVatReturn
+        val result = service.toCore(vatReturn, correctionPayload).futureValue
+
+        result mustBe expectedResultCoreVatReturn
+      }
+
+      "fails when registration returns empty" in {
+        when(vatReturnSalesService.getTotalVatOnSalesAfterCorrection(vatReturn, Some(correctionPayload))).thenReturn(
+          expectedTotal
+        )
+        when(registrationConnector.getRegistration()(any())) thenReturn Future.successful(None)
+
+        val result = service.toCore(vatReturn, correctionPayload)
+
+        whenReady(result.failed) { exp => exp.getMessage mustBe "Unable to get registration" }
+      }
+
     }
 
     "convert from VatReturn and correctionPayload to CoreVatReturn" in {
@@ -259,8 +277,9 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach {
         )
       )
 
+      when(registrationConnector.getRegistration()(any())) thenReturn Future.successful(Some(RegistrationData.registration))
 
-      service.toCore(vatReturn, correctionPayload) mustBe expectedResultCoreVatReturn
+      service.toCore(vatReturn, correctionPayload).futureValue mustBe expectedResultCoreVatReturn
     }
   }
 
