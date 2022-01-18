@@ -30,9 +30,12 @@ class TestOnlyController @Inject()(
   extends BackendController(cc) {
 
   def deleteAccounts(): Action[AnyContent] = Action.async {
+
+    val vrnPattern = "^1110".r
+
     for {
-      res1 <- correctionRepository.collection.deleteMany(Filters.regex("vrn", "/^1110")).toFutureOption()
-      res2 <- vatReturnRepository.collection.deleteMany(Filters.regex("vrn", "/^1110")).toFutureOption()
+      res1 <- correctionRepository.collection.deleteMany(Filters.regex("vrn", vrnPattern)).toFutureOption()
+      res2 <- vatReturnRepository.collection.deleteMany(Filters.regex("vrn", vrnPattern)).toFutureOption()
     } yield {
       Ok("Deleted Perf Tests Accounts MongoDB")
     }
