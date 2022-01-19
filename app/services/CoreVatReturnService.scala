@@ -60,7 +60,7 @@ class CoreVatReturnService @Inject()(
         ))
       case _ =>
         logger.error("Unable to get registration")
-        Future.failed(new Exception("Unable to get registration")) // TODO should we do this or simple skip trying to get any msest data?
+        Future.failed(new Exception("Unable to get registration"))
     }
 
 
