@@ -55,7 +55,7 @@ class VatReturnControllerSpec
     "must save a VAT return and respond with Created" in {
       val mockService = mock[VatReturnService]
 
-      when(mockService.createVatReturn(any()))
+      when(mockService.createVatReturn (any())(any()))
         .thenReturn(Future.successful(Some(vatReturn)))
 
       val app =
@@ -69,14 +69,14 @@ class VatReturnControllerSpec
 
         status(result) mustEqual CREATED
         contentAsJson(result) mustBe Json.toJson(vatReturn)
-        verify(mockService, times(1)).createVatReturn(eqTo(vatReturnRequest))
+        verify(mockService, times(1)).createVatReturn(eqTo(vatReturnRequest))(any())
       }
     }
 
     "must respond with Conflict when trying to save a duplicate" in {
 
       val mockService = mock[VatReturnService]
-      when(mockService.createVatReturn(any())).thenReturn(Future.successful(None))
+      when(mockService.createVatReturn(any())(any())).thenReturn(Future.successful(None))
 
       val app =
         applicationBuilder
@@ -119,7 +119,7 @@ class VatReturnControllerSpec
     "must save a VAT return and respond with Created" in {
       val mockService = mock[VatReturnService]
 
-      when(mockService.createVatReturnWithCorrection(any()))
+      when(mockService.createVatReturnWithCorrection(any())(any()))
         .thenReturn(Future.successful(Some((vatReturn, correctionPayload))))
 
       val app =
@@ -133,14 +133,14 @@ class VatReturnControllerSpec
 
         status(result) mustEqual CREATED
         contentAsJson(result) mustBe Json.toJson((vatReturn, correctionPayload))
-        verify(mockService, times(1)).createVatReturnWithCorrection(eqTo(vatReturnWithCorrectionRequest))
+        verify(mockService, times(1)).createVatReturnWithCorrection(eqTo(vatReturnWithCorrectionRequest))(any())
       }
     }
 
     "must respond with Conflict when trying to save a duplicate" in {
 
       val mockService = mock[VatReturnService]
-      when(mockService.createVatReturnWithCorrection(any())).thenReturn(Future.successful(None))
+      when(mockService.createVatReturnWithCorrection(any())(any())).thenReturn(Future.successful(None))
 
       val app =
         applicationBuilder

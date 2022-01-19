@@ -16,44 +16,57 @@
 
 package services
 
+import connectors.RegistrationConnector
+import logging.Logging
 import models._
 import models.core._
 import models.corrections.{CorrectionPayload, PeriodWithCorrections}
+import models.domain.{EuVatRegistration, Registration, RegistrationWithFixedEstablishment, RegistrationWithoutFixedEstablishment}
+import uk.gov.hmrc.http.HeaderCarrier
 import utils.CorrectionUtils
 
 import javax.inject.Inject
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 class CoreVatReturnService @Inject()(
-                                      vatReturnSalesService: VatReturnSalesService
+                                      vatReturnSalesService: VatReturnSalesService,
+                                      registrationConnector: RegistrationConnector
                                     )
-                                    (implicit ec: ExecutionContext) {
+                                    (implicit ec: ExecutionContext) extends Logging {
 
 
-  def toCore(vatReturn: VatReturn, correctionPayload: CorrectionPayload): CoreVatReturn = {
+  def toCore(vatReturn: VatReturn, correctionPayload: CorrectionPayload)(implicit hc: HeaderCarrier): Future[CoreVatReturn] = {
     val totalVatDue = vatReturnSalesService.getTotalVatOnSalesAfterCorrection(vatReturn, Some(correctionPayload))
     val amountsToCountries = CorrectionUtils.groupByCountryAndSum(correctionPayload, vatReturn)
 
-    CoreVatReturn(
-      vatReturnReferenceNumber = vatReturn.reference.value,
-      version = vatReturn.lastUpdated.toString,
-      traderId = CoreTraderId(
-        vatNumber = vatReturn.vrn.vrn,
-        issuedBy = "XI"
-      ),
-      period = CorePeriod(
-        year = vatReturn.period.year,
-        quarter = vatReturn.period.quarter.toString.tail.toInt
-      ),
-      startDate = vatReturn.startDate.getOrElse(vatReturn.period.firstDay),
-      endDate = vatReturn.endDate.getOrElse(vatReturn.period.lastDay),
-      submissionDateTime = vatReturn.submissionReceived,
-      totalAmountVatDueGBP = totalVatDue,
-      msconSupplies = toCoreMsconSupplies(vatReturn.salesFromNi, vatReturn.salesFromEu, correctionPayload.corrections, amountsToCountries)
-    )
+    registrationConnector.getRegistration().flatMap {
+      case Some(registration) =>
+        Future.successful(CoreVatReturn(
+          vatReturnReferenceNumber = vatReturn.reference.value,
+          version = vatReturn.lastUpdated.toString,
+          traderId = CoreTraderId(
+            vatNumber = vatReturn.vrn.vrn,
+            issuedBy = "XI"
+          ),
+          period = CorePeriod(
+            year = vatReturn.period.year,
+            quarter = vatReturn.period.quarter.toString.tail.toInt
+          ),
+          startDate = vatReturn.startDate.getOrElse(vatReturn.period.firstDay),
+          endDate = vatReturn.endDate.getOrElse(vatReturn.period.lastDay),
+          submissionDateTime = vatReturn.submissionReceived,
+          totalAmountVatDueGBP = totalVatDue,
+          msconSupplies = toCoreMsconSupplies(vatReturn.salesFromNi, vatReturn.salesFromEu, correctionPayload.corrections, amountsToCountries, registration)
+        ))
+      case _ =>
+        logger.error("Unable to get registration")
+        Future.failed(new Exception("Unable to get registration"))
+    }
+
+
   }
 
-  private def toCoreMsconSupplies(salesFromNi: List[SalesToCountry], salesFromEu: List[SalesFromEuCountry], corrections: List[PeriodWithCorrections], amountsToCountries: Map[Country, CountryAmounts]): List[CoreMsconSupply] = {
+  private def toCoreMsconSupplies(salesFromNi: List[SalesToCountry], salesFromEu: List[SalesFromEuCountry], corrections: List[PeriodWithCorrections], amountsToCountries: Map[Country, CountryAmounts], registration: Registration): List[CoreMsconSupply] = {
     val listOfCountriesSoldTo = (
       salesFromNi.map(_.countryOfConsumption)
         ++ salesFromEu.flatMap(_.sales.map(_.countryOfConsumption))
@@ -61,7 +74,7 @@ class CoreVatReturnService @Inject()(
       ).distinct
 
     val listOfSalesFromNiAsCoreSupplies = toCoreSupplies(salesFromNi)
-    val listOfSalesFromEuAsCoreMsestSupplies = toCoreMsestSupplies(salesFromEu)
+    val listOfSalesFromEuAsCoreMsestSupplies = toCoreMsestSupplies(salesFromEu, registration)
     val coreCorrections = toCoreCorrections(corrections)
 
     listOfCountriesSoldTo.map { countrySoldTo =>
@@ -102,7 +115,7 @@ class CoreVatReturnService @Inject()(
     )
   }
 
-  private def toCoreMsestSupplies(salesFromEuCountry: List[SalesFromEuCountry]): Map[Country, List[CoreMsestSupply]] = {
+  private def toCoreMsestSupplies(salesFromEuCountry: List[SalesFromEuCountry], registration: Registration): Map[Country, List[CoreMsestSupply]] = {
     val allSoldToEuCountries = salesFromEuCountry.flatMap(_.sales.map(_.countryOfConsumption)).distinct
 
     allSoldToEuCountries.map { soldToEuCountry =>
@@ -117,16 +130,40 @@ class CoreVatReturnService @Inject()(
       val onlyNonEmptySalesForCountry = allSalesForCountry.filter(_._2.nonEmpty)
 
       val coreMsestSuppliesForCountry = onlyNonEmptySalesForCountry.map { case (countrySoldFrom, sales) =>
-        CoreMsestSupply(
-          countryCode = Some(countrySoldFrom.code),
-          euTraderId = None,
-          supplies = sales
-        )
+
+        getEuTraderIdForCountry(countrySoldFrom, registration) match {
+          case Some(coreEuTraderId: CoreEuTraderId) =>
+            CoreMsestSupply(
+              countryCode = None,
+              euTraderId = Some(coreEuTraderId),
+              supplies = sales
+            )
+          case _ =>
+            CoreMsestSupply(
+              countryCode = Some(countrySoldFrom.code),
+              euTraderId = None,
+              supplies = sales
+            )
+        }
       }
 
       soldToEuCountry -> coreMsestSuppliesForCountry.toList
     }.toMap
 
+  }
+
+  private def getEuTraderIdForCountry(country: Country, registration: Registration): Option[CoreEuTraderId] = {
+    val matchedRegistration = registration.euRegistrations.filter {
+      case euRegistration: EuVatRegistration => euRegistration.country == country
+      case euRegistrationWithFE: RegistrationWithFixedEstablishment => euRegistrationWithFE.country == country
+      case euRegistrationWithoutFE: RegistrationWithoutFixedEstablishment => euRegistrationWithoutFE.country == country
+    }
+
+    matchedRegistration.headOption.flatMap {
+      case euRegistration: EuVatRegistration => Some(CoreEuTraderId(euRegistration.vatNumber, euRegistration.country.code))
+      case registrationWithFE: RegistrationWithFixedEstablishment => Some(CoreEuTraderId(registrationWithFE.taxIdentifier.value, registrationWithFE.country.code))
+      case _: RegistrationWithoutFixedEstablishment => None
+    }
   }
 
   private def toCoreCorrections(correctionsForPeriods: List[PeriodWithCorrections]): Map[Country, List[CoreCorrection]] = {

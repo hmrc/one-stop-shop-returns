@@ -24,46 +24,6 @@ class CoreVatReturnConnectorSpec extends SpecBase with WireMockHelper {
       )
       .build()
 
-  private val coreVatReturn = CoreVatReturn(
-    vatReturnReferenceNumber = "",
-    version = "",
-    traderId = CoreTraderId("", ""),
-    period = CorePeriod(2021, 3),
-    startDate = LocalDate.now(stubClock),
-    endDate = LocalDate.now(stubClock),
-    submissionDateTime = Instant.now(stubClock),
-    totalAmountVatDueGBP = BigDecimal(10),
-    msconSupplies = List(CoreMsconSupply(
-      "",
-      BigDecimal(10),
-      BigDecimal(10),
-      BigDecimal(10),
-      BigDecimal(-10),
-      List(CoreSupply(
-        "",
-        BigDecimal(10),
-        "",
-        BigDecimal(10),
-        BigDecimal(10)
-      )),
-      List(CoreMsestSupply(
-        Some(""),
-        None,
-        List(CoreSupply(
-          "",
-          BigDecimal(10),
-          "",
-          BigDecimal(10),
-          BigDecimal(10)
-        ))
-      )),
-      List(CoreCorrection(
-        CorePeriod(2021, 2),
-        BigDecimal(-10)
-      ))
-    ))
-  )
-
   "submit" - {
     "when the server returns ACCEPTED" - {
       "must return gracefully" in {
