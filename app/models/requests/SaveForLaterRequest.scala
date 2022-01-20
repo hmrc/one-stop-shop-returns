@@ -14,20 +14,21 @@
  * limitations under the License.
  */
 
-package config
+package models.requests
 
-import play.api.Configuration
-import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+import models.{Period, SalesFromEuCountry, SalesToCountry}
+import play.api.libs.json.{JsObject, Json, OFormat}
+import uk.gov.hmrc.domain.Vrn
 
-import javax.inject.{Inject, Singleton}
+import java.time.{Instant, LocalDate}
 
-@Singleton
-class AppConfig @Inject()(config: Configuration, servicesConfig: ServicesConfig) {
+case class SaveForLaterRequest(
+                             vrn: Vrn,
+                             period: Period,
+                             data: JsObject
+                           )
 
-  val encryptionKey: String = config.get[String]("mongodb.encryption.key")
-  val cacheTtl: Int = config.get[Int]("mongodb.timeToLiveInDays")
+object SaveForLaterRequest {
 
-
-  val coreVatReturnsEnabled: Boolean = config.get[Boolean]("features.coreVatReturns")
-
+  implicit val format: OFormat[SaveForLaterRequest] = Json.format[SaveForLaterRequest]
 }
