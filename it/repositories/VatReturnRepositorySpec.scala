@@ -185,6 +185,32 @@ class VatReturnRepositorySpec
     }
   }
 
+  ".get all" - {
+
+    "must return all records" in {
+
+      val vatReturn1    = arbitrary[VatReturn].sample.value
+      val return2Period = vatReturn1.period copy (year = vatReturn1.period.year + 1)
+      val vatReturn2    = vatReturn1 copy (
+        period    = return2Period,
+        reference = ReturnReference(vatReturn1.vrn, return2Period)
+      )
+      val vrn3       = Vrn(StringUtils.rotateDigitsInString(vatReturn1.vrn.vrn).mkString)
+      val vatReturn3 = vatReturn1 copy (
+        vrn       = vrn3,
+        reference = ReturnReference(vrn3, vatReturn1.period)
+      )
+
+      insert(encryptor.encryptReturn(vatReturn1, vatReturn1.vrn, secretKey)).futureValue
+      insert(encryptor.encryptReturn(vatReturn2, vatReturn2.vrn, secretKey)).futureValue
+      insert(encryptor.encryptReturn(vatReturn3, vatReturn3.vrn, secretKey)).futureValue
+
+      val returns = repository.get().futureValue
+
+      returns must contain theSameElementsAs Seq(vatReturn1, vatReturn2)
+    }
+  }
+
   ".get many" - {
 
     "must return all records for the given VRN" in {

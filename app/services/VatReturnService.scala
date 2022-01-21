@@ -114,6 +114,9 @@ class VatReturnService @Inject()(
     sendToCoreIfEnabled(vatReturn, correctionPayload, insertPayload)
   }
 
+  def get(): Future[Seq[VatReturn]] =
+    repository.get()
+
   def get(vrn: Vrn): Future[Seq[VatReturn]] =
     repository.get(vrn)
 

@@ -44,7 +44,7 @@ class CorrectionRepositorySpec
       correctionEncryptor = correctionEncryptor
     )
 
-  ".get" - {
+  ".get many" - {
     "must return all records for the given VRN" in {
 
       val correctionPayload1 = arbitrary[CorrectionPayload].sample.value
@@ -73,6 +73,28 @@ class CorrectionRepositorySpec
       val returns = repository.get(vrn).futureValue
 
       returns must contain theSameElementsAs Seq.empty
+    }
+  }
+  ".get all" - {
+    "must return all records" in {
+
+      val correctionPayload1 = arbitrary[CorrectionPayload].sample.value
+      val correctionPayload2Period = correctionPayload1.period copy (year = correctionPayload1.period.year + 1)
+      val correctionPayload2 = correctionPayload1.copy(
+        period = correctionPayload2Period
+      )
+      val vrn3 = Vrn(StringUtils.rotateDigitsInString(correctionPayload1.vrn.vrn).mkString)
+      val correctionPayload3 = correctionPayload1.copy(
+        vrn = vrn3
+      )
+
+      insert(correctionEncryptor.encryptCorrectionPayload(correctionPayload1, correctionPayload1.vrn, secretKey)).futureValue
+      insert(correctionEncryptor.encryptCorrectionPayload(correctionPayload2, correctionPayload2.vrn, secretKey)).futureValue
+      insert(correctionEncryptor.encryptCorrectionPayload(correctionPayload3, correctionPayload3.vrn, secretKey)).futureValue
+
+      val returns = repository.get().futureValue
+
+      returns must contain theSameElementsAs Seq(correctionPayload1, correctionPayload2)
     }
   }
 

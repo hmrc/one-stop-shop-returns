@@ -91,6 +91,15 @@ class VatReturnRepository @Inject()(
       }
   }
 
+  def get(): Future[Seq[VatReturn]] =
+    collection
+      .find()
+      .toFuture()
+      .map(_.map {
+        vatReturn =>
+          returnEncryptor.decryptReturn(vatReturn, vatReturn.vrn, encryptionKey)
+      })
+
   def get(vrn: Vrn): Future[Seq[VatReturn]] =
     collection
       .find(Filters.equal("vrn", toBson(vrn)))
