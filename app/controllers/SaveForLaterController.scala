@@ -41,11 +41,10 @@ class SaveForLaterController @Inject()(
       }
   }
 
-  def get(period: Period): Action[AnyContent] = auth.async {
+  def get(): Action[AnyContent] = auth.async {
     implicit request =>
-      saveForLaterService.get(request.vrn, period).map {
-        case None => NotFound
-        case value => Ok(Json.toJson(value))
+      saveForLaterService.get(request.vrn).map {
+        value => Ok(Json.toJson(value.sortBy(_.lastUpdated).lastOption))
       }
   }
 
