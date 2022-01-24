@@ -16,27 +16,32 @@
 
 package services
 
-import connectors.CoreVatReturnConnector
+import connectors.{CoreVatReturnConnector, RegistrationConnector}
 import logging.Logging
 import models.corrections.CorrectionPayload
 import models.Period
 import uk.gov.hmrc.domain.Vrn
-import uk.gov.hmrc.http.HeaderCarrier
+import utils.ObfuscationUtils.obfuscateVrn
 
 import java.time.{Clock, Instant}
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-class HistoricalReturnSubmitService @Inject()(
+trait HistoricalReturnSubmitService
+
+class HistoricalReturnSubmitServiceImpl @Inject()(
                                                vatReturnService: VatReturnService,
                                                correctionService: CorrectionService,
                                                coreVatReturnService: CoreVatReturnService,
                                                coreVatReturnConnector: CoreVatReturnConnector,
+                                               registrationConnector: RegistrationConnector,
                                                clock: Clock
                                              )
-                                             (implicit ec: ExecutionContext) extends Logging {
+                                             (implicit ec: ExecutionContext) extends HistoricalReturnSubmitService with Logging {
 
-  def transfer()(implicit hc: HeaderCarrier): Future[Any] = {
+  val startTransfer: Future[Any] = transfer()
+
+  def transfer(): Future[Any] = {
     logger.debug("Starting to process all historical returns to send to core")
 
     vatReturnService.get().flatMap{ allReturns =>
@@ -45,9 +50,26 @@ class HistoricalReturnSubmitService @Inject()(
         val amountOfCorrections = allCorrections.size
         logger.info(s"There are $amountOfReturns returns and $amountOfCorrections corrections. Starting processing...")
         val allReturnsToCore = allReturns.map { singleReturn =>
+          logger.info(s"Converting return for ${obfuscateVrn(singleReturn.vrn)} and ${singleReturn.period}")
           val correctionPayload = filterCorrectionByVrnAndPeriod(allCorrections, singleReturn.vrn, singleReturn.period)
-          coreVatReturnService.toCore(singleReturn, correctionPayload).flatMap { coreVatReturn =>
-            coreVatReturnConnector.submit(coreVatReturn)
+          logger.info(s"Following correction for ${obfuscateVrn(singleReturn.vrn)} and ${singleReturn.period}: ${correctionPayload.corrections.nonEmpty}")
+
+          registrationConnector.getRegistration(singleReturn.vrn).flatMap {
+            case Some(registration) =>
+              coreVatReturnService.toCore(singleReturn, correctionPayload, registration).flatMap { coreVatReturn =>
+                coreVatReturnConnector.submit(coreVatReturn).map {
+                  case Right(value) =>
+                    logger.info(s"Successfully sent return to core for ${obfuscateVrn(singleReturn.vrn)} and ${singleReturn.period}")
+                    Right(value)
+                  case Left(error) =>
+                    logger.error(s"Failure with sending return to core for ${obfuscateVrn(singleReturn.vrn)} and ${singleReturn.period} $error")
+                    Left(error)
+                }
+              }
+            case _ =>
+              val errorMessage = s"No registration found for VRN ${obfuscateVrn(singleReturn.vrn)}"
+              logger.error(errorMessage)
+              Future.failed(new Exception(errorMessage))
           }
         }
 
@@ -56,7 +78,6 @@ class HistoricalReturnSubmitService @Inject()(
     }
 
   }
-
 
   private def filterCorrectionByVrnAndPeriod(allCorrections: Seq[CorrectionPayload], vrn: Vrn, period: Period): CorrectionPayload = {
     allCorrections.find(correctionPayload => correctionPayload.vrn == vrn && correctionPayload.period == period) match {

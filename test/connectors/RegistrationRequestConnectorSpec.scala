@@ -34,7 +34,7 @@ class RegistrationRequestConnectorSpec extends SpecBase with WireMockHelper {
       .configure("microservice.services.one-stop-shop-registration.port" -> server.port)
       .build()
 
-  "getRegistration" - {
+  "getRegistration (vrn from request)" - {
 
     "must return a registration when the backend returns one" in {
 
@@ -63,6 +63,41 @@ class RegistrationRequestConnectorSpec extends SpecBase with WireMockHelper {
         server.stubFor(get(urlEqualTo(url)).willReturn(notFound()))
 
         val result = connector.getRegistration().futureValue
+
+        result must not be defined
+      }
+    }
+  }
+
+  "getRegistration (vrn passed)" - {
+
+    "must return a registration when the backend returns one" in {
+
+      val url = s"/one-stop-shop-registration/registration/${RegistrationData.registration.vrn}"
+
+      running(application) {
+        val connector = application.injector.instanceOf[RegistrationConnector]
+
+        val responseBody = Json.toJson(RegistrationData.registration).toString
+
+        server.stubFor(get(urlEqualTo(url)).willReturn(ok().withBody(responseBody)))
+
+        val result = connector.getRegistration(RegistrationData.registration.vrn).futureValue
+
+        result.value mustEqual RegistrationData.registration
+      }
+    }
+
+    "must return None when the backend returns NOT_FOUND" in {
+
+      val url = s"/one-stop-shop-registration/registration/${RegistrationData.registration.vrn}"
+
+      running(application) {
+        val connector = application.injector.instanceOf[RegistrationConnector]
+
+        server.stubFor(get(urlEqualTo(url)).willReturn(notFound()))
+
+        val result = connector.getRegistration(RegistrationData.registration.vrn).futureValue
 
         result must not be defined
       }

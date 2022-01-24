@@ -24,7 +24,7 @@ class HistoricalReturnSubmitServiceSpec extends SpecBase with BeforeAndAfterEach
   private val correctionService = mock[CorrectionService]
   private val coreVatReturnService = mock[CoreVatReturnService]
   private val coreVatReturnConnector = mock[CoreVatReturnConnector]
-  private val service = new HistoricalReturnSubmitService(vatReturnService, correctionService, coreVatReturnService, coreVatReturnConnector, stubClock)
+  private val registrationConnector = mock[RegistrationConnector]
   implicit private lazy val hc: HeaderCarrier = HeaderCarrier()
 
   override def beforeEach(): Unit = {
@@ -33,11 +33,16 @@ class HistoricalReturnSubmitServiceSpec extends SpecBase with BeforeAndAfterEach
 
   "HistoricalReturnSubmitService#transfer" - {
 
+    when(vatReturnService.get()) thenReturn Future.successful(List.empty)
+
+    val service = new HistoricalReturnSubmitServiceImpl(vatReturnService, correctionService, coreVatReturnService, coreVatReturnConnector, registrationConnector, stubClock)
+
     "successfully transfer all data" in {
       when(vatReturnService.get()) thenReturn Future.successful(List(completeVatReturn))
       when(correctionService.get()) thenReturn Future.successful(List(emptyCorrectionPayload))
-      when(coreVatReturnService.toCore(any(), any())(any())) thenReturn Future.successful(coreVatReturn)
+      when(coreVatReturnService.toCore(any(), any(), any())) thenReturn Future.successful(coreVatReturn)
       when(coreVatReturnConnector.submit(any())) thenReturn Future.successful(Right())
+      when(registrationConnector.getRegistration(any())) thenReturn Future.successful(Some(RegistrationData.registration))
 
       service.transfer().futureValue mustBe List(Right())
     }

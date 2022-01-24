@@ -19,6 +19,7 @@ package connectors
 import config.Service
 import models.domain.Registration
 import play.api.Configuration
+import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient}
 
 import javax.inject.Inject
@@ -31,5 +32,10 @@ class RegistrationConnector @Inject()(config: Configuration, httpClient: HttpCli
 
   def getRegistration()(implicit hc: HeaderCarrier): Future[Option[Registration]] =
     httpClient.GET[Option[Registration]](s"$baseUrl/registration")
+
+  def getRegistration(vrn: Vrn): Future[Option[Registration]] = {
+    implicit val emptyHc: HeaderCarrier = HeaderCarrier()
+    httpClient.GET[Option[Registration]](s"$baseUrl/registration/$vrn")
+  }
 
 }
