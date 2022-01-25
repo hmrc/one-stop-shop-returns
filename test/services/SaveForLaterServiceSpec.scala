@@ -70,21 +70,19 @@ class SaveForLaterServiceSpec
 
   ".get" - {
 
-    "must retrieve a single Saved User Answers record" in {
+    "must retrieve a sequence of Saved User Answers record" in {
       val now            = Instant.now
       val stubClock      = Clock.fixed(now, ZoneId.systemDefault())
       val answers      = arbitrary[SavedUserAnswers].sample.value
-      val insertResult   = answers
       val mockRepository = mock[SaveForLaterRepository]
       val vrn = arbitrary[Vrn].sample.value
-      val period = arbitrary[Period].sample.value
 
-      when(mockRepository.get(any(), any())) thenReturn Future.successful(Some(answers))
+      when(mockRepository.get(any())) thenReturn Future.successful(Seq(answers))
       val service = new SaveForLaterService(mockRepository, stubClock)
 
-      val result = service.get(vrn, period).futureValue
-      result mustBe Some(answers)
-      verify(mockRepository, times(1)).get(vrn, period)
+      val result = service.get(vrn).futureValue
+      result mustBe Seq(answers)
+      verify(mockRepository, times(1)).get(vrn)
 
     }
   }

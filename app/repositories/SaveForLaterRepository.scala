@@ -73,6 +73,9 @@ class SaveForLaterRepository @Inject()(
       Filters.equal("period", period.toBson(legacyNumbers = false))
     )
 
+  private def byVrn(vrn: Vrn): Bson =
+      Filters.equal("vrn", vrn.vrn)
+
   def set(savedUserAnswers: SavedUserAnswers): Future[SavedUserAnswers] = {
 
     val encryptedAnswers = encryptor.encryptAnswers(savedUserAnswers, savedUserAnswers.vrn, encryptionKey)

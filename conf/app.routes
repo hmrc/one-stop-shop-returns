@@ -19,5 +19,5 @@ GET         /corrections                                            controllers.
 GET         /corrections/:period                                    controllers.CorrectionController.get(period: Period)
 GET         /corrections-for-period/:period                         controllers.CorrectionController.getByCorrectionPeriod(period: Period)
 POST        /save-for-later                                         controllers.SaveForLaterController.post
-GET         /save-for-later/:period                                 controllers.SaveForLaterController.get(period:Period)
+GET         /save-for-later                                         controllers.SaveForLaterController.get
 GET         /save-for-later/delete/:period                          controllers.SaveForLaterController.delete(period:Period)
