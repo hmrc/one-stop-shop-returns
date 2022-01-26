@@ -1,6 +1,7 @@
 package services
 
 import base.SpecBase
+import config.AppConfig
 import connectors.{CoreVatReturnConnector, RegistrationConnector}
 import models._
 import models.core._
@@ -25,6 +26,7 @@ class HistoricalReturnSubmitServiceSpec extends SpecBase with BeforeAndAfterEach
   private val coreVatReturnService = mock[CoreVatReturnService]
   private val coreVatReturnConnector = mock[CoreVatReturnConnector]
   private val registrationConnector = mock[RegistrationConnector]
+  private val appConfig = mock[AppConfig]
   implicit private lazy val hc: HeaderCarrier = HeaderCarrier()
 
   override def beforeEach(): Unit = {
@@ -35,7 +37,7 @@ class HistoricalReturnSubmitServiceSpec extends SpecBase with BeforeAndAfterEach
 
     when(vatReturnService.get()) thenReturn Future.successful(List.empty)
 
-    val service = new HistoricalReturnSubmitServiceImpl(vatReturnService, correctionService, coreVatReturnService, coreVatReturnConnector, registrationConnector, stubClock)
+    val service = new HistoricalReturnSubmitServiceImpl(vatReturnService, correctionService, coreVatReturnService, coreVatReturnConnector, registrationConnector, appConfig, stubClock)
 
     "successfully transfer all data" in {
       when(vatReturnService.get()) thenReturn Future.successful(List(completeVatReturn))
