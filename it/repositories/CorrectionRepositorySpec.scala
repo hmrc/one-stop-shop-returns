@@ -94,7 +94,7 @@ class CorrectionRepositorySpec
 
       val returns = repository.get().futureValue
 
-      returns must contain theSameElementsAs Seq(correctionPayload1, correctionPayload2)
+      returns must contain theSameElementsAs Seq(correctionPayload1, correctionPayload2, correctionPayload3)
     }
   }
 

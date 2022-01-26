@@ -207,7 +207,7 @@ class VatReturnRepositorySpec
 
       val returns = repository.get().futureValue
 
-      returns must contain theSameElementsAs Seq(vatReturn1, vatReturn2)
+      returns must contain theSameElementsAs Seq(vatReturn1, vatReturn2, vatReturn3)
     }
   }
 
