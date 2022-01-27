@@ -69,6 +69,23 @@ class HistoricalReturnSubmitServiceSpec extends SpecBase with BeforeAndAfterEach
       service.transfer().futureValue mustBe Seq(Success(Right()), Failure(genericException), Success(Right()))
     }
 
+    "fail gracefully when vat return service fails" in {
+      val genericException = new Exception("Error")
+
+      when(vatReturnService.get()) thenReturn Future.failed(genericException)
+
+      service.transfer().futureValue mustBe ()
+    }
+
+    "fail gracefully when correction return service fails" in {
+      val genericException = new Exception("Error")
+
+      when(vatReturnService.get()) thenReturn Future.successful(List(completeVatReturn))
+      when(correctionService.get()) thenReturn Future.failed(genericException)
+
+      service.transfer().futureValue mustBe ()
+    }
+
   }
 
 }

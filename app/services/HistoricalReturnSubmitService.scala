@@ -93,6 +93,10 @@ class HistoricalReturnSubmitServiceImpl @Inject()(
           }
 
         }
+      }.recoverWith {
+        case e: Exception =>
+          logger.error(s"Error occurred while getting historical data ${e.getMessage}", e)
+          Future.unit
       }
     } else {
       logger.info("Skipping historical data transfer due to toggle off")
