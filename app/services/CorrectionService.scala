@@ -31,6 +31,9 @@ class CorrectionService @Inject()(
                                  )
                                  (implicit ec: ExecutionContext) {
 
+  def get(): Future[Seq[CorrectionPayload]] =
+    repository.get()
+
   def get(vrn: Vrn): Future[Seq[CorrectionPayload]] =
     repository.get(vrn)
 

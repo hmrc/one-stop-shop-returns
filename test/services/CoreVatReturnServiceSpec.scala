@@ -164,7 +164,7 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach {
 
         val result = service.toCore(vatReturn, correctionPayload)
 
-        whenReady(result.failed) { exp => exp.getMessage mustBe "Unable to get registration" }
+        whenReady(result.failed) { exp => exp.getMessage mustBe "Unable to get registration for 12345**** in period 2021-Q3" }
       }
 
     }

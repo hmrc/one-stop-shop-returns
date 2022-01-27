@@ -51,6 +51,14 @@ class CorrectionRepository @Inject()(
 
   private val encryptionKey = appConfig.encryptionKey
 
+  def get(): Future[Seq[CorrectionPayload]] =
+    collection
+      .find()
+      .toFuture()
+      .map(_.map { correction =>
+        correctionEncryptor.decryptCorrectionPayload(correction, correction.vrn, encryptionKey)
+      })
+
   def get(vrn: Vrn): Future[Seq[CorrectionPayload]] =
     collection
       .find(Filters.equal("vrn", toBson(vrn)))

@@ -24,6 +24,7 @@ import models.corrections.{CorrectionPayload, PeriodWithCorrections}
 import models.domain.{EuVatRegistration, Registration, RegistrationWithFixedEstablishment, RegistrationWithoutFixedEstablishment}
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.CorrectionUtils
+import utils.ObfuscationUtils.obfuscateVrn
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -36,34 +37,37 @@ class CoreVatReturnService @Inject()(
 
 
   def toCore(vatReturn: VatReturn, correctionPayload: CorrectionPayload)(implicit hc: HeaderCarrier): Future[CoreVatReturn] = {
+    registrationConnector.getRegistration().flatMap {
+      case Some(registration) =>
+        toCore(vatReturn, correctionPayload, registration)
+      case _ =>
+        val errorMessage = s"Unable to get registration for ${obfuscateVrn(vatReturn.vrn)} in period ${vatReturn.period}"
+        logger.error(errorMessage)
+        Future.failed(new Exception(errorMessage))
+    }
+  }
+
+  def toCore(vatReturn: VatReturn, correctionPayload: CorrectionPayload, registration: Registration): Future[CoreVatReturn] = {
     val totalVatDue = vatReturnSalesService.getTotalVatOnSalesAfterCorrection(vatReturn, Some(correctionPayload))
     val amountsToCountries = CorrectionUtils.groupByCountryAndSum(correctionPayload, vatReturn)
 
-    registrationConnector.getRegistration().flatMap {
-      case Some(registration) =>
-        Future.successful(CoreVatReturn(
-          vatReturnReferenceNumber = vatReturn.reference.value,
-          version = vatReturn.lastUpdated.toString,
-          traderId = CoreTraderId(
-            vatNumber = vatReturn.vrn.vrn,
-            issuedBy = "XI"
-          ),
-          period = CorePeriod(
-            year = vatReturn.period.year,
-            quarter = vatReturn.period.quarter.toString.tail.toInt
-          ),
-          startDate = vatReturn.startDate.getOrElse(vatReturn.period.firstDay),
-          endDate = vatReturn.endDate.getOrElse(vatReturn.period.lastDay),
-          submissionDateTime = vatReturn.submissionReceived,
-          totalAmountVatDueGBP = totalVatDue,
-          msconSupplies = toCoreMsconSupplies(vatReturn.salesFromNi, vatReturn.salesFromEu, correctionPayload.corrections, amountsToCountries, registration)
-        ))
-      case _ =>
-        logger.error("Unable to get registration")
-        Future.failed(new Exception("Unable to get registration"))
-    }
-
-
+      Future.successful(CoreVatReturn(
+        vatReturnReferenceNumber = vatReturn.reference.value,
+        version = vatReturn.lastUpdated.toString,
+        traderId = CoreTraderId(
+          vatNumber = vatReturn.vrn.vrn,
+          issuedBy = "XI"
+        ),
+        period = CorePeriod(
+          year = vatReturn.period.year,
+          quarter = vatReturn.period.quarter.toString.tail.toInt
+        ),
+        startDate = vatReturn.startDate.getOrElse(vatReturn.period.firstDay),
+        endDate = vatReturn.endDate.getOrElse(vatReturn.period.lastDay),
+        submissionDateTime = vatReturn.submissionReceived,
+        totalAmountVatDueGBP = totalVatDue,
+        msconSupplies = toCoreMsconSupplies(vatReturn.salesFromNi, vatReturn.salesFromEu, correctionPayload.corrections, amountsToCountries, registration)
+      ))
   }
 
   private def toCoreMsconSupplies(salesFromNi: List[SalesToCountry], salesFromEu: List[SalesFromEuCountry], corrections: List[PeriodWithCorrections], amountsToCountries: Map[Country, CountryAmounts], registration: Registration): List[CoreMsconSupply] = {

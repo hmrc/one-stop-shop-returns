@@ -13,6 +13,7 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
+import services.{FakeHistoricalReturnSubmitService, HistoricalReturnSubmitService}
 import uk.gov.hmrc.domain.Vrn
 
 import java.time.{Clock, Instant, LocalDate, ZoneId}
@@ -146,6 +147,7 @@ trait SpecBase
   protected def applicationBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
       .overrides(
-        bind[AuthAction].to[FakeAuthAction]
+        bind[AuthAction].to[FakeAuthAction],
+        bind[HistoricalReturnSubmitService].to[FakeHistoricalReturnSubmitService]
       )
 }
