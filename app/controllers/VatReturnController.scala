@@ -37,16 +37,18 @@ class VatReturnController @Inject()(
   def post(): Action[VatReturnRequest] = auth(parse.json[VatReturnRequest]).async {
     implicit request =>
       vatReturnService.createVatReturn(request.body).map {
-        case Some(vatReturn) => Created(Json.toJson(vatReturn))
-        case None => Conflict
+        case Right(Some(vatReturn)) => Created(Json.toJson(vatReturn))
+        case Right(None) => Conflict
+        case Left(errorResponse) => NotFound(Json.toJson(errorResponse))
       }
   }
 
   def postWithCorrection(): Action[VatReturnWithCorrectionRequest] = auth(parse.json[VatReturnWithCorrectionRequest]).async {
     implicit request =>
       vatReturnService.createVatReturnWithCorrection(request.body).map {
-        case Some(vatReturnWithCorrection) => Created(Json.toJson(vatReturnWithCorrection))
-        case None => Conflict
+        case Right(Some(vatReturnWithCorrection)) => Created(Json.toJson(vatReturnWithCorrection))
+        case Right(None) => Conflict
+        case Left(errorResponse) => NotFound(Json.toJson(errorResponse))
       }
   }
 
