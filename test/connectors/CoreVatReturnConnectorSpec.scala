@@ -12,7 +12,7 @@ import java.util.UUID
 
 class CoreVatReturnConnectorSpec extends SpecBase with WireMockHelper {
 
-  private val url = "/one-stop-shop-returns-stub/oss/returns/v1/return"
+  private val url = "/one-stop-shop-returns-stub/vec/submitossvatreturn/submitossvatreturnrequest/v1"
 
   private def application: Application =
     new GuiceApplicationBuilder()
