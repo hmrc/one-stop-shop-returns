@@ -22,6 +22,8 @@ import generators.Generators
 import models._
 import models.requests.{VatReturnRequest, VatReturnWithCorrectionRequest}
 import models.Quarter.Q3
+import models.core.CoreErrorResponse
+import models.core.CoreErrorResponse.REGISTRATION_NOT_FOUND
 import models.corrections.CorrectionPayload
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito.{times, verify, when}
@@ -36,6 +38,7 @@ import play.api.test.Helpers._
 import services.VatReturnService
 import uk.gov.hmrc.auth.core.{AuthConnector, MissingBearerToken}
 
+import java.time.Instant
 import scala.concurrent.Future
 
 class VatReturnControllerSpec
@@ -56,7 +59,7 @@ class VatReturnControllerSpec
       val mockService = mock[VatReturnService]
 
       when(mockService.createVatReturn (any())(any()))
-        .thenReturn(Future.successful(Some(vatReturn)))
+        .thenReturn(Future.successful(Right(Some(vatReturn))))
 
       val app =
         applicationBuilder
@@ -76,7 +79,7 @@ class VatReturnControllerSpec
     "must respond with Conflict when trying to save a duplicate" in {
 
       val mockService = mock[VatReturnService]
-      when(mockService.createVatReturn(any())(any())).thenReturn(Future.successful(None))
+      when(mockService.createVatReturn(any())(any())).thenReturn(Future.successful(Right(None)))
 
       val app =
         applicationBuilder
@@ -88,6 +91,25 @@ class VatReturnControllerSpec
         val result = route(app, request).value
 
         status(result) mustEqual CONFLICT
+      }
+    }
+
+    "must respond with NotFound when registration is not in core" in {
+      val coreErrorResponse = CoreErrorResponse(Instant.now(), None, REGISTRATION_NOT_FOUND, "There was an error")
+
+      val mockService = mock[VatReturnService]
+      when(mockService.createVatReturn(any())(any())).thenReturn(Future.successful(Left(coreErrorResponse)))
+
+      val app =
+        applicationBuilder
+          .overrides(bind[VatReturnService].toInstance(mockService))
+          .build()
+
+      running(app) {
+
+        val result = route(app, request).value
+
+        status(result) mustEqual NOT_FOUND
       }
     }
 
@@ -120,7 +142,7 @@ class VatReturnControllerSpec
       val mockService = mock[VatReturnService]
 
       when(mockService.createVatReturnWithCorrection(any())(any()))
-        .thenReturn(Future.successful(Some((vatReturn, correctionPayload))))
+        .thenReturn(Future.successful(Right(Some((vatReturn, correctionPayload)))))
 
       val app =
         applicationBuilder
@@ -140,7 +162,7 @@ class VatReturnControllerSpec
     "must respond with Conflict when trying to save a duplicate" in {
 
       val mockService = mock[VatReturnService]
-      when(mockService.createVatReturnWithCorrection(any())(any())).thenReturn(Future.successful(None))
+      when(mockService.createVatReturnWithCorrection(any())(any())).thenReturn(Future.successful(Right(None)))
 
       val app =
         applicationBuilder
@@ -154,6 +176,26 @@ class VatReturnControllerSpec
         status(result) mustEqual CONFLICT
       }
     }
+
+    "must respond with NotFound when registration is not in core" in {
+      val coreErrorResponse = CoreErrorResponse(Instant.now(), None, REGISTRATION_NOT_FOUND, "There was an error")
+
+      val mockService = mock[VatReturnService]
+      when(mockService.createVatReturnWithCorrection(any())(any())).thenReturn(Future.successful(Left(coreErrorResponse)))
+
+      val app =
+        applicationBuilder
+          .overrides(bind[VatReturnService].toInstance(mockService))
+          .build()
+
+      running(app) {
+
+        val result = route(app, request).value
+
+        status(result) mustEqual NOT_FOUND
+      }
+    }
+
 
     "must respond with Unauthorized when the user is not authorised" in {
 
