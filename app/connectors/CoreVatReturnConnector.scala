@@ -33,7 +33,7 @@ class CoreVatReturnConnector @Inject()(
   private implicit val emptyHc: HeaderCarrier = HeaderCarrier()
   private val headers: Seq[(String, String)] = desConfig.desHeaders
 
-  private def url = s"${desConfig.baseUrl}oss/returns/v1/return"
+  private def url = s"${desConfig.baseUrl}vec/submitossvatreturn/submitossvatreturnrequest/v1"
 
   def submit(coreVatReturn: CoreVatReturn): Future[CoreVatReturnResponse] = {
     httpClient.POST[CoreVatReturn, CoreVatReturnResponse](
