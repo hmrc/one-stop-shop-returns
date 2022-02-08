@@ -116,4 +116,5 @@ case class CoreErrorResponse(
 
 object CoreErrorResponse {
   implicit val format: OFormat[CoreErrorResponse] = Json.format[CoreErrorResponse]
+  val REGISTRATION_NOT_FOUND = "OSS_009"
 }

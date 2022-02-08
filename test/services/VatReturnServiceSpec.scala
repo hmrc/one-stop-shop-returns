@@ -21,6 +21,7 @@ import config.AppConfig
 import connectors.CoreVatReturnConnector
 import models.VatReturn
 import models.core.CoreErrorResponse
+import models.core.CoreErrorResponse.REGISTRATION_NOT_FOUND
 import models.corrections.CorrectionPayload
 import models.requests.{VatReturnRequest, VatReturnWithCorrectionRequest}
 import org.mockito.ArgumentMatchers.any
@@ -58,7 +59,7 @@ class VatReturnServiceSpec
 
       val result = service.createVatReturn(request).futureValue
 
-      result mustEqual insertResult
+      result mustEqual Right(insertResult)
       verify(mockRepository, times(1)).insert(any())
     }
   }
@@ -77,7 +78,7 @@ class VatReturnServiceSpec
 
       val result = service.createVatReturnWithCorrection(request).futureValue
 
-      result mustEqual insertResult
+      result mustEqual Right(insertResult)
       verify(mockRepository, times(1)).insert(any(), any())
     }
 
@@ -95,6 +96,22 @@ class VatReturnServiceSpec
       val result = service.createVatReturnWithCorrection(request)
 
       whenReady(result.failed) { exp => exp mustBe coreErrorResponse.asException }
+    }
+
+    "must error when core enabled and registration is not present in core" in {
+      val coreErrorResponse = CoreErrorResponse(Instant.now(), None, REGISTRATION_NOT_FOUND, "There was an error")
+      val mockRepository = mock[VatReturnRepository]
+
+      when(appConfig.coreVatReturnsEnabled) thenReturn true
+      when(coreVatReturnConnector.submit(any())) thenReturn Future.successful(Left(coreErrorResponse))
+      when(coreVatReturnService.toCore(any(), any())(any())) thenReturn Future.successful(coreVatReturn)
+
+      val request = arbitrary[VatReturnWithCorrectionRequest].sample.value
+      val service = new VatReturnService(mockRepository, coreVatReturnService, coreVatReturnConnector, appConfig, stubClock)
+
+      val result = service.createVatReturnWithCorrection(request).futureValue
+      result mustBe Left(coreErrorResponse)
+
     }
 
   }
