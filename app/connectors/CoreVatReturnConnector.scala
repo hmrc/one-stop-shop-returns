@@ -16,7 +16,7 @@
 
 package connectors
 
-import config.DesConfig
+import config.IfConfig
 import connectors.CoreVatReturnHttpParser._
 import logging.Logging
 import models.core.CoreVatReturn
@@ -27,13 +27,13 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class CoreVatReturnConnector @Inject()(
                                         httpClient: HttpClient,
-                                        desConfig: DesConfig
+                                        ifConfig: IfConfig
                                       )(implicit ec: ExecutionContext) extends Logging {
 
   private implicit val emptyHc: HeaderCarrier = HeaderCarrier()
-  private val headers: Seq[(String, String)] = desConfig.desHeaders
+  private val headers: Seq[(String, String)] = ifConfig.desHeaders
 
-  private def url = s"${desConfig.baseUrl}vec/submitossvatreturn/submitossvatreturnrequest/v1"
+  private def url = s"${ifConfig.baseUrl}"
 
   def submit(coreVatReturn: CoreVatReturn): Future[CoreVatReturnResponse] = {
     httpClient.POST[CoreVatReturn, CoreVatReturnResponse](
