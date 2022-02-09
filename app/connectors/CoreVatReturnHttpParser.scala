@@ -35,6 +35,7 @@ object CoreVatReturnHttpParser extends Logging {
         case ACCEPTED =>
           Right()
         case status =>
+          logger.info(s"Response received from core vat returns ${response.status} with body ${response.body}")
           response.json.validate[CoreErrorResponse] match {
             case JsSuccess(value, _) =>
               logger.error(s"Error response from core $url, received status $status, body of response was: ${response.body}")
