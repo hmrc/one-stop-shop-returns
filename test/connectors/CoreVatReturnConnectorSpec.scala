@@ -17,10 +17,10 @@ class CoreVatReturnConnectorSpec extends SpecBase with WireMockHelper {
   private def application: Application =
     new GuiceApplicationBuilder()
       .configure(
-        "microservice.services.des.host" -> "127.0.0.1",
-        "microservice.services.des.port" -> server.port,
-        "microservice.services.des.authorizationToken" -> "auth-token",
-        "microservice.services.des.environment" -> "test-environment",
+        "microservice.services.if.host" -> "127.0.0.1",
+        "microservice.services.if.port" -> server.port,
+        "microservice.services.if.authorizationToken" -> "auth-token",
+        "microservice.services.if.environment" -> "test-environment",
       )
       .build()
 
