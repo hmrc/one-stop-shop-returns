@@ -31,7 +31,7 @@ class CoreVatReturnConnector @Inject()(
                                       )(implicit ec: ExecutionContext) extends Logging {
 
   private implicit val emptyHc: HeaderCarrier = HeaderCarrier()
-  private val headers: Seq[(String, String)] = ifConfig.desHeaders
+  private val headers: Seq[(String, String)] = ifConfig.ifHeaders
 
   private def url = s"${ifConfig.baseUrl}"
 
