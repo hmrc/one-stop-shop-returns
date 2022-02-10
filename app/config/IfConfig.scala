@@ -42,7 +42,6 @@ class IfConfig @Inject()(config: Configuration, clock: Clock) {
     CONTENT_TYPE -> MimeTypes.JSON,
     ACCEPT -> MimeTypes.JSON,
     AUTHORIZATION -> s"Bearer $authorizationToken",
-    "Environment" -> environment,
     DATE -> dateTimeFormatter.format(LocalDateTime.now(clock)),
     XCorrelationId -> correlationId,
     Environment -> environment
