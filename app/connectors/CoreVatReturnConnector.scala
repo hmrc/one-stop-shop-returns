@@ -20,8 +20,10 @@ import config.IfConfig
 import connectors.CoreVatReturnHttpParser._
 import logging.Logging
 import models.core.CoreVatReturn
+import play.api.http.HeaderNames.AUTHORIZATION
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient}
 
+import java.util.UUID
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -31,15 +33,24 @@ class CoreVatReturnConnector @Inject()(
                                       )(implicit ec: ExecutionContext) extends Logging {
 
   private implicit val emptyHc: HeaderCarrier = HeaderCarrier()
-  private val headers: Seq[(String, String)] = ifConfig.ifHeaders
+  private def headers(correlationId: String): Seq[(String, String)] = ifConfig.ifHeaders(correlationId)
 
   private def url = s"${ifConfig.baseUrl}"
 
   def submit(coreVatReturn: CoreVatReturn): Future[CoreVatReturnResponse] = {
+    val correlationId = UUID.randomUUID().toString
+    val headersWithCorrelationId = headers(correlationId)
+
+    val headersWithoutAuth = headersWithCorrelationId.filterNot{
+      case (key, _) => key.matches(AUTHORIZATION)
+    }
+
+    logger.info(s"Sending request to core with headers $headersWithoutAuth")
+
     httpClient.POST[CoreVatReturn, CoreVatReturnResponse](
       url,
       coreVatReturn,
-      headers = headers
+      headers = headersWithCorrelationId
     )
   }
 

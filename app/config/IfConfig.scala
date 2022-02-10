@@ -22,7 +22,8 @@ import java.time.format.DateTimeFormatter
 import java.time.{Clock, LocalDateTime, ZoneId, ZoneOffset}
 import java.util.Locale
 import javax.inject.Inject
-import play.api.http.HeaderNames.{AUTHORIZATION, DATE}
+import play.api.http.HeaderNames.{ACCEPT, AUTHORIZATION, CONTENT_TYPE, DATE}
+import play.api.http.MimeTypes
 
 class IfConfig @Inject()(config: Configuration, clock: Clock) {
 
@@ -34,9 +35,15 @@ class IfConfig @Inject()(config: Configuration, clock: Clock) {
     .withLocale(Locale.UK)
     .withZone(ZoneId.of("GMT"))
 
-  val ifHeaders: Seq[(String, String)] = Seq(
+  private val XCorrelationId = "X-Correlation-Id"
+  private val Environment    = "environment"
+
+  def ifHeaders(correlationId: String): Seq[(String, String)] = Seq(
+    CONTENT_TYPE -> MimeTypes.JSON,
+    ACCEPT -> MimeTypes.JSON,
     AUTHORIZATION -> s"Bearer $authorizationToken",
-    "Environment" -> environment,
-    DATE -> dateTimeFormatter.format(LocalDateTime.now(clock))
+    DATE -> dateTimeFormatter.format(LocalDateTime.now(clock)),
+    XCorrelationId -> correlationId,
+    Environment -> environment
   )
 }
