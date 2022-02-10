@@ -22,6 +22,7 @@ import java.time.format.DateTimeFormatter
 import java.time.{Clock, LocalDateTime, ZoneId, ZoneOffset}
 import java.util.Locale
 import javax.inject.Inject
+import play.api.http.HeaderNames.{AUTHORIZATION, DATE}
 
 class IfConfig @Inject()(config: Configuration, clock: Clock) {
 
@@ -34,8 +35,8 @@ class IfConfig @Inject()(config: Configuration, clock: Clock) {
     .withZone(ZoneId.of("GMT"))
 
   val ifHeaders: Seq[(String, String)] = Seq(
-    "Authorization" -> s"Bearer $authorizationToken",
+    AUTHORIZATION -> s"Bearer $authorizationToken",
     "Environment" -> environment,
-    "date" -> dateTimeFormatter.format(LocalDateTime.now(clock))
+    DATE -> dateTimeFormatter.format(LocalDateTime.now(clock))
   )
 }
