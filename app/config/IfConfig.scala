@@ -18,16 +18,24 @@ package config
 
 import play.api.Configuration
 
+import java.time.format.DateTimeFormatter
+import java.time.{Clock, LocalDateTime, ZoneId, ZoneOffset}
+import java.util.Locale
 import javax.inject.Inject
 
-class IfConfig @Inject()(config: Configuration) {
+class IfConfig @Inject()(config: Configuration, clock: Clock) {
 
   val baseUrl: Service = config.get[Service]("microservice.services.if")
   val authorizationToken: String = config.get[String]("microservice.services.if.authorizationToken")
   val environment: String = config.get[String]("microservice.services.if.environment")
 
-  val desHeaders: Seq[(String, String)] = Seq(
+  private val dateTimeFormatter = DateTimeFormatter.ofPattern("EEE, d MMM yyyy HH:mm:ss z")
+    .withLocale(Locale.UK)
+    .withZone(ZoneId.of("GMT"))
+
+  val ifHeaders: Seq[(String, String)] = Seq(
     "Authorization" -> s"Bearer $authorizationToken",
-    "Environment" -> environment
+    "Environment" -> environment,
+    "date" -> dateTimeFormatter.format(LocalDateTime.now(clock))
   )
 }
