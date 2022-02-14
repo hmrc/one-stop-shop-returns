@@ -17,13 +17,12 @@
 package connectors
 
 import logging.Logging
-import models.core.{CoreErrorResponse, CoreVatReturn}
+import models.core.CoreErrorResponse
 import play.api.http.Status._
-import play.api.libs.json.{JsError, JsSuccess}
+import play.api.libs.json.JsSuccess
 import uk.gov.hmrc.http.{HttpReads, HttpResponse}
 
 import java.time.Instant
-import java.util.UUID
 
 object CoreVatReturnHttpParser extends Logging {
 

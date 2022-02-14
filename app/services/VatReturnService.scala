@@ -77,12 +77,9 @@ class VatReturnService @Inject()(
             block.map(
               payload => Right(payload)
             )
-          case Left(coreErrorResponse) if(coreErrorResponse.error == REGISTRATION_NOT_FOUND) =>
-            logger.error(s"Error occurred while submitting to core $coreErrorResponse", coreErrorResponse.asException)
-            Future.successful(Left(coreErrorResponse))
           case Left(coreErrorResponse) =>
             logger.error(s"Error occurred while submitting to core $coreErrorResponse", coreErrorResponse.asException)
-            Future.failed(new Exception(coreErrorResponse.asException))
+            Future.successful(Left(coreErrorResponse))
         }
       } yield submissionResult
 

@@ -87,15 +87,15 @@ class VatReturnServiceSpec
       val mockRepository = mock[VatReturnRepository]
 
       when(appConfig.coreVatReturnsEnabled) thenReturn true
-      when(coreVatReturnConnector.submit(any())) thenReturn Future.failed(coreErrorResponse.asException)
+      when(coreVatReturnConnector.submit(any())) thenReturn Future.successful(Left(coreErrorResponse))
       when(coreVatReturnService.toCore(any(), any())(any())) thenReturn Future.successful(coreVatReturn)
 
       val request = arbitrary[VatReturnWithCorrectionRequest].sample.value
       val service = new VatReturnService(mockRepository, coreVatReturnService, coreVatReturnConnector, appConfig, stubClock)
 
-      val result = service.createVatReturnWithCorrection(request)
+      val result = service.createVatReturnWithCorrection(request).futureValue
 
-      whenReady(result.failed) { exp => exp mustBe coreErrorResponse.asException }
+      result mustBe Left(coreErrorResponse)
     }
 
     "must error when core enabled and registration is not present in core" in {
