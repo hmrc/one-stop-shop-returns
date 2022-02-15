@@ -113,6 +113,25 @@ class VatReturnControllerSpec
       }
     }
 
+    "must respond with ServiceUnavailable(coreError) when error received from core" in {
+      val coreErrorResponse = CoreErrorResponse(Instant.now(), None, "OSS_111", "There was an error")
+
+      val mockService = mock[VatReturnService]
+      when(mockService.createVatReturn(any())(any())).thenReturn(Future.successful(Left(coreErrorResponse)))
+
+      val app =
+        applicationBuilder
+          .overrides(bind[VatReturnService].toInstance(mockService))
+          .build()
+
+      running(app) {
+
+        val result = route(app, request).value
+
+        status(result) mustEqual SERVICE_UNAVAILABLE
+      }
+    }
+
     "must respond with Unauthorized when the user is not authorised" in {
 
       val app =

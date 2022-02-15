@@ -19,6 +19,7 @@ package controllers
 import controllers.actions.AuthAction
 import models.requests.{VatReturnRequest, VatReturnWithCorrectionRequest}
 import models.Period
+import models.core.CoreErrorResponse
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import services.VatReturnService
@@ -39,7 +40,8 @@ class VatReturnController @Inject()(
       vatReturnService.createVatReturn(request.body).map {
         case Right(Some(vatReturn)) => Created(Json.toJson(vatReturn))
         case Right(None) => Conflict
-        case Left(errorResponse) => NotFound(Json.toJson(errorResponse))
+        case Left(errorResponse) if(errorResponse.error == CoreErrorResponse.REGISTRATION_NOT_FOUND) => NotFound(Json.toJson(errorResponse))
+        case Left(errorResponse) => ServiceUnavailable(Json.toJson(errorResponse))
       }
   }
 
@@ -48,7 +50,8 @@ class VatReturnController @Inject()(
       vatReturnService.createVatReturnWithCorrection(request.body).map {
         case Right(Some(vatReturnWithCorrection)) => Created(Json.toJson(vatReturnWithCorrection))
         case Right(None) => Conflict
-        case Left(errorResponse) => NotFound(Json.toJson(errorResponse))
+        case Left(errorResponse) if(errorResponse.error == CoreErrorResponse.REGISTRATION_NOT_FOUND) => NotFound(Json.toJson(errorResponse))
+        case Left(errorResponse) => ServiceUnavailable(Json.toJson(errorResponse))
       }
   }
 
