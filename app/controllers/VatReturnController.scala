@@ -41,7 +41,7 @@ class VatReturnController @Inject()(
         case Right(Some(vatReturn)) => Created(Json.toJson(vatReturn))
         case Right(None) => Conflict
         case Left(errorResponse) if(errorResponse.errorDetail.error == CoreErrorResponse.REGISTRATION_NOT_FOUND) => NotFound(Json.toJson(errorResponse.errorDetail))
-        case Left(errorResponse) => ServiceUnavailable(Json.toJson(errorResponse))
+        case Left(errorResponse) => ServiceUnavailable(Json.toJson(errorResponse.errorDetail))
       }
   }
 
@@ -51,7 +51,7 @@ class VatReturnController @Inject()(
         case Right(Some(vatReturnWithCorrection)) => Created(Json.toJson(vatReturnWithCorrection))
         case Right(None) => Conflict
         case Left(errorResponse) if(errorResponse.errorDetail.error == CoreErrorResponse.REGISTRATION_NOT_FOUND) => NotFound(Json.toJson(errorResponse.errorDetail))
-        case Left(errorResponse) => ServiceUnavailable(Json.toJson(errorResponse))
+        case Left(errorResponse) => ServiceUnavailable(Json.toJson(errorResponse.errorDetail))
       }
   }
 
