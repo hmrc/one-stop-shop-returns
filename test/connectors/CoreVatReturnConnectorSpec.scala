@@ -55,7 +55,7 @@ class CoreVatReturnConnectorSpec extends SpecBase with WireMockHelper {
           s"""{"errorDetail": {
             |  "timestamp": "$timestamp",
             |  "transactionId": "$uuid",
-            |  "error": "OSS_405",
+            |  "errorCode": "OSS_405",
             |  "errorMessage": "Method Not Allowed"
             |}}""".stripMargin
 
