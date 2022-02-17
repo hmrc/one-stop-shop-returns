@@ -118,3 +118,11 @@ object CoreErrorResponse {
   implicit val format: OFormat[CoreErrorResponse] = Json.format[CoreErrorResponse]
   val REGISTRATION_NOT_FOUND = "OSS_009"
 }
+
+case class EisErrorResponse(
+                           errorDetail: CoreErrorResponse
+                           )
+
+object EisErrorResponse {
+  implicit val format: OFormat[EisErrorResponse] = Json.format[EisErrorResponse]
+}

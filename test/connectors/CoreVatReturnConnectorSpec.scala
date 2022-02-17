@@ -2,7 +2,7 @@ package connectors
 
 import base.SpecBase
 import com.github.tomakehurst.wiremock.client.WireMock._
-import models.core.{CoreCorrection, CoreErrorResponse, CoreEuTraderId, CoreMsconSupply, CoreMsestSupply, CorePeriod, CoreSupply, CoreTraderId, CoreVatReturn}
+import models.core.{CoreCorrection, CoreErrorResponse, CoreEuTraderId, CoreMsconSupply, CoreMsestSupply, CorePeriod, CoreSupply, CoreTraderId, CoreVatReturn, EisErrorResponse}
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.Application
 import play.api.test.Helpers.running
@@ -52,12 +52,12 @@ class CoreVatReturnConnectorSpec extends SpecBase with WireMockHelper {
         val uuid = "f3204b9d-ed02-4d6f-8ff6-2339daef8241"
 
         val errorResponseJson =
-          s"""{
+          s"""{"errorDetail": {
             |  "timestamp": "$timestamp",
             |  "transactionId": "$uuid",
             |  "error": "OSS_405",
             |  "errorMessage": "Method Not Allowed"
-            |}""".stripMargin
+            |}}""".stripMargin
 
         server.stubFor(
           post(urlEqualTo(url))
@@ -71,7 +71,7 @@ class CoreVatReturnConnectorSpec extends SpecBase with WireMockHelper {
           val connector = app.injector.instanceOf[CoreVatReturnConnector]
           val result = connector.submit(coreVatReturn).futureValue
 
-          val expectedResponse = CoreErrorResponse(Instant.parse(timestamp),  Some(UUID.fromString(uuid)), "OSS_405", "Method Not Allowed")
+          val expectedResponse = EisErrorResponse(CoreErrorResponse(Instant.parse(timestamp),  Some(UUID.fromString(uuid)), "OSS_405", "Method Not Allowed"))
 
           result mustBe Left(expectedResponse)
         }
@@ -96,7 +96,7 @@ class CoreVatReturnConnectorSpec extends SpecBase with WireMockHelper {
           val connector = app.injector.instanceOf[CoreVatReturnConnector]
           val result = connector.submit(coreVatReturn).futureValue
 
-          val expectedResponse = CoreErrorResponse(result.left.get.timestamp, result.left.get.transactionId, s"UNEXPECTED_404", errorResponseJson)
+          val expectedResponse = EisErrorResponse(CoreErrorResponse(result.left.get.errorDetail.timestamp, result.left.get.errorDetail.transactionId, s"UNEXPECTED_404", errorResponseJson))
 
           result mustBe Left(expectedResponse)
         }
