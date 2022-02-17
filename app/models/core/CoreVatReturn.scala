@@ -16,9 +16,7 @@
 
 package models.core
 
-import models.{Country, Period, SalesDetails, SalesFromEuCountry, SalesToCountry, VatReturn}
-import models.corrections.{CorrectionPayload, PeriodWithCorrections}
-import play.api.libs.json.{__, Json, OFormat}
+import play.api.libs.json.{Json, OFormat}
 
 import java.time.{Instant, LocalDate}
 import java.util.UUID
@@ -108,10 +106,10 @@ object CoreVatReturn {
 case class CoreErrorResponse(
                               timestamp: Instant,
                               transactionId: Option[UUID],
-                              error: String,
+                              errorCode: String,
                               errorMessage: String
                             ) {
-  val asException: Exception = new Exception(s"$timestamp $transactionId $error $errorMessage")
+  val asException: Exception = new Exception(s"$timestamp $transactionId $errorCode $errorMessage")
 }
 
 object CoreErrorResponse {
