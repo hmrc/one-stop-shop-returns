@@ -20,7 +20,7 @@ import base.SpecBase
 import config.AppConfig
 import connectors.CoreVatReturnConnector
 import models.VatReturn
-import models.core.CoreErrorResponse
+import models.core.{CoreErrorResponse, EisErrorResponse}
 import models.core.CoreErrorResponse.REGISTRATION_NOT_FOUND
 import models.corrections.CorrectionPayload
 import models.requests.{VatReturnRequest, VatReturnWithCorrectionRequest}
@@ -84,10 +84,11 @@ class VatReturnServiceSpec
 
     "must error when core enabled and fails to send to core" in {
       val coreErrorResponse = CoreErrorResponse(Instant.now(), None, "ERROR", "There was an error")
+      val eisErrorResponse = EisErrorResponse(coreErrorResponse)
       val mockRepository = mock[VatReturnRepository]
 
       when(appConfig.coreVatReturnsEnabled) thenReturn true
-      when(coreVatReturnConnector.submit(any())) thenReturn Future.successful(Left(coreErrorResponse))
+      when(coreVatReturnConnector.submit(any())) thenReturn Future.successful(Left(eisErrorResponse))
       when(coreVatReturnService.toCore(any(), any())(any())) thenReturn Future.successful(coreVatReturn)
 
       val request = arbitrary[VatReturnWithCorrectionRequest].sample.value
@@ -95,22 +96,23 @@ class VatReturnServiceSpec
 
       val result = service.createVatReturnWithCorrection(request).futureValue
 
-      result mustBe Left(coreErrorResponse)
+      result mustBe Left(eisErrorResponse)
     }
 
     "must error when core enabled and registration is not present in core" in {
       val coreErrorResponse = CoreErrorResponse(Instant.now(), None, REGISTRATION_NOT_FOUND, "There was an error")
+      val eisErrorResponse = EisErrorResponse(coreErrorResponse)
       val mockRepository = mock[VatReturnRepository]
 
       when(appConfig.coreVatReturnsEnabled) thenReturn true
-      when(coreVatReturnConnector.submit(any())) thenReturn Future.successful(Left(coreErrorResponse))
+      when(coreVatReturnConnector.submit(any())) thenReturn Future.successful(Left(eisErrorResponse))
       when(coreVatReturnService.toCore(any(), any())(any())) thenReturn Future.successful(coreVatReturn)
 
       val request = arbitrary[VatReturnWithCorrectionRequest].sample.value
       val service = new VatReturnService(mockRepository, coreVatReturnService, coreVatReturnConnector, appConfig, stubClock)
 
       val result = service.createVatReturnWithCorrection(request).futureValue
-      result mustBe Left(coreErrorResponse)
+      result mustBe Left(eisErrorResponse)
 
     }
 

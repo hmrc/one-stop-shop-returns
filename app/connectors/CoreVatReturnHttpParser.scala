@@ -17,7 +17,7 @@
 package connectors
 
 import logging.Logging
-import models.core.CoreErrorResponse
+import models.core.{CoreErrorResponse, EisErrorResponse}
 import play.api.http.Status._
 import play.api.libs.json.JsSuccess
 import uk.gov.hmrc.http.{HttpReads, HttpResponse}
@@ -26,7 +26,7 @@ import java.time.Instant
 
 object CoreVatReturnHttpParser extends Logging {
 
-  type CoreVatReturnResponse = Either[CoreErrorResponse, Unit]
+  type CoreVatReturnResponse = Either[EisErrorResponse, Unit]
 
   implicit object CoreVatReturnReads extends HttpReads[CoreVatReturnResponse] {
     override def read(method: String, url: String, response: HttpResponse): CoreVatReturnResponse =
@@ -35,13 +35,16 @@ object CoreVatReturnHttpParser extends Logging {
           Right()
         case status =>
           logger.info(s"Response received from core vat returns ${response.status} with body ${response.body}")
-          response.json.validate[CoreErrorResponse] match {
+          response.json.validate[EisErrorResponse] match {
             case JsSuccess(value, _) =>
               logger.error(s"Error response from core $url, received status $status, body of response was: ${response.body}")
               Left(value)
             case _ =>
               logger.error(s"Unexpected error response from core $url, received status $status, body of response was: ${response.body}")
-              Left(CoreErrorResponse(Instant.now(), None, s"UNEXPECTED_$status", response.body))
+              Left(
+                EisErrorResponse(
+                  CoreErrorResponse(Instant.now(), None, s"UNEXPECTED_$status", response.body)
+                ))
           }
       }
   }

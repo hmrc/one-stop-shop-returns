@@ -19,7 +19,7 @@ package services
 import config.AppConfig
 import connectors.CoreVatReturnConnector
 import logging.Logging
-import models.core.CoreErrorResponse
+import models.core.{CoreErrorResponse, EisErrorResponse}
 import models.core.CoreErrorResponse.REGISTRATION_NOT_FOUND
 import models.{PaymentReference, Period, ReturnReference, VatReturn}
 import models.corrections.CorrectionPayload
@@ -41,7 +41,7 @@ class VatReturnService @Inject()(
                                 )
                                 (implicit ec: ExecutionContext) extends Logging {
 
-  def createVatReturn(request: VatReturnRequest)(implicit hc: HeaderCarrier): Future[Either[CoreErrorResponse, Option[VatReturn]]] = {
+  def createVatReturn(request: VatReturnRequest)(implicit hc: HeaderCarrier): Future[Either[EisErrorResponse, Option[VatReturn]]] = {
     val vatReturn = VatReturn(
       vrn = request.vrn,
       period = request.period,
@@ -66,7 +66,7 @@ class VatReturnService @Inject()(
     sendToCoreIfEnabled(vatReturn, emptyCorrectionPayload, repository.insert(vatReturn))
   }
 
-  private def sendToCoreIfEnabled[A](vatReturn: VatReturn, correctionPayload: CorrectionPayload, block: => Future[A])(implicit hc: HeaderCarrier): Future[Either[CoreErrorResponse, A]] = {
+  private def sendToCoreIfEnabled[A](vatReturn: VatReturn, correctionPayload: CorrectionPayload, block: => Future[A])(implicit hc: HeaderCarrier): Future[Either[EisErrorResponse, A]] = {
     if (appConfig.coreVatReturnsEnabled) {
 
       for {
@@ -77,9 +77,9 @@ class VatReturnService @Inject()(
             block.map(
               payload => Right(payload)
             )
-          case Left(coreErrorResponse) =>
-            logger.error(s"Error occurred while submitting to core $coreErrorResponse", coreErrorResponse.asException)
-            Future.successful(Left(coreErrorResponse))
+          case Left(eisErrorResponse) =>
+            logger.error(s"Error occurred while submitting to core $eisErrorResponse", eisErrorResponse.errorDetail.asException)
+            Future.successful(Left(eisErrorResponse))
         }
       } yield submissionResult
 
@@ -91,7 +91,7 @@ class VatReturnService @Inject()(
     }
   }
 
-  def createVatReturnWithCorrection(request: VatReturnWithCorrectionRequest)(implicit hc: HeaderCarrier): Future[Either[CoreErrorResponse, Option[(VatReturn, CorrectionPayload)]]] = {
+  def createVatReturnWithCorrection(request: VatReturnWithCorrectionRequest)(implicit hc: HeaderCarrier): Future[Either[EisErrorResponse, Option[(VatReturn, CorrectionPayload)]]] = {
     val vatReturn = VatReturn(
       vrn = request.vatReturnRequest.vrn,
       period = request.vatReturnRequest.period,
