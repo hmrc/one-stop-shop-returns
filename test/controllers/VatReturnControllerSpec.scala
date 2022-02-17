@@ -22,7 +22,7 @@ import generators.Generators
 import models._
 import models.requests.{VatReturnRequest, VatReturnWithCorrectionRequest}
 import models.Quarter.Q3
-import models.core.CoreErrorResponse
+import models.core.{CoreErrorResponse, EisErrorResponse}
 import models.core.CoreErrorResponse.REGISTRATION_NOT_FOUND
 import models.corrections.CorrectionPayload
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
@@ -96,9 +96,10 @@ class VatReturnControllerSpec
 
     "must respond with NotFound when registration is not in core" in {
       val coreErrorResponse = CoreErrorResponse(Instant.now(), None, REGISTRATION_NOT_FOUND, "There was an error")
+      val eisErrorResponse = EisErrorResponse(coreErrorResponse)
 
       val mockService = mock[VatReturnService]
-      when(mockService.createVatReturn(any())(any())).thenReturn(Future.successful(Left(coreErrorResponse)))
+      when(mockService.createVatReturn(any())(any())).thenReturn(Future.successful(Left(eisErrorResponse)))
 
       val app =
         applicationBuilder
@@ -115,9 +116,10 @@ class VatReturnControllerSpec
 
     "must respond with ServiceUnavailable(coreError) when error received from core" in {
       val coreErrorResponse = CoreErrorResponse(Instant.now(), None, "OSS_111", "There was an error")
+      val eisErrorResponse = EisErrorResponse(coreErrorResponse)
 
       val mockService = mock[VatReturnService]
-      when(mockService.createVatReturn(any())(any())).thenReturn(Future.successful(Left(coreErrorResponse)))
+      when(mockService.createVatReturn(any())(any())).thenReturn(Future.successful(Left(eisErrorResponse)))
 
       val app =
         applicationBuilder
@@ -198,9 +200,10 @@ class VatReturnControllerSpec
 
     "must respond with NotFound when registration is not in core" in {
       val coreErrorResponse = CoreErrorResponse(Instant.now(), None, REGISTRATION_NOT_FOUND, "There was an error")
+      val eisErrorResponse = EisErrorResponse(coreErrorResponse)
 
       val mockService = mock[VatReturnService]
-      when(mockService.createVatReturnWithCorrection(any())(any())).thenReturn(Future.successful(Left(coreErrorResponse)))
+      when(mockService.createVatReturnWithCorrection(any())(any())).thenReturn(Future.successful(Left(eisErrorResponse)))
 
       val app =
         applicationBuilder
