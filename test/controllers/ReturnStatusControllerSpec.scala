@@ -86,7 +86,7 @@ class ReturnStatusControllerSpec
     val commencementDate = LocalDate.of(2021, 1, 1)
     val returns = Returns(
       None,
-      Seq(Return.fromPeriod(period3)),
+      Some(Return.fromPeriod(period3)),
       Seq(
         Return.fromPeriod(period0),
         Return.fromPeriod(period1),

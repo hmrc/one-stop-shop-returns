@@ -58,7 +58,7 @@ class ReturnStatusController @Inject()(
       val answers = savedAnswers.sortBy(_.lastUpdated).lastOption
       val returnInProgress = answers.map(savedAnswers =>
           Return.fromPeriod(savedAnswers.period))
-      val duePeriods = availablePeriodsWithStatus.filter(_.status == Due).map(periodWithStatus => Return.fromPeriod(periodWithStatus.period))
+      val duePeriods = availablePeriodsWithStatus.find(_.status == Due).map(periodWithStatus => Return.fromPeriod(periodWithStatus.period))
       val overduePeriods = availablePeriodsWithStatus.filter(_.status == Overdue).map(periodWithStatus => Return.fromPeriod(periodWithStatus.period))
       val returns = Returns(returnInProgress, duePeriods, overduePeriods)
 
