@@ -21,7 +21,7 @@ import play.api.libs.json.{Json, OFormat}
 
 case class Returns(
                            currentReturn: Option[Return],
-                           dueReturns: Option[Return],
+                           dueReturn: Option[Return],
                            overdueReturns: Seq[Return]
                            )
 
