@@ -19,7 +19,8 @@ package controllers
 import base.SpecBase
 import generators.Generators
 import models._
-import models.Quarter.Q3
+import models.yourAccount._
+import models.Quarter.{Q1, Q2, Q3}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
@@ -31,7 +32,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import services.{PeriodService, VatReturnService}
 
-import java.time.LocalDate
+import java.time.{Clock, LocalDate, ZoneId}
 import scala.concurrent.Future
 
 class ReturnStatusControllerSpec
@@ -69,6 +70,57 @@ class ReturnStatusControllerSpec
 
         status(result) mustEqual OK
         contentAsJson(result) mustEqual Json.toJson(Seq(PeriodWithStatus(period, SubmissionStatus.Complete)))
+      }
+    }
+
+  }
+
+  ".getCurrentReturns(commencementDate)" - {
+    val stubClock: Clock = Clock.fixed(LocalDate.of(2022, 10, 1).atStartOfDay(ZoneId.systemDefault).toInstant, ZoneId.systemDefault)
+    val period = Period(2021, Q2)
+    val period0 = Period(2021, Q3)
+    val period1 = Period(2022, Q1)
+    val period2 = Period(2022, Q2)
+    val period3 = Period(2022, Q3)
+    val periods = Seq(period, period0, period1, period2, period3)
+    val commencementDate = LocalDate.of(2021, 1, 1)
+    val returns = Returns(
+      None,
+      Seq(Return.fromPeriod(period3)),
+      Seq(
+        Return.fromPeriod(period0),
+        Return.fromPeriod(period1),
+        Return.fromPeriod(period2)
+      )
+    )
+
+    lazy val request = FakeRequest(GET, routes.ReturnStatusController.getCurrentReturns(commencementDate).url)
+
+    "must respond with OK and a sequence of requests" in {
+
+      val mockVatReturnService = mock[VatReturnService]
+      val mockPeriodService = mock[PeriodService]
+      val vatReturn =
+        Gen
+          .nonEmptyListOf(arbitrary[VatReturn])
+          .sample.value
+          .map(r => r copy(vrn = vrn, reference = ReturnReference(vrn, r.period))).head
+
+      when(mockVatReturnService.get(any())) thenReturn Future.successful(Seq(vatReturn.copy(period = period)))
+      when(mockPeriodService.getReturnPeriods(any())) thenReturn periods
+
+      val app =
+        applicationBuilder
+          .overrides(bind[VatReturnService].toInstance(mockVatReturnService))
+          .overrides(bind[PeriodService].toInstance(mockPeriodService))
+          .overrides(bind[Clock].toInstance(stubClock))
+          .build()
+
+      running(app) {
+        val result = route(app, request).value
+
+        status(result) mustEqual OK
+        contentAsJson(result) mustEqual Json.toJson(returns)
       }
     }
 
