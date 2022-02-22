@@ -22,6 +22,7 @@ import play.api.libs.json.{Json, OFormat}
 import java.time.LocalDate
 
 case class Return (
+                  period: Period,
                   firstDay: LocalDate,
                   lastDay: LocalDate,
                   dueDate: LocalDate
@@ -30,5 +31,5 @@ case class Return (
 case object Return {
   implicit val format: OFormat[Return] = Json.format[Return]
 
-  def fromPeriod(period: Period) = Return(period.firstDay, period.lastDay, period.paymentDeadline)
+  def fromPeriod(period: Period) = Return(period, period.firstDay, period.lastDay, period.paymentDeadline)
 }
