@@ -489,7 +489,7 @@ class FinancialDataServiceSpec extends SpecBase
       val response = financialDataService.getVatReturnWithFinancialData(Vrn("123456789"), commencementDate).futureValue
       val expectedResponse =
         Seq(VatReturnWithFinancialData(
-          vatReturn, Some(Charge(period, BigDecimal(1000), BigDecimal(1000), BigDecimal(0))), 100000, None)
+          vatReturn, Some(Charge(period, BigDecimal(1000), BigDecimal(1000), BigDecimal(0))), 1000, None)
         )
 
       response must contain theSameElementsAs expectedResponse
@@ -610,12 +610,12 @@ class FinancialDataServiceSpec extends SpecBase
       val expectedResponse =
         Seq(
           VatReturnWithFinancialData(
-            vatReturn, Some(Charge(period, BigDecimal(1000), BigDecimal(1000), BigDecimal(0))), 100000, None
+            vatReturn, Some(Charge(period, BigDecimal(1000), BigDecimal(1000), BigDecimal(0))), 1000, None
           ),
           VatReturnWithFinancialData(
             vatReturn.copy(period = period2),
             Some(Charge(period2, BigDecimal(1000), BigDecimal(1000), BigDecimal(0))),
-            100000,
+            1000,
             None
           )
         )
@@ -690,12 +690,12 @@ class FinancialDataServiceSpec extends SpecBase
       val expectedResponse =
         Seq(
           VatReturnWithFinancialData(
-            vatReturn, Some(Charge(period, BigDecimal(1000), BigDecimal(1000), BigDecimal(0))), 100000, None
+            vatReturn, Some(Charge(period, BigDecimal(1000), BigDecimal(1000), BigDecimal(0))), 1000, None
           ),
           VatReturnWithFinancialData(
             vatReturn.copy(period = period2),
             Some(Charge(period2, BigDecimal(1000), BigDecimal(1000), BigDecimal(0))),
-            100000,
+            1000,
             None
           )
         )
@@ -717,7 +717,7 @@ class FinancialDataServiceSpec extends SpecBase
       when(correctionsService.get(any(), any())) thenReturn Future.successful(Some(correctionPayload))
       when(vatReturnSalesService.getTotalVatOnSalesAfterCorrection(any(), any())) thenReturn BigDecimal(100)
       val expectedResponse =
-        Seq(VatReturnWithFinancialData(vatReturn, None, 10000, Some(correctionPayload)))
+        Seq(VatReturnWithFinancialData(vatReturn, None, 100, Some(correctionPayload)))
 
       val response = financialDataService.getVatReturnWithFinancialData(Vrn("123456789"), commencementDate).futureValue
 

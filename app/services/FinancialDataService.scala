@@ -67,8 +67,8 @@ class FinancialDataService @Inject()(
           VatReturnWithFinancialData(
             vatReturn,
             charge,
-            charge.map(c => (c.outstandingAmount * 100).toLong)
-            .getOrElse((vatReturnSalesService.getTotalVatOnSalesAfterCorrection(vatReturn, maybeCorrectionPayload) * 100).toLong),
+            charge.map(c => c.outstandingAmount)
+            .getOrElse(vatReturnSalesService.getTotalVatOnSalesAfterCorrection(vatReturn, maybeCorrectionPayload)),
             maybeCorrectionPayload)
         }
       })
