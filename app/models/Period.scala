@@ -19,7 +19,7 @@ package models
 import play.api.libs.json._
 import play.api.mvc.PathBindable
 
-import java.time.LocalDate
+import java.time.{Clock, LocalDate}
 import scala.util.Try
 import scala.util.matching.Regex
 
@@ -30,6 +30,10 @@ case class Period(year: Int, quarter: Quarter) {
   val paymentDeadline: LocalDate = firstDay.plusMonths(4).minusDays(1)
 
   override def toString: String = s"$year-${quarter.toString}"
+
+  def isOverdue(clock: Clock): Boolean = {
+    paymentDeadline.isBefore(LocalDate.now(clock))
+  }
 }
 
 object Period {

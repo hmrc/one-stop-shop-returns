@@ -7,6 +7,7 @@ import models.financialdata._
 import models.Quarter._
 import models.corrections.{CorrectionPayload, CorrectionToCountry, PeriodWithCorrections}
 import models.des.{DesException, UnexpectedResponseStatus}
+import models.VatReturn
 import org.mockito.ArgumentMatchers.{any, eq => equalTo}
 import org.mockito.ArgumentMatchersSugar.eqTo
 import org.mockito.Mockito
@@ -26,9 +27,10 @@ class FinancialDataServiceSpec extends SpecBase
   private val periodService = mock[PeriodService]
   private val financialDataConnector = mock[FinancialDataConnector]
   private val vatReturnService = mock[VatReturnService]
+  private val vatReturnSalesService = mock[VatReturnSalesService]
   private val correctionsService = mock[CorrectionService]
   private val financialDataService =
-    new FinancialDataService(financialDataConnector, vatReturnService, periodService, correctionsService)
+    new FinancialDataService(financialDataConnector, vatReturnService, vatReturnSalesService, periodService, correctionsService)
 
   private val periodYear2021 = PeriodYear(2021)
   private val queryParameters2021 =
@@ -50,6 +52,7 @@ class FinancialDataServiceSpec extends SpecBase
     Mockito.reset(periodService)
     Mockito.reset(financialDataConnector)
     Mockito.reset(vatReturnService)
+    Mockito.reset(vatReturnSalesService)
     Mockito.reset(correctionsService)
   }
 
@@ -723,4 +726,104 @@ class FinancialDataServiceSpec extends SpecBase
       verify(correctionsService, times(1)).get(eqTo(Vrn("123456789")), eqTo(period))
     }
   }
+
+  ".filterIfPaymentIsOutstanding" - {
+
+    val fullyPaidCharge = Charge(
+      period = Period(2021, Q3),
+      originalAmount = BigDecimal(1000),
+      outstandingAmount = BigDecimal(0),
+      clearedAmount = BigDecimal(1000)
+    )
+    val notPaidCharge = Charge(
+      period = Period(2021, Q3),
+      originalAmount = BigDecimal(1000),
+      outstandingAmount = BigDecimal(1000),
+      clearedAmount = BigDecimal(0)
+    )
+
+    "when passing one vatReturnWithFinancialData" - {
+
+      val vatReturnWithFinancialData = VatReturnWithFinancialData(vatReturn, None, None, None)
+      val vatOnSales = BigDecimal(1000)
+
+      "should return one vatReturnWithFinancialData" - {
+
+        "when no charge exists and has vat owed with no correction" in {
+          when(vatReturnSalesService.getTotalVatOnSalesAfterCorrection(vatReturn, None)).thenReturn(vatOnSales)
+
+          val result = financialDataService.filterIfPaymentIsOutstanding(Seq(vatReturnWithFinancialData))
+
+          result mustBe Seq(vatReturnWithFinancialData)
+          verify(vatReturnSalesService, times(1)).getTotalVatOnSalesAfterCorrection(vatReturn, None)
+        }
+
+        "when no charge exists and has vat owed with correction" in {
+          when(vatReturnSalesService.getTotalVatOnSalesAfterCorrection(vatReturn, Some(correctionPayload)))
+            .thenReturn(vatOnSales)
+
+          val vatReturnWithFinancialData = VatReturnWithFinancialData(vatReturn, None, None, Some(correctionPayload))
+
+          val result =
+            financialDataService.filterIfPaymentIsOutstanding(
+              Seq(vatReturnWithFinancialData)
+            )
+
+          result mustBe Seq(vatReturnWithFinancialData)
+          verify(vatReturnSalesService, times(1))
+            .getTotalVatOnSalesAfterCorrection(vatReturn, Some(correctionPayload))
+        }
+
+        "when charge exists with outstanding amount" in {
+          val vatReturnWithFinancialData = VatReturnWithFinancialData(vatReturn, Some(notPaidCharge), None, None)
+          val result = financialDataService.filterIfPaymentIsOutstanding(Seq(vatReturnWithFinancialData))
+
+          result mustBe Seq(vatReturnWithFinancialData)
+        }
+      }
+    }
+
+    "when passing vatReturnWithFinancialDatas" - {
+
+      "should return empty when no outstanding amounts" in {
+        val vatReturn2 = arbitrary[VatReturn].sample.value
+        val vatReturnWithFinancialData = VatReturnWithFinancialData(vatReturn, Some(fullyPaidCharge), Some(0L), None)
+        val vatReturnWithFinancialData2 = VatReturnWithFinancialData(vatReturn2, Some(fullyPaidCharge), Some(0L), None)
+
+        financialDataService.filterIfPaymentIsOutstanding(
+          Seq(vatReturnWithFinancialData, vatReturnWithFinancialData2)
+        ) mustBe Seq.empty
+      }
+
+      "should return all vatReturnWithFinancialDatas with outstanding amounts" in {
+        val vatReturn2 = arbitrary[VatReturn].sample.value
+        val vatReturnWithFinancialData = VatReturnWithFinancialData(vatReturn, Some(notPaidCharge), Some(1000L), None)
+        val vatReturnWithFinancialData2 = VatReturnWithFinancialData(vatReturn2, Some(notPaidCharge), Some(1000L), None)
+
+        financialDataService.filterIfPaymentIsOutstanding(
+          Seq(vatReturnWithFinancialData, vatReturnWithFinancialData2)
+        ) mustBe Seq(vatReturnWithFinancialData, vatReturnWithFinancialData2)
+      }
+    }
+
+    "return empty when" - {
+
+      "charge has been fully paid" in {
+        val vatReturnWithFinancialData = VatReturnWithFinancialData(vatReturn, Some(fullyPaidCharge), Some(0), None)
+
+        val result = financialDataService.filterIfPaymentIsOutstanding(Seq(vatReturnWithFinancialData))
+
+        result mustBe Seq.empty
+      }
+
+      "no charge exists and does not have vat owed" in {
+        val vatReturnWithFinancialData = VatReturnWithFinancialData(vatReturn, Some(fullyPaidCharge), Some(0), None)
+
+        val result = financialDataService.filterIfPaymentIsOutstanding(Seq(vatReturnWithFinancialData))
+
+        result mustBe Seq.empty
+      }
+    }
+  }
+
 }

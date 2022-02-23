@@ -30,6 +30,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class FinancialDataService @Inject()(
                                       financialDataConnector: FinancialDataConnector,
                                       vatReturnService: VatReturnService,
+                                      vatReturnSalesService: VatReturnSalesService,
                                       periodService: PeriodService,
                                       correctionService: CorrectionService
                                     )(implicit ec: ExecutionContext) extends Logging {
@@ -153,5 +154,23 @@ class FinancialDataService @Inject()(
             Future.failed(DesException(s"An error occurred while getting financial Data: ${e.body}"))
         }
     } yield periodsWithOutstandingAmounts
+  }
+
+  def filterIfPaymentIsOutstanding(
+                                    vatReturnsWithFinancialData: Seq[VatReturnWithFinancialData]
+                                  ): Seq[VatReturnWithFinancialData] = {
+    vatReturnsWithFinancialData.filter {
+      vatReturnWithFinancialData =>
+        val hasChargeWithOutstanding =
+          vatReturnWithFinancialData.charge.exists(_.outstandingAmount > 0)
+        val expectingCharge =
+          vatReturnWithFinancialData.charge.isEmpty &&
+            vatReturnSalesService.getTotalVatOnSalesAfterCorrection(
+              vatReturnWithFinancialData.vatReturn,
+              vatReturnWithFinancialData.corrections
+            ) > 0
+
+        hasChargeWithOutstanding || expectingCharge
+    }
   }
 }
