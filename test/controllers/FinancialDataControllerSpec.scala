@@ -173,7 +173,7 @@ class FinancialDataControllerSpec
     val vatOwed = 1000
     val commencementDate = LocalDate.now()
 
-    val vatReturnWithFinancialData = VatReturnWithFinancialData(vatReturn, Some(charge), Some(vatOwed), None)
+    val vatReturnWithFinancialData = VatReturnWithFinancialData(vatReturn, Some(charge), vatOwed, None)
 
     lazy val request =
       FakeRequest(GET, routes.FinancialDataController.getVatReturnWithFinancialData(commencementDate).url)
@@ -214,9 +214,9 @@ class FinancialDataControllerSpec
       val charge2 = Charge(periodOverdue, 1000, 500, 500)
 
       val vatReturnWithFinancialData1 = VatReturnWithFinancialData(
-        completeVatReturn.copy(period = periodDue), Some(charge1), Some(1000L), None)
+        completeVatReturn.copy(period = periodDue), Some(charge1), 1000L, None)
       val vatReturnWithFinancialData2 = VatReturnWithFinancialData(
-        completeVatReturn.copy(period = periodOverdue), Some(charge2), Some(1000L), None)
+        completeVatReturn.copy(period = periodOverdue), Some(charge2), 1000L, None)
 
       val payment1 = Payment.fromVatReturnWithFinancialData(vatReturnWithFinancialData1)
       val payment2 = Payment.fromVatReturnWithFinancialData(vatReturnWithFinancialData2)
@@ -250,7 +250,7 @@ class FinancialDataControllerSpec
       val charge1 = Charge(periodDue, 1000, 1000, 0)
 
       val vatReturnWithFinancialData = VatReturnWithFinancialData(
-        completeVatReturn.copy(period = periodDue), Some(charge1), Some(1000L), None)
+        completeVatReturn.copy(period = periodDue), Some(charge1), 1000L, None)
 
       val payment = Payment.fromVatReturnWithFinancialData(vatReturnWithFinancialData)
 
@@ -285,9 +285,9 @@ class FinancialDataControllerSpec
       val charge2 = Charge(periodOverdue2, 1000, 1000, 0)
 
       val vatReturnWithFinancialData1 = VatReturnWithFinancialData(
-        completeVatReturn.copy(period = periodOverdue1), Some(charge1), Some(1000L), None)
+        completeVatReturn.copy(period = periodOverdue1), Some(charge1), 1000L, None)
       val vatReturnWithFinancialData2 = VatReturnWithFinancialData(
-        completeVatReturn.copy(period = periodOverdue2), Some(charge2), Some(1000L), None)
+        completeVatReturn.copy(period = periodOverdue2), Some(charge2), 1000L, None)
 
       val payment1 = Payment.fromVatReturnWithFinancialData(vatReturnWithFinancialData1)
       val payment2 = Payment.fromVatReturnWithFinancialData(vatReturnWithFinancialData2)

@@ -24,7 +24,8 @@ import java.time.LocalDate
 case class Payment(period: Period,
                    amountOwed: Long,
                    dateDue: LocalDate,
-                   paymentStatus: Option[PaymentStatus]
+                   paymentStatus: PaymentStatus,
+                   hasCharge: Boolean
                   )
 
 object Payment {
@@ -32,10 +33,15 @@ object Payment {
 
   def fromVatReturnWithFinancialData(vatReturnWithFinancialData: VatReturnWithFinancialData): Payment = {
     val paymentStatus = vatReturnWithFinancialData.charge
-      .map(status => if (status.outstandingAmount == status.originalAmount) PaymentStatus.Unpaid else PaymentStatus.Partial)
+      .map(paymentCharge => if (paymentCharge.outstandingAmount == paymentCharge.originalAmount) PaymentStatus.Unpaid else PaymentStatus.Partial)
+      .getOrElse(PaymentStatus.Unknown)
 
-    Payment(vatReturnWithFinancialData.vatReturn.period, vatReturnWithFinancialData.vatOwed.getOrElse(0),
+
+    Payment(vatReturnWithFinancialData.vatReturn.period,
+      vatReturnWithFinancialData.vatOwed,
       vatReturnWithFinancialData.vatReturn.period.paymentDeadline,
-      paymentStatus)
+      paymentStatus,
+      vatReturnWithFinancialData.charge.isDefined
+    )
   }
 }

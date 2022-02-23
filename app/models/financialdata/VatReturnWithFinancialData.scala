@@ -22,7 +22,7 @@ import play.api.libs.json.{Format, Json}
 
 case class VatReturnWithFinancialData(vatReturn: VatReturn,
                                       charge: Option[Charge],
-                                      vatOwed: Option[Long],
+                                      vatOwed: Long,
                                       corrections: Option[CorrectionPayload]
                                      )
 

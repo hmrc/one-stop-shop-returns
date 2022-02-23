@@ -67,10 +67,11 @@ class FinancialDataController @Inject()(
   def prepareFinancialData(commencementDate: LocalDate): Action[AnyContent] = auth.async {
     implicit request =>
       for {
-        vatReturnWithFinancialData <- service.getVatReturnWithFinancialData(request.vrn, commencementDate)
+        vatReturnsWithFinancialData <- service.getVatReturnWithFinancialData(request.vrn, commencementDate)
       } yield {
 
-        val filteredPeriodsWithOutstandingAmounts = getFilteredPeriodsWithOutstandingAmounts(vatReturnWithFinancialData)
+        val filteredPeriodsWithOutstandingAmounts = service
+          .filterIfPaymentIsOutstanding(vatReturnsWithFinancialData)
         val duePeriodsWithOutstandingAmounts =
           filteredPeriodsWithOutstandingAmounts.filterNot(_.vatReturn.period.isOverdue(clock))
         val overduePeriodsWithOutstandingAmounts =
@@ -88,22 +89,5 @@ class FinancialDataController @Inject()(
 
         Ok(Json.toJson(CurrentPayments(duePayments, overduePayments)))
       }
-  }
-
-  private def getFilteredPeriodsWithOutstandingAmounts(vatReturnsWithFinancialData: Seq[VatReturnWithFinancialData]) = {
-    service
-      .filterIfPaymentIsOutstanding(vatReturnsWithFinancialData)
-      .map(vatReturnWithFinancialData =>
-        vatReturnWithFinancialData.vatOwed match {
-          case Some(_) => vatReturnWithFinancialData
-          case _ =>
-            vatReturnWithFinancialData.copy(
-              vatOwed = Some(
-                (vatReturnSalesService.getTotalVatOnSalesAfterCorrection(vatReturnWithFinancialData.vatReturn,
-                  vatReturnWithFinancialData.corrections) * 100).toLong
-              )
-            )
-        }
-      )
   }
 }

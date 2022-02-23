@@ -489,7 +489,7 @@ class FinancialDataServiceSpec extends SpecBase
       val response = financialDataService.getVatReturnWithFinancialData(Vrn("123456789"), commencementDate).futureValue
       val expectedResponse =
         Seq(VatReturnWithFinancialData(
-          vatReturn, Some(Charge(period, BigDecimal(1000), BigDecimal(1000), BigDecimal(0))), Some(100000), None)
+          vatReturn, Some(Charge(period, BigDecimal(1000), BigDecimal(1000), BigDecimal(0))), 100000, None)
         )
 
       response must contain theSameElementsAs expectedResponse
@@ -508,17 +508,18 @@ class FinancialDataServiceSpec extends SpecBase
         .thenReturn(Future.successful(Right(None)))
       when(vatReturnService.get(any())) thenReturn Future.successful(Seq(vatReturn))
       when(correctionsService.get(any(), any())) thenReturn Future.successful(None)
-
+      when(vatReturnSalesService.getTotalVatOnSalesAfterCorrection(any(), any())) thenReturn BigDecimal(0)
 
       val response = financialDataService.getVatReturnWithFinancialData(Vrn("123456789"), commencementDate).futureValue
       val expectedResponse =
-        Seq(VatReturnWithFinancialData(vatReturn, None, None, None))
+        Seq(VatReturnWithFinancialData(vatReturn, None, 0, None))
 
       response mustBe expectedResponse
       verify(financialDataConnector, times(1)).getFinancialData(any(), eqTo(queryParameters2021))
       verify(periodService, times(1)).getPeriodYears(eqTo(commencementDate))
       verify(vatReturnService, times(1)).get(any())
       verify(correctionsService, times(1)).get(eqTo(Vrn("123456789")), eqTo(period))
+      verify(vatReturnSalesService, times(1)).getTotalVatOnSalesAfterCorrection(eqTo(vatReturn), eqTo(None))
     }
 
     "must return one VatReturnWithFinancialData when there is one vatReturn and financialDataConnector call fails" in {
@@ -530,16 +531,17 @@ class FinancialDataServiceSpec extends SpecBase
       )
       when(vatReturnService.get(any())) thenReturn Future.successful(Seq(vatReturn))
       when(correctionsService.get(any(), any())) thenReturn Future.successful(None)
-
+      when(vatReturnSalesService.getTotalVatOnSalesAfterCorrection(any(), any())) thenReturn BigDecimal(0)
 
       val response = financialDataService.getVatReturnWithFinancialData(Vrn("123456789"), commencementDate).futureValue
-      val expectedResponse = Seq(VatReturnWithFinancialData(vatReturn, None, None, None))
+      val expectedResponse = Seq(VatReturnWithFinancialData(vatReturn, None, 0, None))
 
       response must contain theSameElementsAs expectedResponse
       verify(financialDataConnector, times(1)).getFinancialData(any(), eqTo(queryParameters2021))
       verify(periodService, times(1)).getPeriodYears(eqTo(commencementDate))
       verify(vatReturnService, times(1)).get(any())
       verify(correctionsService, times(1)).get(eqTo(Vrn("123456789")), eqTo(period))
+      verify(vatReturnSalesService, times(1)).getTotalVatOnSalesAfterCorrection(eqTo(vatReturn), eqTo(None))
 
     }
 
@@ -608,12 +610,12 @@ class FinancialDataServiceSpec extends SpecBase
       val expectedResponse =
         Seq(
           VatReturnWithFinancialData(
-            vatReturn, Some(Charge(period, BigDecimal(1000), BigDecimal(1000), BigDecimal(0))), Some(100000), None
+            vatReturn, Some(Charge(period, BigDecimal(1000), BigDecimal(1000), BigDecimal(0))), 100000, None
           ),
           VatReturnWithFinancialData(
             vatReturn.copy(period = period2),
             Some(Charge(period2, BigDecimal(1000), BigDecimal(1000), BigDecimal(0))),
-            Some(100000),
+            100000,
             None
           )
         )
@@ -688,12 +690,12 @@ class FinancialDataServiceSpec extends SpecBase
       val expectedResponse =
         Seq(
           VatReturnWithFinancialData(
-            vatReturn, Some(Charge(period, BigDecimal(1000), BigDecimal(1000), BigDecimal(0))), Some(100000), None
+            vatReturn, Some(Charge(period, BigDecimal(1000), BigDecimal(1000), BigDecimal(0))), 100000, None
           ),
           VatReturnWithFinancialData(
             vatReturn.copy(period = period2),
             Some(Charge(period2, BigDecimal(1000), BigDecimal(1000), BigDecimal(0))),
-            Some(100000),
+            100000,
             None
           )
         )
@@ -713,9 +715,9 @@ class FinancialDataServiceSpec extends SpecBase
       when(vatReturnService.get(any())) thenReturn Future.successful(Seq(vatReturn))
       when(periodService.getPeriodYears(any())) thenReturn Seq(periodYear2021)
       when(correctionsService.get(any(), any())) thenReturn Future.successful(Some(correctionPayload))
-
+      when(vatReturnSalesService.getTotalVatOnSalesAfterCorrection(any(), any())) thenReturn BigDecimal(100)
       val expectedResponse =
-        Seq(VatReturnWithFinancialData(vatReturn, None, None, Some(correctionPayload)))
+        Seq(VatReturnWithFinancialData(vatReturn, None, 10000, Some(correctionPayload)))
 
       val response = financialDataService.getVatReturnWithFinancialData(Vrn("123456789"), commencementDate).futureValue
 
@@ -724,6 +726,8 @@ class FinancialDataServiceSpec extends SpecBase
       verify(vatReturnService, times(1)).get(eqTo(Vrn("123456789")))
       verify(periodService, times(1)).getPeriodYears(eqTo(commencementDate))
       verify(correctionsService, times(1)).get(eqTo(Vrn("123456789")), eqTo(period))
+      verify(vatReturnSalesService, times(1)).getTotalVatOnSalesAfterCorrection(eqTo(vatReturn), eqTo(Some(correctionPayload)))
+
     }
   }
 
@@ -744,7 +748,7 @@ class FinancialDataServiceSpec extends SpecBase
 
     "when passing one vatReturnWithFinancialData" - {
 
-      val vatReturnWithFinancialData = VatReturnWithFinancialData(vatReturn, None, None, None)
+      val vatReturnWithFinancialData = VatReturnWithFinancialData(vatReturn, None, 0, None)
       val vatOnSales = BigDecimal(1000)
 
       "should return one vatReturnWithFinancialData" - {
@@ -762,7 +766,7 @@ class FinancialDataServiceSpec extends SpecBase
           when(vatReturnSalesService.getTotalVatOnSalesAfterCorrection(vatReturn, Some(correctionPayload)))
             .thenReturn(vatOnSales)
 
-          val vatReturnWithFinancialData = VatReturnWithFinancialData(vatReturn, None, None, Some(correctionPayload))
+          val vatReturnWithFinancialData = VatReturnWithFinancialData(vatReturn, None, 0, Some(correctionPayload))
 
           val result =
             financialDataService.filterIfPaymentIsOutstanding(
@@ -775,7 +779,7 @@ class FinancialDataServiceSpec extends SpecBase
         }
 
         "when charge exists with outstanding amount" in {
-          val vatReturnWithFinancialData = VatReturnWithFinancialData(vatReturn, Some(notPaidCharge), None, None)
+          val vatReturnWithFinancialData = VatReturnWithFinancialData(vatReturn, Some(notPaidCharge), 0, None)
           val result = financialDataService.filterIfPaymentIsOutstanding(Seq(vatReturnWithFinancialData))
 
           result mustBe Seq(vatReturnWithFinancialData)
@@ -787,8 +791,8 @@ class FinancialDataServiceSpec extends SpecBase
 
       "should return empty when no outstanding amounts" in {
         val vatReturn2 = arbitrary[VatReturn].sample.value
-        val vatReturnWithFinancialData = VatReturnWithFinancialData(vatReturn, Some(fullyPaidCharge), Some(0L), None)
-        val vatReturnWithFinancialData2 = VatReturnWithFinancialData(vatReturn2, Some(fullyPaidCharge), Some(0L), None)
+        val vatReturnWithFinancialData = VatReturnWithFinancialData(vatReturn, Some(fullyPaidCharge), 0L, None)
+        val vatReturnWithFinancialData2 = VatReturnWithFinancialData(vatReturn2, Some(fullyPaidCharge), 0L, None)
 
         financialDataService.filterIfPaymentIsOutstanding(
           Seq(vatReturnWithFinancialData, vatReturnWithFinancialData2)
@@ -797,8 +801,8 @@ class FinancialDataServiceSpec extends SpecBase
 
       "should return all vatReturnWithFinancialDatas with outstanding amounts" in {
         val vatReturn2 = arbitrary[VatReturn].sample.value
-        val vatReturnWithFinancialData = VatReturnWithFinancialData(vatReturn, Some(notPaidCharge), Some(1000L), None)
-        val vatReturnWithFinancialData2 = VatReturnWithFinancialData(vatReturn2, Some(notPaidCharge), Some(1000L), None)
+        val vatReturnWithFinancialData = VatReturnWithFinancialData(vatReturn, Some(notPaidCharge), 1000L, None)
+        val vatReturnWithFinancialData2 = VatReturnWithFinancialData(vatReturn2, Some(notPaidCharge), 1000L, None)
 
         financialDataService.filterIfPaymentIsOutstanding(
           Seq(vatReturnWithFinancialData, vatReturnWithFinancialData2)
@@ -809,7 +813,7 @@ class FinancialDataServiceSpec extends SpecBase
     "return empty when" - {
 
       "charge has been fully paid" in {
-        val vatReturnWithFinancialData = VatReturnWithFinancialData(vatReturn, Some(fullyPaidCharge), Some(0), None)
+        val vatReturnWithFinancialData = VatReturnWithFinancialData(vatReturn, Some(fullyPaidCharge), 0, None)
 
         val result = financialDataService.filterIfPaymentIsOutstanding(Seq(vatReturnWithFinancialData))
 
@@ -817,7 +821,7 @@ class FinancialDataServiceSpec extends SpecBase
       }
 
       "no charge exists and does not have vat owed" in {
-        val vatReturnWithFinancialData = VatReturnWithFinancialData(vatReturn, Some(fullyPaidCharge), Some(0), None)
+        val vatReturnWithFinancialData = VatReturnWithFinancialData(vatReturn, Some(fullyPaidCharge), 0, None)
 
         val result = financialDataService.filterIfPaymentIsOutstanding(Seq(vatReturnWithFinancialData))
 
