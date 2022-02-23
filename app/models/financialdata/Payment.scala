@@ -16,11 +16,13 @@
 
 package models.financialdata
 
+import models.Period
 import play.api.libs.json.{Format, Json}
 
 import java.time.LocalDate
 
-case class Payment(amountOwed: Long,
+case class Payment(period: Period,
+                   amountOwed: Long,
                    dateDue: LocalDate,
                    paymentStatus: Option[PaymentStatus]
                   )
@@ -30,9 +32,9 @@ object Payment {
 
   def fromVatReturnWithFinancialData(vatReturnWithFinancialData: VatReturnWithFinancialData): Payment = {
     val paymentStatus = vatReturnWithFinancialData.charge
-      .map(status => if(status.outstandingAmount == status.originalAmount) PaymentStatus.Unpaid else PaymentStatus.Partial)
+      .map(status => if (status.outstandingAmount == status.originalAmount) PaymentStatus.Unpaid else PaymentStatus.Partial)
 
-    Payment(vatReturnWithFinancialData.vatOwed.getOrElse(0),
+    Payment(vatReturnWithFinancialData.vatReturn.period, vatReturnWithFinancialData.vatOwed.getOrElse(0),
       vatReturnWithFinancialData.vatReturn.period.paymentDeadline,
       paymentStatus)
   }
