@@ -24,8 +24,7 @@ import java.time.LocalDate
 case class Payment(period: Period,
                    amountOwed: Long,
                    dateDue: LocalDate,
-                   paymentStatus: PaymentStatus,
-                   hasCharge: Boolean
+                   paymentStatus: PaymentStatus
                   )
 
 object Payment {
@@ -40,8 +39,7 @@ object Payment {
     Payment(vatReturnWithFinancialData.vatReturn.period,
       vatReturnWithFinancialData.vatOwed,
       vatReturnWithFinancialData.vatReturn.period.paymentDeadline,
-      paymentStatus,
-      vatReturnWithFinancialData.charge.isDefined
+      paymentStatus
     )
   }
 }
