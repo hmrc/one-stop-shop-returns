@@ -50,6 +50,9 @@ object Period {
         None
     }
 
+  implicit def orderingByPeriod[A <: Period]: Ordering[A] =
+    Ordering.by(e => e.firstDay.toEpochDay)
+
   implicit val format: OFormat[Period] = Json.format[Period]
 
   implicit val pathBindable: PathBindable[Period] = new PathBindable[Period] {
