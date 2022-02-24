@@ -60,7 +60,7 @@ class ReturnStatusController @Inject()(
           Return.fromPeriod(savedAnswers.period))
       val duePeriods = availablePeriodsWithStatus.find(_.status == Due).map(periodWithStatus => Return.fromPeriod(periodWithStatus.period))
       val overduePeriods = availablePeriodsWithStatus.filter(_.status == Overdue).map(periodWithStatus => Return.fromPeriod(periodWithStatus.period))
-      val returns = Returns(returnInProgress, duePeriods, overduePeriods)
+      val returns = OpenReturns(returnInProgress, duePeriods, overduePeriods)
 
       Ok(Json.toJson(returns))
     }

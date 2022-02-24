@@ -17,6 +17,7 @@
 package controllers
 
 import base.SpecBase
+import controllers.actions.FakeFailingAuthConnector
 import generators.Generators
 import models._
 import models.yourAccount._
@@ -27,10 +28,13 @@ import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.inject.bind
+import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
+import repositories.SaveForLaterRepository
 import services.{PeriodService, VatReturnService}
+import uk.gov.hmrc.auth.core.{AuthConnector, MissingBearerToken}
 
 import java.time.{Clock, LocalDate, ZoneId}
 import scala.concurrent.Future
@@ -84,45 +88,189 @@ class ReturnStatusControllerSpec
     val period3 = Period(2022, Q3)
     val periods = Seq(period, period0, period1, period2, period3)
     val commencementDate = LocalDate.of(2021, 1, 1)
-    val returns = Returns(
-      None,
-      Some(Return.fromPeriod(period3)),
-      Seq(
-        Return.fromPeriod(period0),
-        Return.fromPeriod(period1),
-        Return.fromPeriod(period2)
-      )
-    )
 
     lazy val request = FakeRequest(GET, routes.ReturnStatusController.getCurrentReturns(commencementDate).url)
+    "must respond with OK and the OpenReturns model" - {
 
-    "must respond with OK and a sequence of requests" in {
+      "with no returns in progress, due or overdue if there are no returns due yet" in {
 
-      val mockVatReturnService = mock[VatReturnService]
-      val mockPeriodService = mock[PeriodService]
-      val vatReturn =
-        Gen
-          .nonEmptyListOf(arbitrary[VatReturn])
-          .sample.value
-          .map(r => r copy(vrn = vrn, reference = ReturnReference(vrn, r.period))).head
+        val mockVatReturnService = mock[VatReturnService]
+        val mockPeriodService = mock[PeriodService]
+        val mockS4LaterRepository = mock[SaveForLaterRepository]
 
-      when(mockVatReturnService.get(any())) thenReturn Future.successful(Seq(vatReturn.copy(period = period)))
-      when(mockPeriodService.getReturnPeriods(any())) thenReturn periods
+        when(mockVatReturnService.get(any())) thenReturn Future.successful(Seq.empty)
+        when(mockPeriodService.getReturnPeriods(any())) thenReturn Seq.empty
+        when(mockS4LaterRepository.get(any())) thenReturn Future.successful(Seq.empty)
+
+        val app =
+          applicationBuilder
+            .overrides(bind[VatReturnService].toInstance(mockVatReturnService))
+            .overrides(bind[PeriodService].toInstance(mockPeriodService))
+            .overrides(bind[SaveForLaterRepository].toInstance(mockS4LaterRepository))
+            .overrides(bind[Clock].toInstance(stubClock))
+            .build()
+
+        running(app) {
+          val result = route(app, request).value
+
+          status(result) mustEqual OK
+          contentAsJson(result) mustEqual Json.toJson(OpenReturns(None, None, Seq.empty))
+        }
+      }
+
+      "with no returns in progress, due or overdue if all returns are complete" in {
+
+        val mockVatReturnService = mock[VatReturnService]
+        val mockPeriodService = mock[PeriodService]
+        val mockS4LaterRepository = mock[SaveForLaterRepository]
+        val vatReturn =
+          Gen
+            .nonEmptyListOf(arbitrary[VatReturn])
+            .sample.value
+            .map(r => r copy(vrn = vrn, reference = ReturnReference(vrn, r.period))).head
+
+        when(mockVatReturnService.get(any())) thenReturn Future.successful(Seq(vatReturn.copy(period = period)))
+        when(mockPeriodService.getReturnPeriods(any())) thenReturn Seq(period)
+        when(mockS4LaterRepository.get(any())) thenReturn Future.successful(Seq.empty)
+
+        val app =
+          applicationBuilder
+            .overrides(bind[VatReturnService].toInstance(mockVatReturnService))
+            .overrides(bind[PeriodService].toInstance(mockPeriodService))
+            .overrides(bind[SaveForLaterRepository].toInstance(mockS4LaterRepository))
+            .overrides(bind[Clock].toInstance(stubClock))
+            .build()
+
+        running(app) {
+          val result = route(app, request).value
+
+          status(result) mustEqual OK
+          contentAsJson(result) mustEqual Json.toJson(OpenReturns(None, None, Seq.empty))
+        }
+      }
+
+      "with a return due but not in progress if there's one return due but no saved answers" in {
+        val period = Period(2022, Q3)
+        val mockVatReturnService = mock[VatReturnService]
+        val mockPeriodService = mock[PeriodService]
+        val mockS4LaterRepository = mock[SaveForLaterRepository]
+
+        when(mockVatReturnService.get(any())) thenReturn Future.successful(Seq.empty)
+        when(mockPeriodService.getReturnPeriods(any())) thenReturn Seq(period)
+        when(mockS4LaterRepository.get(any())) thenReturn Future.successful(Seq.empty)
+
+        val app =
+          applicationBuilder
+            .overrides(bind[VatReturnService].toInstance(mockVatReturnService))
+            .overrides(bind[PeriodService].toInstance(mockPeriodService))
+            .overrides(bind[SaveForLaterRepository].toInstance(mockS4LaterRepository))
+            .overrides(bind[Clock].toInstance(stubClock))
+            .build()
+
+        running(app) {
+          val result = route(app, request).value
+
+          status(result) mustEqual OK
+          contentAsJson(result) mustEqual Json.toJson(OpenReturns(None, Some(Return(period, period.firstDay, period.lastDay, period.paymentDeadline)), Seq.empty))
+        }
+      }
+
+      "with some overdue returns but nothing in progress" in {
+
+        val mockVatReturnService = mock[VatReturnService]
+        val mockPeriodService = mock[PeriodService]
+        val mockS4LaterRepository = mock[SaveForLaterRepository]
+        val periods = Seq(period, period0, period2)
+        val returns = Seq(
+          Return.fromPeriod(period),
+          Return.fromPeriod(period0),
+          Return.fromPeriod(period2))
+        when(mockVatReturnService.get(any())) thenReturn Future.successful(Seq.empty)
+        when(mockPeriodService.getReturnPeriods(any())) thenReturn periods
+        when(mockS4LaterRepository.get(any())) thenReturn Future.successful(Seq.empty)
+
+        val app =
+          applicationBuilder
+            .overrides(bind[VatReturnService].toInstance(mockVatReturnService))
+            .overrides(bind[PeriodService].toInstance(mockPeriodService))
+            .overrides(bind[SaveForLaterRepository].toInstance(mockS4LaterRepository))
+            .overrides(bind[Clock].toInstance(stubClock))
+            .build()
+
+        running(app) {
+          val result = route(app, request).value
+
+          status(result) mustEqual OK
+          contentAsJson(result) mustEqual Json.toJson(OpenReturns(None, None, returns))
+        }
+      }
+
+      "with a return due and some returns overdue and nothing in progress" in {
+
+        val mockVatReturnService = mock[VatReturnService]
+        val mockPeriodService = mock[PeriodService]
+        val mockS4LaterRepository = mock[SaveForLaterRepository]
+
+        when(mockVatReturnService.get(any())) thenReturn Future.successful(Seq.empty)
+        when(mockPeriodService.getReturnPeriods(any())) thenReturn periods
+        when(mockS4LaterRepository.get(any())) thenReturn Future.successful(Seq.empty)
+        val app =
+          applicationBuilder
+            .overrides(bind[VatReturnService].toInstance(mockVatReturnService))
+            .overrides(bind[PeriodService].toInstance(mockPeriodService))
+            .overrides(bind[SaveForLaterRepository].toInstance(mockS4LaterRepository))
+            .overrides(bind[Clock].toInstance(stubClock))
+            .build()
+
+        running(app) {
+          val result = route(app, request).value
+
+          status(result) mustEqual OK
+          contentAsJson(result) mustEqual Json.toJson(OpenReturns(None, Some(Return.fromPeriod(period3)),
+            Seq(Return.fromPeriod(period), Return.fromPeriod(period0), Return.fromPeriod(period1), Return.fromPeriod(period2))
+          ))
+        }
+      }
+
+      "with a return due and in progress if there's one return due and saved answers" in {
+        val period = Period(2022, Q3)
+        val mockVatReturnService = mock[VatReturnService]
+        val mockPeriodService = mock[PeriodService]
+        val mockS4LaterRepository = mock[SaveForLaterRepository]
+        val answers = arbitrary[SavedUserAnswers].sample.value.copy(period = period)
+
+        when(mockVatReturnService.get(any())) thenReturn Future.successful(Seq.empty)
+        when(mockPeriodService.getReturnPeriods(any())) thenReturn Seq(period)
+        when(mockS4LaterRepository.get(any())) thenReturn Future.successful(Seq(answers))
+
+        val app =
+          applicationBuilder
+            .overrides(bind[VatReturnService].toInstance(mockVatReturnService))
+            .overrides(bind[PeriodService].toInstance(mockPeriodService))
+            .overrides(bind[SaveForLaterRepository].toInstance(mockS4LaterRepository))
+            .overrides(bind[Clock].toInstance(stubClock))
+            .build()
+
+        running(app) {
+          val result = route(app, request).value
+
+          status(result) mustEqual OK
+          contentAsJson(result) mustEqual Json.toJson(OpenReturns(Some(Return.fromPeriod(period)), Some(Return.fromPeriod(period)), Seq.empty))
+        }
+      }
+    }
+
+    "must respond with Unauthorized when the user is not authorised" in {
 
       val app =
-        applicationBuilder
-          .overrides(bind[VatReturnService].toInstance(mockVatReturnService))
-          .overrides(bind[PeriodService].toInstance(mockPeriodService))
-          .overrides(bind[Clock].toInstance(stubClock))
+        new GuiceApplicationBuilder()
+          .overrides(bind[AuthConnector].toInstance(new FakeFailingAuthConnector(new MissingBearerToken)))
           .build()
 
       running(app) {
         val result = route(app, request).value
-
-        status(result) mustEqual OK
-        contentAsJson(result) mustEqual Json.toJson(returns)
+        status(result) mustEqual UNAUTHORIZED
       }
     }
-
   }
 }
