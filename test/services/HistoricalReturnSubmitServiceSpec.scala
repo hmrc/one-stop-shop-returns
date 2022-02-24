@@ -5,7 +5,7 @@ import config.AppConfig
 import connectors.{CoreVatReturnConnector, RegistrationConnector}
 import models.Period
 import models.Quarter.{Q1, Q2, Q4}
-import models.core.CoreErrorResponse
+import models.core.{CoreErrorResponse, EisErrorResponse}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchersSugar.eqTo
 import org.mockito.Mockito
@@ -112,7 +112,7 @@ class HistoricalReturnSubmitServiceSpec extends SpecBase with BeforeAndAfterEach
 
         val coreVatReturnFail = coreVatReturn.copy(vatReturnReferenceNumber = "987654323")
 
-        val coreErrorResponse = CoreErrorResponse(Instant.now(), None, "ERROR", "Submission error")
+        val coreErrorResponse = EisErrorResponse(CoreErrorResponse(Instant.now(), None, "ERROR", "Submission error"))
 
         when(vatReturnService.get()) thenReturn Future.successful(List(completeVatReturn, completeVatReturn2, completeVatReturn3))
         when(correctionService.get()) thenReturn Future.successful(List(emptyCorrectionPayload))
@@ -123,7 +123,7 @@ class HistoricalReturnSubmitServiceSpec extends SpecBase with BeforeAndAfterEach
         when(coreVatReturnConnector.submit(eqTo(coreVatReturnFail))) thenReturn Future.successful(Left(coreErrorResponse))
         when(registrationConnector.getRegistration(any())) thenReturn Future.successful(Some(RegistrationData.registration))
 
-        service.transfer().futureValue mustBe Failure(coreErrorResponse.asException)
+        service.transfer().futureValue mustBe Failure(coreErrorResponse.errorDetail.asException)
 
         verify(coreVatReturnConnector, times(2)).submit(any())
       }

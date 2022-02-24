@@ -20,7 +20,7 @@ import config.AppConfig
 import connectors.CoreVatReturnHttpParser.CoreVatReturnResponse
 import connectors.{CoreVatReturnConnector, RegistrationConnector}
 import logging.Logging
-import models.core.{CoreErrorResponse, CoreVatReturn}
+import models.core.{CoreErrorResponse, CoreVatReturn, EisErrorResponse}
 import models.corrections.CorrectionPayload
 import models.domain.Registration
 import models.{Period, VatReturn}
@@ -57,13 +57,19 @@ class HistoricalReturnSubmitServiceImpl @Inject()(
     }
   }
 
-   def submitSequentially(returns: Seq[CoreVatReturn]): Future[Either[CoreErrorResponse, Unit]] = {
+   def submitSequentially(returns: Seq[CoreVatReturn]): Future[Either[EisErrorResponse, Unit]] = {
      if(returns.isEmpty)
        Future.successful(Right())
      else {
        coreVatReturnConnector.submit(returns.head).flatMap {
-           case Right(_) => submitSequentially(returns.tail)
-           case Left(t) => Future.successful(Left(t))
+           case Right(_) => {
+             logger.info(s"Successfully sent return to core for ${obfuscateVrn(returns.head.vatReturnReferenceNumber)} and ${returns.head.period}")
+             submitSequentially(returns.tail)
+           }
+           case Left(t) => {
+             logger.error(s"Failure with sending return to core for ${obfuscateVrn(returns.head.vatReturnReferenceNumber)} and ${returns.head.period}: ${t.errorDetail.errorMessage}")
+             Future.successful(Left(t))
+           }
        }
      }
   }
@@ -127,8 +133,8 @@ class HistoricalReturnSubmitServiceImpl @Inject()(
           submissionsResult match {
             case Right(_) => Success()
             case Left(t) => {
-              logger.error(s"Could not submit vat return: ${t.errorMessage}")
-              Failure(t.asException)
+              logger.error(s"Could not submit vat return: ${t.errorDetail.errorMessage}")
+              Failure(t.errorDetail.asException)
             }
           }
         }
