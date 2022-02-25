@@ -19,26 +19,38 @@ package controllers
 import base.SpecBase
 import generators.Generators
 import models._
-import models.Quarter.Q3
+import models.Quarter.{Q3, Q4}
 import models.des.DesException
-import models.financialdata.{Charge, PeriodWithOutstandingAmount, VatReturnWithFinancialData}
+import models.financialdata.{Charge, CurrentPayments, Payment, PeriodWithOutstandingAmount, VatReturnWithFinancialData}
 import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
+import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.inject.bind
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import services.FinancialDataService
+import services.{FinancialDataService, VatReturnSalesService}
 
-import java.time.LocalDate
+import java.time.{Clock, Instant, LocalDate, ZoneId}
 import scala.concurrent.Future
 
 class FinancialDataControllerSpec
   extends SpecBase
     with ScalaCheckPropertyChecks
-    with Generators {
+    with Generators
+    with BeforeAndAfterEach {
+
+  val mockFinancialDataService = mock[FinancialDataService]
+  val mockVatReturnSalesService = mock[VatReturnSalesService]
+
+  override def beforeEach(): Unit = {
+    Mockito.reset(mockFinancialDataService)
+    Mockito.reset(mockVatReturnSalesService)
+    super.beforeEach()
+  }
 
   ".getCharge(period)" - {
 
@@ -161,7 +173,7 @@ class FinancialDataControllerSpec
     val vatOwed = 1000
     val commencementDate = LocalDate.now()
 
-    val vatReturnWithFinancialData = VatReturnWithFinancialData(vatReturn, Some(charge), Some(vatOwed), None)
+    val vatReturnWithFinancialData = VatReturnWithFinancialData(vatReturn, Some(charge), vatOwed, None)
 
     lazy val request =
       FakeRequest(GET, routes.FinancialDataController.getVatReturnWithFinancialData(commencementDate).url)
@@ -185,4 +197,120 @@ class FinancialDataControllerSpec
       }
     }
   }
+
+  ".prepareFinancialData" - {
+
+    lazy val request =
+      FakeRequest(GET, routes.FinancialDataController.prepareFinancialData(LocalDate.now).url)
+
+    "must return both Current Payments as Json when there are due payments and overdue payments" in {
+
+      val stubClock = Clock.fixed(
+        Instant.from(LocalDate.of(2022, 1, 1)
+          .atStartOfDay(ZoneId.systemDefault())), ZoneId.systemDefault())
+      val periodDue = Period(2021, Q4)
+      val periodOverdue = Period(2021, Q3)
+      val charge1 = Charge(periodDue, 1000, 1000, 0)
+      val charge2 = Charge(periodOverdue, 1000, 500, 500)
+
+      val vatReturnWithFinancialData1 = VatReturnWithFinancialData(
+        completeVatReturn.copy(period = periodDue), Some(charge1), 1000L, None)
+      val vatReturnWithFinancialData2 = VatReturnWithFinancialData(
+        completeVatReturn.copy(period = periodOverdue), Some(charge2), 1000L, None)
+
+      val payment1 = Payment.fromVatReturnWithFinancialData(vatReturnWithFinancialData1)
+      val payment2 = Payment.fromVatReturnWithFinancialData(vatReturnWithFinancialData2)
+
+      when(mockFinancialDataService.getVatReturnWithFinancialData(any(), any())) thenReturn Future.successful(Seq(vatReturnWithFinancialData1, vatReturnWithFinancialData2))
+      when(mockFinancialDataService.filterIfPaymentIsOutstanding(any())) thenReturn Seq(vatReturnWithFinancialData1, vatReturnWithFinancialData2)
+      when(mockVatReturnSalesService.getTotalVatOnSalesAfterCorrection(any(), any())) thenReturn BigDecimal(0)
+
+      val app =
+        applicationBuilder
+          .overrides(bind[FinancialDataService].to(mockFinancialDataService))
+          .overrides(bind[VatReturnSalesService].to(mockVatReturnSalesService))
+          .overrides(bind[Clock].toInstance(stubClock))
+          .build()
+
+      running(app) {
+
+        val result = route(app, request).value
+
+        status(result) mustBe OK
+        contentAsJson(result) mustBe Json.toJson(CurrentPayments(Seq(payment1), Seq(payment2)))
+      }
+    }
+
+    "must return Current Payment as Json when there are due payments" in {
+
+      val stubClock = Clock.fixed(
+        Instant.from(LocalDate.of(2022, 1, 1)
+          .atStartOfDay(ZoneId.systemDefault())), ZoneId.systemDefault())
+      val periodDue = Period(2021, Q4)
+      val charge1 = Charge(periodDue, 1000, 1000, 0)
+
+      val vatReturnWithFinancialData = VatReturnWithFinancialData(
+        completeVatReturn.copy(period = periodDue), Some(charge1), 1000L, None)
+
+      val payment = Payment.fromVatReturnWithFinancialData(vatReturnWithFinancialData)
+
+      when(mockFinancialDataService.getVatReturnWithFinancialData(any(), any())) thenReturn Future.successful(Seq(vatReturnWithFinancialData))
+      when(mockFinancialDataService.filterIfPaymentIsOutstanding(any())) thenReturn Seq(vatReturnWithFinancialData)
+      when(mockVatReturnSalesService.getTotalVatOnSalesAfterCorrection(any(), any())) thenReturn BigDecimal(0)
+
+      val app =
+        applicationBuilder
+          .overrides(bind[FinancialDataService].to(mockFinancialDataService))
+          .overrides(bind[VatReturnSalesService].to(mockVatReturnSalesService))
+          .overrides(bind[Clock].toInstance(stubClock))
+          .build()
+
+      running(app) {
+
+        val result = route(app, request).value
+
+        status(result) mustBe OK
+        contentAsJson(result) mustBe Json.toJson(CurrentPayments(Seq(payment), Seq.empty))
+      }
+    }
+
+    "must return Current Payments as Json when there are overdue payments" in {
+
+      val stubClock = Clock.fixed(
+        Instant.from(LocalDate.of(2022, 4, 1)
+          .atStartOfDay(ZoneId.systemDefault())), ZoneId.systemDefault())
+      val periodOverdue1 = Period(2021, Q3)
+      val periodOverdue2 = Period(2021, Q4)
+      val charge1 = Charge(periodOverdue1, 1000, 1000, 0)
+      val charge2 = Charge(periodOverdue2, 1000, 1000, 0)
+
+      val vatReturnWithFinancialData1 = VatReturnWithFinancialData(
+        completeVatReturn.copy(period = periodOverdue1), Some(charge1), 1000L, None)
+      val vatReturnWithFinancialData2 = VatReturnWithFinancialData(
+        completeVatReturn.copy(period = periodOverdue2), Some(charge2), 1000L, None)
+
+      val payment1 = Payment.fromVatReturnWithFinancialData(vatReturnWithFinancialData1)
+      val payment2 = Payment.fromVatReturnWithFinancialData(vatReturnWithFinancialData2)
+
+      when(mockFinancialDataService.getVatReturnWithFinancialData(any(), any())) thenReturn Future.successful(Seq(vatReturnWithFinancialData1, vatReturnWithFinancialData2))
+      when(mockFinancialDataService.filterIfPaymentIsOutstanding(any())) thenReturn Seq(vatReturnWithFinancialData1, vatReturnWithFinancialData2)
+      when(mockVatReturnSalesService.getTotalVatOnSalesAfterCorrection(any(), any())) thenReturn BigDecimal(0)
+
+      val app =
+        applicationBuilder
+          .overrides(bind[FinancialDataService].to(mockFinancialDataService))
+          .overrides(bind[VatReturnSalesService].to(mockVatReturnSalesService))
+          .overrides(bind[Clock].toInstance(stubClock))
+          .build()
+
+      running(app) {
+
+        val result = route(app, request).value
+
+        status(result) mustBe OK
+        contentAsJson(result) mustBe Json.toJson(CurrentPayments(Seq.empty, Seq(payment1, payment2)))
+      }
+    }
+  }
+
 }

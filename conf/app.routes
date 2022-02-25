@@ -22,3 +22,5 @@ GET         /corrections-for-period/:period                         controllers.
 POST        /save-for-later                                         controllers.SaveForLaterController.post
 GET         /save-for-later                                         controllers.SaveForLaterController.get
 GET         /save-for-later/delete/:period                          controllers.SaveForLaterController.delete(period:Period)
+
+GET         /financial-data/prepare/:commencementDate               controllers.FinancialDataController.prepareFinancialData(commencementDate: LocalDate)

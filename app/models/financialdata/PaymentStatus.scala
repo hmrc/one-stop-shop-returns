@@ -16,18 +16,21 @@
 
 package models.financialdata
 
-import models.VatReturn
-import models.corrections.CorrectionPayload
-import play.api.libs.json.{Format, Json}
+import models.{Enumerable, WithName}
 
-case class VatReturnWithFinancialData(vatReturn: VatReturn,
-                                      charge: Option[Charge],
-                                      vatOwed: BigDecimal,
-                                      corrections: Option[CorrectionPayload]
-                                     )
+sealed trait PaymentStatus
 
-object VatReturnWithFinancialData {
-  implicit val format: Format[VatReturnWithFinancialData] = Json.format[VatReturnWithFinancialData]
+object PaymentStatus extends Enumerable.Implicits {
+
+  case object Unpaid extends WithName("UNPAID") with PaymentStatus
+
+  case object Partial extends WithName("PARTIAL") with PaymentStatus
+
+  case object Unknown extends WithName("UNKNOWN") with PaymentStatus
+
+
+  val values: Seq[PaymentStatus] = Seq(Unpaid, Partial, Unknown)
+
+  implicit val enumerable: Enumerable[PaymentStatus] =
+    Enumerable(values.map(v => v.toString -> v): _*)
 }
-
-
