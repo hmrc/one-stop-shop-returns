@@ -562,6 +562,33 @@ class FinancialDataServiceSpec extends SpecBase
       verify(vatReturnService, times(1)).get(any())
     }
 
+    "must returnsomething when there are vat returns but 404 financial data" in {
+      val commencementDate = LocalDate.of(2021, 7, 1)
+
+      when(periodService.getPeriodYears(any())) thenReturn Seq(periodYear2021)
+      when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters2021))).thenReturn(
+        Future.successful(Right(None))
+      )
+      when(vatReturnService.get(any())).thenReturn(
+        Future.successful(Seq(vatReturn))
+      )
+      when(correctionsService.get(any(), any())) thenReturn Future.successful(None)
+
+      val response = financialDataService.getVatReturnWithFinancialData(Vrn("123456789"), commencementDate).futureValue
+
+      val expectedResponse =
+        Seq(
+          VatReturnWithFinancialData(
+            vatReturn, None, 1000, None
+          ),
+        )
+
+      response mustBe expectedResponse
+      verify(financialDataConnector, times(1)).getFinancialData(any(), eqTo(queryParameters2021))
+      verify(periodService, times(1)).getPeriodYears(eqTo(commencementDate))
+      verify(vatReturnService, times(1)).get(any())
+    }
+
     "must return multiple VatReturnWithFinancialDatas when there is multiple vatReturns in the same period year and charges" in {
       val commencementDate = LocalDate.now()
       val period = Period(2021, Q3)
