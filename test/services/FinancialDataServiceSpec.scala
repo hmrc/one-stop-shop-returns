@@ -562,7 +562,7 @@ class FinancialDataServiceSpec extends SpecBase
       verify(vatReturnService, times(1)).get(any())
     }
 
-    "must returnsomething when there are vat returns but 404 financial data" in {
+    "must return something when there are vat returns but 404 financial data" in {
       val commencementDate = LocalDate.of(2021, 7, 1)
 
       when(periodService.getPeriodYears(any())) thenReturn Seq(periodYear2021)
@@ -573,7 +573,7 @@ class FinancialDataServiceSpec extends SpecBase
         Future.successful(Seq(vatReturn))
       )
       when(correctionsService.get(any(), any())) thenReturn Future.successful(None)
-
+      when(vatReturnSalesService.getTotalVatOnSalesAfterCorrection(any(), any())) thenReturn BigDecimal(1000)
       val response = financialDataService.getVatReturnWithFinancialData(Vrn("123456789"), commencementDate).futureValue
 
       val expectedResponse =
