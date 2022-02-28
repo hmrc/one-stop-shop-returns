@@ -27,7 +27,9 @@ object CoreTraderId {
   implicit val format: OFormat[CoreTraderId] = Json.format[CoreTraderId]
 }
 
-case class CorePeriod(year: Int, quarter: Int)
+case class CorePeriod(year: Int, quarter: Int) {
+  override def toString: String = s"$year-Q$quarter"
+}
 
 object CorePeriod {
   implicit val format: OFormat[CorePeriod] = Json.format[CorePeriod]

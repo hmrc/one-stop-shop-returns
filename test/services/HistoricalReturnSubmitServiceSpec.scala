@@ -3,9 +3,10 @@ package services
 import base.SpecBase
 import config.AppConfig
 import connectors.{CoreVatReturnConnector, RegistrationConnector}
-import models.Period
+import models.{Period, VatReturn}
 import models.Quarter.{Q1, Q2, Q4}
-import models.core.{CoreErrorResponse, EisErrorResponse}
+import models.core.{CoreErrorResponse, CorePeriod, CoreVatReturn, EisErrorResponse}
+import models.corrections.CorrectionPayload
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchersSugar.eqTo
 import org.mockito.Mockito
@@ -73,20 +74,39 @@ class HistoricalReturnSubmitServiceSpec extends SpecBase with BeforeAndAfterEach
         verify(coreVatReturnConnector, times(0)).submit(any())
       }
 
+      def getCoreVatReturn(vatReturn: VatReturn) = {
+        coreVatReturn.copy(
+          vatReturnReferenceNumber = vatReturn.vrn.value,
+          period = CorePeriod(vatReturn.period.year, vatReturn.period.quarter.toString.tail.toInt))
+      }
+
       "submit vat returns in order" in {
 
         val completeVatReturn2 = completeVatReturn.copy(vrn = Vrn("987654321"), period = Period(2086, Q4))
+        val completeVatReturn2a = completeVatReturn.copy(vrn = Vrn("987654322"), period = Period(2086, Q4))
         val completeVatReturn3 = completeVatReturn.copy(vrn = Vrn("987654322"), period = Period(2087, Q1))
 
-        val coreVatReturn2 = coreVatReturn.copy(vatReturnReferenceNumber = completeVatReturn2.vrn.value)
-        val coreVatReturn3 = coreVatReturn.copy(vatReturnReferenceNumber = completeVatReturn3.vrn.value)
+        val coreVatReturn1 = getCoreVatReturn(completeVatReturn)
+        val coreVatReturn2 = getCoreVatReturn(completeVatReturn2)
+        val coreVatReturn2a = getCoreVatReturn(completeVatReturn2a)
+        val coreVatReturn3 = getCoreVatReturn(completeVatReturn3)
+
+        val emptyCorrectionPayload2: CorrectionPayload =
+          CorrectionPayload(
+            Vrn("063407423"),
+            Period("2086", "Q3").get,
+            List.empty,
+            Instant.ofEpochSecond(1630670836),
+            Instant.ofEpochSecond(1630670836)
+          )
 
         // retrieve vat returns out of order
-        when(vatReturnService.get()) thenReturn Future.successful(List(completeVatReturn2,  completeVatReturn, completeVatReturn3))
-        when(correctionService.get()) thenReturn Future.successful(List(emptyCorrectionPayload))
+        when(vatReturnService.get()) thenReturn Future.successful(List(completeVatReturn2,  completeVatReturn, completeVatReturn2a,  completeVatReturn3))
+        when(correctionService.get()) thenReturn Future.successful(List(emptyCorrectionPayload2))
 
-        when(coreVatReturnService.toCore(eqTo(completeVatReturn), any(), any())) thenReturn Future.successful(coreVatReturn)
+        when(coreVatReturnService.toCore(eqTo(completeVatReturn), any(), any())) thenReturn Future.successful(coreVatReturn1)
         when(coreVatReturnService.toCore(eqTo(completeVatReturn2), any(), any())) thenReturn Future.successful(coreVatReturn2)
+        when(coreVatReturnService.toCore(eqTo(completeVatReturn2a), any(), any())) thenReturn Future.successful(coreVatReturn2a)
         when(coreVatReturnService.toCore(eqTo(completeVatReturn3), any(), any())) thenReturn Future.successful(coreVatReturn3)
 
         when(coreVatReturnConnector.submit(any())) thenReturn Future.successful(Right())
@@ -95,12 +115,13 @@ class HistoricalReturnSubmitServiceSpec extends SpecBase with BeforeAndAfterEach
 
         service.transfer().futureValue mustBe Success()
 
-        verify(coreVatReturnConnector, times(3)).submit(any())
+        verify(coreVatReturnConnector, times(4)).submit(any())
 
         // submit vat returns in order
         val inOrder = Mockito.inOrder(coreVatReturnConnector)
-        inOrder.verify(coreVatReturnConnector).submit(coreVatReturn)
+        inOrder.verify(coreVatReturnConnector).submit(coreVatReturn1)
         inOrder.verify(coreVatReturnConnector).submit(coreVatReturn2)
+        inOrder.verify(coreVatReturnConnector).submit(coreVatReturn2a)
         inOrder.verify(coreVatReturnConnector).submit(coreVatReturn3)
 
       }
