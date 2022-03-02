@@ -44,7 +44,9 @@ class SaveForLaterController @Inject()(
   def get(): Action[AnyContent] = auth.async {
     implicit request =>
       saveForLaterService.get(request.vrn).map {
-        value => Ok(Json.toJson(value.sortBy(_.lastUpdated).lastOption))
+        value => value.sortBy(_.lastUpdated).lastOption
+          .map(savedUserAnswers => Ok(Json.toJson(savedUserAnswers)))
+          .getOrElse(NotFound)
       }
   }
 
