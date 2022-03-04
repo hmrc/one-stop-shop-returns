@@ -113,6 +113,26 @@ class SaveForLaterControllerSpec
         verify(mockService, times(1)).get(any())
       }
     }
+
+    "must return NOT_FOUND when no answers are found" in {
+      val mockService = mock[SaveForLaterService]
+
+      when(mockService.get(any()))
+        .thenReturn(Future.successful(Seq()))
+
+      val app =
+        applicationBuilder
+          .overrides(bind[SaveForLaterService].toInstance(mockService))
+          .build()
+
+      running(app) {
+
+        val result = route(app, request).value
+
+        status(result) mustEqual NOT_FOUND
+        verify(mockService, times(1)).get(any())
+      }
+    }
   }
 
   ".delete" - {
