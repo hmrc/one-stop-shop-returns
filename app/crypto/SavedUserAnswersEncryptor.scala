@@ -17,7 +17,7 @@
 package crypto
 
 import models._
-import play.api.libs.json.{JsObject, JsValue, Json}
+import play.api.libs.json.{JsValue, Json}
 import uk.gov.hmrc.domain.Vrn
 
 import javax.inject.Inject

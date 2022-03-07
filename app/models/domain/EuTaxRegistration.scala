@@ -26,13 +26,15 @@ object EuTaxRegistration {
   implicit val reads: Reads[EuTaxRegistration] =
     RegistrationWithFixedEstablishment.format.widen[EuTaxRegistration] orElse
       EuVatRegistration.format.widen[EuTaxRegistration] orElse
-      RegistrationWithoutFixedEstablishment.format.widen[EuTaxRegistration]
+      RegistrationWithoutFixedEstablishment.format.widen[EuTaxRegistration] orElse
+      RegistrationWithoutTaxId.format.widen[EuTaxRegistration]
 
 
   implicit val writes: Writes[EuTaxRegistration] = Writes {
-    case v: EuVatRegistration                     => Json.toJson(v)(EuVatRegistration.format)
-    case fe: RegistrationWithFixedEstablishment   => Json.toJson(fe)(RegistrationWithFixedEstablishment.format)
-    case w: RegistrationWithoutFixedEstablishment => Json.toJson(w)(RegistrationWithoutFixedEstablishment.format)
+    case v: EuVatRegistration => Json.toJson(v)(EuVatRegistration.format)
+    case fe: RegistrationWithFixedEstablishment => Json.toJson(fe)(RegistrationWithFixedEstablishment.format)
+    case wfe: RegistrationWithoutFixedEstablishment => Json.toJson(wfe)(RegistrationWithoutFixedEstablishment.format)
+    case w: RegistrationWithoutTaxId => Json.toJson(w)(RegistrationWithoutTaxId.format)
   }
 }
 
@@ -48,17 +50,24 @@ object EuVatRegistration {
 }
 
 final case class RegistrationWithFixedEstablishment(
-                                                    country: Country,
-                                                    taxIdentifier: EuTaxIdentifier,
-                                                    fixedEstablishment: FixedEstablishment
-                                                  ) extends EuTaxRegistration
+                                                     country: Country,
+                                                     taxIdentifier: EuTaxIdentifier,
+                                                     fixedEstablishment: FixedEstablishment
+                                                   ) extends EuTaxRegistration
 
 object RegistrationWithFixedEstablishment {
   implicit val format: OFormat[RegistrationWithFixedEstablishment] =
     Json.format[RegistrationWithFixedEstablishment]
 }
 
-final case class RegistrationWithoutFixedEstablishment(country: Country) extends EuTaxRegistration
+final case class RegistrationWithoutTaxId(country: Country) extends EuTaxRegistration
+
+object RegistrationWithoutTaxId {
+  implicit val format: OFormat[RegistrationWithoutTaxId] =
+    Json.format[RegistrationWithoutTaxId]
+}
+
+final case class RegistrationWithoutFixedEstablishment(country: Country, taxIdentifier: EuTaxIdentifier) extends EuTaxRegistration
 
 object RegistrationWithoutFixedEstablishment {
   implicit val format: OFormat[RegistrationWithoutFixedEstablishment] =

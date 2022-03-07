@@ -17,12 +17,11 @@
 package models
 
 import crypto.EncryptedValue
-import play.api.libs.json.JsPath.\
-import play.api.libs.json.{JsObject, JsValue, Json, OFormat, OWrites, Reads, __}
+import play.api.libs.json._
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 
-import java.time.{Instant, LocalDate}
+import java.time.Instant
 
 case class SavedUserAnswers(
                              vrn: Vrn,

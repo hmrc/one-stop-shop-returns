@@ -16,7 +16,6 @@
 
 package config
 import play.api.Configuration
-import play.api.libs.json.{Format, Json}
 
 import javax.inject.Inject
 

@@ -18,7 +18,7 @@ package controllers
 
 import controllers.actions.AuthAction
 import models.Period
-import models.financialdata.{CurrentPayments, Payment, VatReturnWithFinancialData}
+import models.financialdata.{CurrentPayments, Payment}
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import services.{FinancialDataService, VatReturnSalesService}

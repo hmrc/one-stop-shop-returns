@@ -2,7 +2,7 @@ package connectors
 
 import base.SpecBase
 import com.github.tomakehurst.wiremock.client.WireMock._
-import models.core.{CoreCorrection, CoreErrorResponse, CoreEuTraderId, CoreMsconSupply, CoreMsestSupply, CorePeriod, CoreSupply, CoreTraderId, CoreVatReturn, EisErrorResponse}
+import models.core.{CoreCorrection, CoreErrorResponse, CoreEuTraderVatId, CoreMsconSupply, CoreMsestSupply, CorePeriod, CoreSupply, CoreTraderId, CoreVatReturn, EisErrorResponse}
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.Application
 import play.api.test.Helpers.running

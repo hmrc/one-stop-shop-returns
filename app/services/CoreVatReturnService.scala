@@ -21,7 +21,8 @@ import logging.Logging
 import models._
 import models.core._
 import models.corrections.{CorrectionPayload, PeriodWithCorrections}
-import models.domain.{EuVatRegistration, Registration, RegistrationWithFixedEstablishment, RegistrationWithoutFixedEstablishment}
+import models.domain.EuTaxIdentifierType.Vat
+import models.domain.{EuVatRegistration, Registration, RegistrationWithFixedEstablishment, RegistrationWithoutFixedEstablishment, RegistrationWithoutTaxId}
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.CorrectionUtils
 import utils.ObfuscationUtils.obfuscateVrn
@@ -160,13 +161,25 @@ class CoreVatReturnService @Inject()(
     val matchedRegistration = registration.euRegistrations.filter {
       case euRegistration: EuVatRegistration => euRegistration.country == country
       case euRegistrationWithFE: RegistrationWithFixedEstablishment => euRegistrationWithFE.country == country
+      case euRegistrationWithoutTaxId: RegistrationWithoutTaxId => euRegistrationWithoutTaxId.country == country
       case euRegistrationWithoutFE: RegistrationWithoutFixedEstablishment => euRegistrationWithoutFE.country == country
     }
 
     matchedRegistration.headOption.flatMap {
-      case euRegistration: EuVatRegistration => Some(CoreEuTraderId(euRegistration.vatNumber, euRegistration.country.code))
-      case registrationWithFE: RegistrationWithFixedEstablishment => Some(CoreEuTraderId(registrationWithFE.taxIdentifier.value, registrationWithFE.country.code))
-      case _: RegistrationWithoutFixedEstablishment => None
+      case euRegistration: EuVatRegistration => Some(CoreEuTraderVatId(euRegistration.vatNumber, euRegistration.country.code))
+      case euRegistrationWithFETaxId: RegistrationWithFixedEstablishment =>
+        if(euRegistrationWithFETaxId.taxIdentifier.identifierType.equals(Vat)) {
+          Some(CoreEuTraderVatId(euRegistrationWithFETaxId.taxIdentifier.value, euRegistrationWithFETaxId.country.code))
+        } else {
+          Some(CoreEuTraderTaxId(euRegistrationWithFETaxId.taxIdentifier.value, euRegistrationWithFETaxId.country.code))
+        }
+      case euRegistrationWithoutFE: RegistrationWithoutFixedEstablishment =>
+        if(euRegistrationWithoutFE.taxIdentifier.identifierType.equals(Vat)) {
+          Some(CoreEuTraderVatId(euRegistrationWithoutFE.taxIdentifier.value, euRegistrationWithoutFE.country.code))
+        } else {
+          Some(CoreEuTraderTaxId(euRegistrationWithoutFE.taxIdentifier.value, euRegistrationWithoutFE.country.code))
+        }
+      case _: RegistrationWithoutTaxId => None
     }
   }
 

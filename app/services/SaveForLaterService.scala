@@ -16,10 +16,9 @@
 
 package services
 
-import models.corrections.CorrectionPayload
-import models.requests.{SaveForLaterRequest, VatReturnRequest, VatReturnWithCorrectionRequest}
-import models.{PaymentReference, Period, ReturnReference, SavedUserAnswers, VatReturn}
-import repositories.{SaveForLaterRepository, VatReturnRepository}
+import models.requests.SaveForLaterRequest
+import models.{Period, SavedUserAnswers}
+import repositories.SaveForLaterRepository
 import uk.gov.hmrc.domain.Vrn
 
 import java.time.{Clock, Instant}

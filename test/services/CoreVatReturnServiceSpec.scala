@@ -9,7 +9,7 @@ import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
-import org.scalatest.BeforeAndAfterEach
+import org.scalatest.{BeforeAndAfterEach, PrivateMethodTester}
 import testutils.RegistrationData
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -18,7 +18,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.math.BigDecimal.RoundingMode
 
-class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach {
+class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach with PrivateMethodTester {
 
   private val vatReturnSalesService = mock[VatReturnSalesService]
   private val registrationConnector = mock[RegistrationConnector]
@@ -281,6 +281,72 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach {
 
       service.toCore(vatReturn, correctionPayload).futureValue mustBe expectedResultCoreVatReturn
     }
+
   }
 
+  "CoreVatReturnService#getEuTraderIdForCountry" - {
+
+    "must return a Some(CoreEuTraderVatId) when registration contains a VatId and fixed establishment" in {
+
+      val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
+
+      val expected = Some(CoreEuTraderVatId("BE123456789", "BE"))
+
+      val result = service.invokePrivate(getEuTraderIdForCountry(new Country("BE", "Belgium"), RegistrationData.registration))
+
+      result mustBe expected
+    }
+
+    "must return a Some(CoreEuTraderVatId) when registration contains a VatId and no fixed establishment" in {
+
+      val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
+
+      val expected = Some(CoreEuTraderVatId("IT123456789", "IT"))
+
+      val result = service.invokePrivate(getEuTraderIdForCountry(new Country("IT", "Italy"), RegistrationData.registration))
+
+      result mustBe expected
+    }
+
+    "must return a Some(CoreEuTraderTaxId) when registration contains a TaxId and fixed establishment" in {
+      val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
+
+      val expected = Some(CoreEuTraderTaxId("PL123456789", "PL"))
+
+      val result = service.invokePrivate(getEuTraderIdForCountry(new Country("PL", "Poland"), RegistrationData.registration))
+
+      result mustBe expected
+    }
+
+    "must return a Some(CoreEuTraderTaxId) when registration contains a TaxId and no fixed establishment" in {
+      val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
+
+      val expected = Some(CoreEuTraderTaxId("NL123456789", "NL"))
+
+      val result = service.invokePrivate(getEuTraderIdForCountry(new Country("NL", "Netherlands"), RegistrationData.registration))
+
+      result mustBe expected
+    }
+
+    "must return a Some(CoreEuTraderVatId) when registration contains a VatId as a String" in {
+      val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
+
+      val expected = Some(CoreEuTraderVatId("FR123456789", "FR"))
+
+      val result = service.invokePrivate(getEuTraderIdForCountry(new Country("FR", "France"), RegistrationData.registration))
+
+      result mustBe expected
+    }
+
+    "must return None when registration does not contains a VatId or TaxId" in {
+      val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
+
+      val expected = None
+
+      val result = service.invokePrivate(getEuTraderIdForCountry(new Country("IR", "Ireland"), RegistrationData.registration))
+
+      result mustBe expected
+    }
+  }
 }
+

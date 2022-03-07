@@ -17,21 +17,18 @@
 package services
 
 import config.AppConfig
-import connectors.CoreVatReturnHttpParser.CoreVatReturnResponse
 import connectors.{CoreVatReturnConnector, RegistrationConnector}
 import logging.Logging
-import models.core.{CoreErrorResponse, CorePeriod, CoreVatReturn, EisErrorResponse}
+import models.core.{CorePeriod, CoreVatReturn, EisErrorResponse}
 import models.corrections.CorrectionPayload
-import models.domain.Registration
 import models.{Period, VatReturn}
 import uk.gov.hmrc.domain.Vrn
 import utils.ObfuscationUtils.obfuscateVrn
 
 import java.time.{Clock, Instant}
 import javax.inject.Inject
-import scala.concurrent.duration.{Duration, MILLISECONDS}
-import scala.concurrent.{Await, ExecutionContext, Future}
-import scala.util.{Failure, Success, Try}
+import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success}
 
 trait HistoricalReturnSubmitService
 

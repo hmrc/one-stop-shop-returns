@@ -16,11 +16,9 @@
 
 package models.requests
 
-import models.{Period, SalesFromEuCountry, SalesToCountry}
+import models.Period
 import play.api.libs.json.{JsObject, Json, OFormat}
 import uk.gov.hmrc.domain.Vrn
-
-import java.time.{Instant, LocalDate}
 
 case class SaveForLaterRequest(
                              vrn: Vrn,

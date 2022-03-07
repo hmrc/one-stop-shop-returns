@@ -16,8 +16,7 @@
 
 package controllers
 
-import controllers.actions.{AuthAction, AuthenticatedControllerComponents}
-import models.requests.CorrectionRequest
+import controllers.actions.AuthenticatedControllerComponents
 import models.Period
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent}

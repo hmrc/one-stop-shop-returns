@@ -19,11 +19,10 @@ package services
 import config.AppConfig
 import connectors.CoreVatReturnConnector
 import logging.Logging
-import models.core.{CoreErrorResponse, EisErrorResponse}
-import models.core.CoreErrorResponse.REGISTRATION_NOT_FOUND
-import models.{PaymentReference, Period, ReturnReference, VatReturn}
+import models.core.EisErrorResponse
 import models.corrections.CorrectionPayload
 import models.requests.{VatReturnRequest, VatReturnWithCorrectionRequest}
+import models.{PaymentReference, Period, ReturnReference, VatReturn}
 import repositories.VatReturnRepository
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.http.HeaderCarrier
