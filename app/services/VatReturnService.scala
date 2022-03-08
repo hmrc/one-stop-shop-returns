@@ -118,6 +118,9 @@ class VatReturnService @Inject()(
   def get(): Future[Seq[VatReturn]] =
     repository.get()
 
+  def get(periods: Seq[Period]): Future[Seq[VatReturn]] =
+    repository.getByPeriods(periods)
+
   def get(vrn: Vrn): Future[Seq[VatReturn]] =
     repository.get(vrn)
 

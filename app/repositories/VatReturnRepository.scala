@@ -19,9 +19,12 @@ package repositories
 import config.AppConfig
 import crypto.{CorrectionEncryptor, ReturnEncryptor}
 import logging.Logging
+import models.Quarter.Q3
 import models.{EncryptedVatReturn, Period, VatReturn}
 import models.corrections.CorrectionPayload
-import org.mongodb.scala.model.{Filters, Indexes, IndexModel, IndexOptions}
+import org.mongodb.scala.bson.{BsonArray, BsonValue}
+import org.mongodb.scala.model.{Filters, IndexModel, IndexOptions, Indexes}
+import play.api.libs.json.Json
 import repositories.MongoErrors.Duplicate
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.mongo.MongoComponent
@@ -29,6 +32,7 @@ import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.mongo.transaction.{TransactionConfiguration, Transactions}
 
 import javax.inject.{Inject, Singleton}
+import scala.collection.JavaConverters.seqAsJavaListConverter
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
@@ -108,6 +112,23 @@ class VatReturnRepository @Inject()(
         vatReturn =>
           returnEncryptor.decryptReturn(vatReturn, vatReturn.vrn, encryptionKey)
       })
+
+  def getByPeriods(periods: Seq[Period]): Future[Seq[VatReturn]] = {
+
+    println("::::::::::::")
+    println("::::::::::::")
+    println("::::::::::::")
+    println("::::::::::::")
+    println(Filters.in("period", periods.map(toBson(_)): _*))
+    collection
+      .find(
+        Filters.in("period", toBson(Period(2021, Q3))))
+      .toFuture
+      .map(_.map {
+        vatReturn =>
+          returnEncryptor.decryptReturn(vatReturn, vatReturn.vrn, encryptionKey)
+      })
+  }
 
   def get(vrn: Vrn, period: Period): Future[Option[VatReturn]] =
     collection

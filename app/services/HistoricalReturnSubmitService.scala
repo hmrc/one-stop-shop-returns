@@ -95,7 +95,7 @@ class HistoricalReturnSubmitServiceImpl @Inject()(
 
   def transfer(): Future[Any] = {
 
-    if(appConfig.coreVatReturnsEnabled) {
+    if(appConfig.historicCoreVatReturnsEnabled) {
 
       logger.debug("Starting to process all historical returns to send to core")
 
