@@ -52,7 +52,25 @@ object RegistrationData extends Generators with EitherValues {
           EuTaxIdentifier(EuTaxIdentifierType.Other, "DE123456789"),
           FixedEstablishment("German trading name", InternationalAddress("Line 1", None, "Town", None, None, Country("DE", "Germany")))
         ),
+        RegistrationWithFixedEstablishment(
+          Country("BE", "Belgium"),
+          EuTaxIdentifier(EuTaxIdentifierType.Vat, "BE123456789"),
+          FixedEstablishment("Belgium trading name", InternationalAddress("Line 1", None, "Town", None, None, Country("BE", "Belgium")))
+        ),
+        RegistrationWithFixedEstablishment(
+          Country("PL", "Poland"),
+          EuTaxIdentifier(EuTaxIdentifierType.Other, "PL123456789"),
+          FixedEstablishment("Polish trading name", InternationalAddress("Line 1", None, "Town", None, None, Country("PL", "Poland")))
+        ),
         RegistrationWithoutFixedEstablishment(
+          Country("IT", "Italy"),
+          EuTaxIdentifier(EuTaxIdentifierType.Vat, "IT123456789")
+        ),
+        RegistrationWithoutFixedEstablishment(
+          Country("NL", "Netherlands"),
+          EuTaxIdentifier(EuTaxIdentifierType.Other, "NL123456789")
+        ),
+        RegistrationWithoutTaxId(
           Country("IE", "Ireland")
         )
       ),

@@ -16,7 +16,7 @@
 
 package models.core
 
-import play.api.libs.json.{Json, OFormat}
+import play.api.libs.json.{Json, OFormat, Reads, Writes}
 
 import java.time.{Instant, LocalDate}
 import java.util.UUID
@@ -47,10 +47,30 @@ object CoreSupply {
   implicit val format: OFormat[CoreSupply] = Json.format[CoreSupply]
 }
 
-case class CoreEuTraderId(vatIdNumber: String, issuedBy: String)
+trait CoreEuTraderId
 
-object CoreEuTraderId {
-  implicit val format: OFormat[CoreEuTraderId] = Json.format[CoreEuTraderId]
+  object CoreEuTraderId {
+
+    implicit val reads: Reads[CoreEuTraderId] =
+      CoreEuTraderVatId.format.widen[CoreEuTraderId] orElse
+        CoreEuTraderTaxId.format.widen[CoreEuTraderId]
+
+    implicit val writes: Writes[CoreEuTraderId] = Writes {
+      case vatId: CoreEuTraderVatId => Json.toJson(vatId)(CoreEuTraderVatId.format)
+      case taxId: CoreEuTraderTaxId => Json.toJson(taxId)(CoreEuTraderTaxId.format)
+    }
+  }
+
+case class CoreEuTraderVatId(vatIdNumber: String, issuedBy: String) extends CoreEuTraderId
+
+object CoreEuTraderVatId {
+  implicit val format: OFormat[CoreEuTraderVatId] = Json.format[CoreEuTraderVatId]
+}
+
+case class CoreEuTraderTaxId(taxRefNumber: String, issuedBy: String) extends CoreEuTraderId
+
+object CoreEuTraderTaxId {
+  implicit val format: OFormat[CoreEuTraderTaxId] = Json.format[CoreEuTraderTaxId]
 }
 
 case class CoreMsestSupply(

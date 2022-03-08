@@ -21,16 +21,15 @@ import crypto.SavedUserAnswersEncryptor
 import logging.Logging
 import models.{EncryptedSavedUserAnswers, Period, SavedUserAnswers}
 import org.mongodb.scala.bson.conversions.Bson
-import org.mongodb.scala.model.{Filters, IndexModel, IndexOptions, Indexes, ReplaceOptions}
+import org.mongodb.scala.model._
 import play.api.libs.json.Format
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.Codecs.JsonOps
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
-import uk.gov.hmrc.mongo.transaction.{TransactionConfiguration, Transactions}
 
-import java.time.{Clock, Instant}
+import java.time.Instant
 import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
