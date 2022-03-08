@@ -67,7 +67,7 @@ object CoreEuTraderVatId {
   implicit val format: OFormat[CoreEuTraderVatId] = Json.format[CoreEuTraderVatId]
 }
 
-case class CoreEuTraderTaxId(taxReferenceNumber: String, issuedBy: String) extends CoreEuTraderId
+case class CoreEuTraderTaxId(taxRefNumber: String, issuedBy: String) extends CoreEuTraderId
 
 object CoreEuTraderTaxId {
   implicit val format: OFormat[CoreEuTraderTaxId] = Json.format[CoreEuTraderTaxId]
