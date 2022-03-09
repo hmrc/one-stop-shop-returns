@@ -15,6 +15,8 @@
  */
 
 package controllers.test
+import models.Period
+import models.Quarter.{Q3, Q4}
 import org.mongodb.scala.model.Filters
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import repositories.{CorrectionRepository, VatReturnRepository}
@@ -40,6 +42,15 @@ class TestOnlyController @Inject()(
       Ok("Deleted Perf Tests Accounts MongoDB")
     }
 
+  }
+
+  def testMongo(): Action[AnyContent] = Action.async {
+    for{
+      returnsByPeriod <- vatReturnRepository.getByPeriods(Seq(Period(2021, Q3), Period(2021, Q4)))
+
+    } yield {
+      Ok("here are the returns: " + returnsByPeriod)
+    }
   }
 
 }
