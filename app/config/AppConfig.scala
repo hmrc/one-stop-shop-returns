@@ -16,6 +16,7 @@
 
 package config
 
+import models.Period
 import play.api.Configuration
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
@@ -29,5 +30,7 @@ class AppConfig @Inject()(config: Configuration, servicesConfig: ServicesConfig)
 
 
   val coreVatReturnsEnabled: Boolean = config.get[Boolean]("features.coreVatReturns")
+  val historicCoreVatReturnsEnabled: Boolean = config.get[Boolean]("features.historicCoreVatReturns")
+  val historicPeriodsToSubmit: Seq[Period] = config.get[Seq[String]]("historicPeriodsToSubmit").flatMap(Period.fromString)
 
 }

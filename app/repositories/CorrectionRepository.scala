@@ -18,13 +18,13 @@ package repositories
 
 import config.AppConfig
 import crypto.CorrectionEncryptor
-import models.corrections.{CorrectionPayload, EncryptedCorrectionPayload}
 import models.Period
-import org.mongodb.scala.model.{Filters, Indexes, IndexModel, IndexOptions}
+import models.corrections.{CorrectionPayload, EncryptedCorrectionPayload}
+import org.mongodb.scala.model.{Filters, IndexModel, IndexOptions, Indexes}
 import uk.gov.hmrc.domain.Vrn
-import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.Codecs.toBson
+import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -58,6 +58,16 @@ class CorrectionRepository @Inject()(
       .map(_.map { correction =>
         correctionEncryptor.decryptCorrectionPayload(correction, correction.vrn, encryptionKey)
       })
+
+  def getByPeriods(periods: Seq[Period]): Future[Seq[CorrectionPayload]] =
+    collection
+      .find(
+        Filters.in("period", periods.map(toBson(_)):_*))
+      .toFuture()
+      .map(_.map { correction =>
+        correctionEncryptor.decryptCorrectionPayload(correction, correction.vrn, encryptionKey)
+      })
+
 
   def get(vrn: Vrn): Future[Seq[CorrectionPayload]] =
     collection

@@ -19,9 +19,9 @@ package repositories
 import config.AppConfig
 import crypto.{CorrectionEncryptor, ReturnEncryptor}
 import logging.Logging
-import models.{EncryptedVatReturn, Period, VatReturn}
 import models.corrections.CorrectionPayload
-import org.mongodb.scala.model.{Filters, Indexes, IndexModel, IndexOptions}
+import models.{EncryptedVatReturn, Period, VatReturn}
+import org.mongodb.scala.model.{Filters, IndexModel, IndexOptions, Indexes}
 import repositories.MongoErrors.Duplicate
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.mongo.MongoComponent
@@ -108,6 +108,17 @@ class VatReturnRepository @Inject()(
         vatReturn =>
           returnEncryptor.decryptReturn(vatReturn, vatReturn.vrn, encryptionKey)
       })
+
+  def getByPeriods(periods: Seq[Period]): Future[Seq[VatReturn]] = {
+    collection
+      .find(
+        Filters.in("period", periods.map(toBson(_)):_*))
+      .toFuture
+      .map(_.map {
+        vatReturn =>
+          returnEncryptor.decryptReturn(vatReturn, vatReturn.vrn, encryptionKey)
+      })
+  }
 
   def get(vrn: Vrn, period: Period): Future[Option[VatReturn]] =
     collection
