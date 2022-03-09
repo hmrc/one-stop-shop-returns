@@ -102,8 +102,8 @@ class HistoricalReturnSubmitServiceImpl @Inject()(
       val vatReturnsAndCorrections: Future[Seq[(VatReturn, CorrectionPayload)]] =
         (
           for {
-            allReturns <- vatReturnService.get()
-            allCorrections <- correctionService.get()
+            allReturns <- vatReturnService.getByPeriods(appConfig.historicPeriodsToSubmit)
+            allCorrections <- correctionService.getByPeriods(appConfig.historicPeriodsToSubmit)
           } yield {
             val amountOfReturns = allReturns.size
             val amountOfCorrections = allCorrections.size

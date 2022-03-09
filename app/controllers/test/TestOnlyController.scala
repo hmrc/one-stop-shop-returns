@@ -43,14 +43,4 @@ class TestOnlyController @Inject()(
     }
 
   }
-
-  def testMongo(): Action[AnyContent] = Action.async {
-    for{
-      returnsByPeriod <- vatReturnRepository.getByPeriods(Seq(Period(2021, Q3), Period(2021, Q4)))
-
-    } yield {
-      Ok("here are the returns: " + returnsByPeriod)
-    }
-  }
-
 }

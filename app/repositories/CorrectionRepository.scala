@@ -59,6 +59,16 @@ class CorrectionRepository @Inject()(
         correctionEncryptor.decryptCorrectionPayload(correction, correction.vrn, encryptionKey)
       })
 
+  def getByPeriods(periods: Seq[Period]): Future[Seq[CorrectionPayload]] =
+    collection
+      .find(
+        Filters.in("period", periods.map(toBson(_)):_*))
+      .toFuture()
+      .map(_.map { correction =>
+        correctionEncryptor.decryptCorrectionPayload(correction, correction.vrn, encryptionKey)
+      })
+
+
   def get(vrn: Vrn): Future[Seq[CorrectionPayload]] =
     collection
       .find(Filters.equal("vrn", toBson(vrn)))

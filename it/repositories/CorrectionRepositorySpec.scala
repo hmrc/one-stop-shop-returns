@@ -4,7 +4,7 @@ import config.AppConfig
 import crypto.{CorrectionEncryptor, CountryEncryptor, SecureGCMCipher}
 import generators.Generators
 import org.mockito.Mockito.when
-import models.corrections.{CorrectionPayload, EncryptedCorrectionPayload, CorrectionToCountry, PeriodWithCorrections}
+import models.corrections.{CorrectionPayload, CorrectionToCountry, EncryptedCorrectionPayload, PeriodWithCorrections}
 import models.{Country, Period}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalatest.OptionValues
@@ -13,7 +13,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar.mock
 import uk.gov.hmrc.domain.Vrn
-import uk.gov.hmrc.mongo.test.{CleanMongoCollectionSupport, DefaultPlayMongoRepositorySupport}
+import uk.gov.hmrc.mongo.test.{CleanMongoCollectionSupport, DefaultPlayMongoRepositorySupport, PlayMongoRepositorySupport}
 import utils.StringUtils
 
 import java.time.Instant
@@ -22,7 +22,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class CorrectionRepositorySpec
   extends AnyFreeSpec
     with Matchers
-    with DefaultPlayMongoRepositorySupport[EncryptedCorrectionPayload]
+    with PlayMongoRepositorySupport[EncryptedCorrectionPayload]
     with CleanMongoCollectionSupport
     with ScalaFutures
     with IntegrationPatience
@@ -75,6 +75,42 @@ class CorrectionRepositorySpec
       returns must contain theSameElementsAs Seq.empty
     }
   }
+
+  ".get by periods" - {
+    "must return all records for the given periods" in {
+
+      val correctionPayload1 = arbitrary[CorrectionPayload].sample.value
+      val correctionPayload2Period = correctionPayload1.period copy (year = correctionPayload1.period.year + 1)
+      val correctionPayload3Period = correctionPayload1.period copy (year = correctionPayload1.period.year + 2)
+      val correctionPayload2 = correctionPayload1.copy(
+        period = correctionPayload2Period
+      )
+      val vrn3 = Vrn(StringUtils.rotateDigitsInString(correctionPayload1.vrn.vrn).mkString)
+      val correctionPayload3 = correctionPayload1.copy(
+        vrn = vrn3,
+        period = correctionPayload3Period
+      )
+
+      insert(correctionEncryptor.encryptCorrectionPayload(correctionPayload1, correctionPayload1.vrn, secretKey)).futureValue
+      insert(correctionEncryptor.encryptCorrectionPayload(correctionPayload2, correctionPayload2.vrn, secretKey)).futureValue
+      insert(correctionEncryptor.encryptCorrectionPayload(correctionPayload3, correctionPayload3.vrn, secretKey)).futureValue
+
+      val returns = repository.getByPeriods(Seq(correctionPayload1.period, correctionPayload2Period)).futureValue
+
+      returns must contain theSameElementsAs Seq(correctionPayload1, correctionPayload2)
+    }
+
+    "must return empty for the given periods" in {
+
+      val period1 = arbitraryPeriod.arbitrary.sample.value
+      val period2 = arbitraryPeriod.arbitrary.retryUntil(_ != period1).sample.value
+
+      val returns = repository.getByPeriods(Seq(period1, period2)).futureValue
+
+      returns must contain theSameElementsAs Seq.empty
+    }
+  }
+
   ".get all" - {
     "must return all records" in {
 
