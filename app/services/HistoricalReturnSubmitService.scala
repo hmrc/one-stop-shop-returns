@@ -97,18 +97,19 @@ class HistoricalReturnSubmitServiceImpl @Inject()(
 
     if(appConfig.historicCoreVatReturnsEnabled) {
 
-      logger.debug("Starting to process all historical returns to send to core")
+      val historicPeriodsToSubmit = appConfig.historicPeriodsToSubmit
+      logger.debug(s"Starting to process historical returns for periods ${historicPeriodsToSubmit.mkString(", ")} to send to core")
 
       val vatReturnsAndCorrections: Future[Seq[(VatReturn, CorrectionPayload)]] =
         (
           for {
-            allReturns <- vatReturnService.getByPeriods(appConfig.historicPeriodsToSubmit)
-            allCorrections <- correctionService.getByPeriods(appConfig.historicPeriodsToSubmit)
+            allReturns <- vatReturnService.getByPeriods(historicPeriodsToSubmit)
+            allCorrections <- correctionService.getByPeriods(historicPeriodsToSubmit)
           } yield {
             val amountOfReturns = allReturns.size
             val amountOfCorrections = allCorrections.size
 
-            logger.info(s"There are $amountOfReturns returns and $amountOfCorrections corrections. Starting processing...")
+            logger.info(s"There are $amountOfReturns returns and $amountOfCorrections corrections for periods ${historicPeriodsToSubmit.mkString(", ")}. Starting processing...")
 
             allReturns.map { singleReturn =>
               val correctionPayload = filterCorrectionByVrnAndPeriod(allCorrections, singleReturn.vrn, singleReturn.period)
