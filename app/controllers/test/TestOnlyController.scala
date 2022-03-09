@@ -15,8 +15,6 @@
  */
 
 package controllers.test
-import models.Period
-import models.Quarter.{Q3, Q4}
 import org.mongodb.scala.model.Filters
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import repositories.{CorrectionRepository, VatReturnRepository}

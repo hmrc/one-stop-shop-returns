@@ -19,12 +19,9 @@ package repositories
 import config.AppConfig
 import crypto.{CorrectionEncryptor, ReturnEncryptor}
 import logging.Logging
-import models.Quarter.Q3
-import models.{EncryptedVatReturn, Period, VatReturn}
 import models.corrections.CorrectionPayload
-import org.mongodb.scala.bson.{BsonArray, BsonValue}
+import models.{EncryptedVatReturn, Period, VatReturn}
 import org.mongodb.scala.model.{Filters, IndexModel, IndexOptions, Indexes}
-import play.api.libs.json.Json
 import repositories.MongoErrors.Duplicate
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.mongo.MongoComponent
@@ -32,7 +29,6 @@ import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.mongo.transaction.{TransactionConfiguration, Transactions}
 
 import javax.inject.{Inject, Singleton}
-import scala.collection.JavaConverters.seqAsJavaListConverter
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
