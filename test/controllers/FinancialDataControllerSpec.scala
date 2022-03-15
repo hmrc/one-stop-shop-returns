@@ -321,7 +321,7 @@ class FinancialDataControllerSpec
       }
     }
 
-    "must return Bad Request if no registration is found for VRN" in {
+    "must return Not Found if no registration is found for VRN" in {
 
       when(mockRegistrationConnector.getRegistration()(any())) thenReturn(Future.successful(None))
 
@@ -334,7 +334,7 @@ class FinancialDataControllerSpec
 
         val result = route(app, request).value
 
-        status(result) mustBe BAD_REQUEST
+        status(result) mustBe NOT_FOUND
       }
     }
   }

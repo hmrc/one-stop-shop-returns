@@ -280,6 +280,24 @@ class ReturnStatusControllerSpec
         }
       }
     }
+    "must return Not Found when no registration is found for VRN" in {
+
+      val mockRegConnector = mock[RegistrationConnector]
+
+      when(mockRegConnector.getRegistration()(any())) thenReturn Future.successful(None)
+
+      val app =
+        applicationBuilder
+          .overrides(bind[RegistrationConnector].toInstance(mockRegConnector))
+          .overrides(bind[Clock].toInstance(stubClock))
+          .build()
+
+      running(app) {
+        val result = route(app, request).value
+
+        status(result) mustEqual NOT_FOUND
+      }
+    }
 
     "must respond with Unauthorized when the user is not authorised" in {
 

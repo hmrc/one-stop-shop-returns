@@ -17,7 +17,7 @@
 package controllers
 
 import connectors.RegistrationConnector
-import controllers.actions.AuthAction
+import controllers.actions.{AuthAction, GetRegistrationAction}
 import models.Period
 import models.financialdata.{CurrentPayments, Payment}
 import play.api.libs.json.Json
@@ -35,6 +35,7 @@ class FinancialDataController @Inject()(
                                          vatReturnSalesService: VatReturnSalesService,
                                          registrationConnector: RegistrationConnector,
                                          auth: AuthAction,
+                                         getRegistration: GetRegistrationAction,
                                          clock: Clock
                                        )(implicit ec: ExecutionContext) extends BackendController(cc) {
 
@@ -66,34 +67,30 @@ class FinancialDataController @Inject()(
       }
   }
 
-  def prepareFinancialData(): Action[AnyContent] = auth.async {
+  def prepareFinancialData(): Action[AnyContent] = (auth andThen getRegistration).async {
     implicit request =>
-      registrationConnector.getRegistration().flatMap{
-        case Some(registration) =>
-          for {
-            vatReturnsWithFinancialData <- service.getVatReturnWithFinancialData(request.vrn, registration.commencementDate)
-          } yield {
+      for {
+        vatReturnsWithFinancialData <- service.getVatReturnWithFinancialData(request.vrn, request.registration.commencementDate)
+      } yield {
 
-            val filteredPeriodsWithOutstandingAmounts = service
-              .filterIfPaymentIsOutstanding(vatReturnsWithFinancialData)
-            val duePeriodsWithOutstandingAmounts =
-              filteredPeriodsWithOutstandingAmounts.filterNot(_.vatReturn.period.isOverdue(clock))
-            val overduePeriodsWithOutstandingAmounts =
-              filteredPeriodsWithOutstandingAmounts.filter(_.vatReturn.period.isOverdue(clock))
+        val filteredPeriodsWithOutstandingAmounts = service
+          .filterIfPaymentIsOutstanding(vatReturnsWithFinancialData)
+        val duePeriodsWithOutstandingAmounts =
+          filteredPeriodsWithOutstandingAmounts.filterNot(_.vatReturn.period.isOverdue(clock))
+        val overduePeriodsWithOutstandingAmounts =
+          filteredPeriodsWithOutstandingAmounts.filter(_.vatReturn.period.isOverdue(clock))
 
-            val duePayments = duePeriodsWithOutstandingAmounts.map(
-              duePeriods =>
-                Payment.fromVatReturnWithFinancialData(duePeriods)
-            )
+        val duePayments = duePeriodsWithOutstandingAmounts.map(
+          duePeriods =>
+            Payment.fromVatReturnWithFinancialData(duePeriods)
+        )
 
-            val overduePayments = overduePeriodsWithOutstandingAmounts.map(
-              overdue =>
-                Payment.fromVatReturnWithFinancialData(overdue)
-            )
+        val overduePayments = overduePeriodsWithOutstandingAmounts.map(
+          overdue =>
+            Payment.fromVatReturnWithFinancialData(overdue)
+        )
 
-            Ok(Json.toJson(CurrentPayments(duePayments, overduePayments)))
-          }
-        case None => Future.successful(BadRequest("No registration found"))
+        Ok(Json.toJson(CurrentPayments(duePayments, overduePayments)))
       }
 
   }
