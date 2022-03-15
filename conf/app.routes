@@ -2,7 +2,7 @@
 
 POST        /vat-returns                                            controllers.VatReturnController.post
 GET         /vat-returns                                            controllers.VatReturnController.list
-GET         /vat-returns/:period                                    controllers.VatReturnController.get(period: Period)
+GET         /vat-returns/period/:period                                    controllers.VatReturnController.get(period: Period)
 
 POST        /vat-return-with-corrections                            controllers.VatReturnController.postWithCorrection
 
