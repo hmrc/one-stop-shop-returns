@@ -68,7 +68,7 @@ class FinancialDataController @Inject()(
 
   def prepareFinancialData(): Action[AnyContent] = auth.async {
     implicit request =>
-      registrationConnector.getRegistration(request.vrn).flatMap{
+      registrationConnector.getRegistration().flatMap{
         case Some(registration) =>
           for {
             vatReturnsWithFinancialData <- service.getVatReturnWithFinancialData(request.vrn, registration.commencementDate)

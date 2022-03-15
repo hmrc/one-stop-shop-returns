@@ -17,6 +17,7 @@
 package controllers
 
 import base.SpecBase
+import connectors.RegistrationConnector
 import controllers.actions.FakeFailingAuthConnector
 import generators.Generators
 import models._
@@ -34,6 +35,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import repositories.SaveForLaterRepository
 import services.{PeriodService, VatReturnService}
+import testutils.RegistrationData
 import uk.gov.hmrc.auth.core.{AuthConnector, MissingBearerToken}
 
 import java.time.{Clock, LocalDate, ZoneId}
@@ -79,7 +81,7 @@ class ReturnStatusControllerSpec
 
   }
 
-  ".getCurrentReturns(commencementDate)" - {
+  ".getCurrentReturns()" - {
     val stubClock: Clock = Clock.fixed(LocalDate.of(2022, 10, 1).atStartOfDay(ZoneId.systemDefault).toInstant, ZoneId.systemDefault)
     val period = Period(2021, Q2)
     val period0 = Period(2021, Q3)
@@ -89,7 +91,7 @@ class ReturnStatusControllerSpec
     val periods = Seq(period, period0, period1, period2, period3)
     val commencementDate = LocalDate.of(2021, 1, 1)
 
-    lazy val request = FakeRequest(GET, routes.ReturnStatusController.getCurrentReturns(commencementDate).url)
+    lazy val request = FakeRequest(GET, routes.ReturnStatusController.getCurrentReturns().url)
     "must respond with OK and the OpenReturns model" - {
 
       "with no returns in progress, due or overdue if there are no returns due yet" in {
@@ -97,16 +99,19 @@ class ReturnStatusControllerSpec
         val mockVatReturnService = mock[VatReturnService]
         val mockPeriodService = mock[PeriodService]
         val mockS4LaterRepository = mock[SaveForLaterRepository]
+        val mockRegConnector = mock[RegistrationConnector]
 
         when(mockVatReturnService.get(any())) thenReturn Future.successful(Seq.empty)
         when(mockPeriodService.getReturnPeriods(any())) thenReturn Seq.empty
         when(mockS4LaterRepository.get(any())) thenReturn Future.successful(Seq.empty)
+        when(mockRegConnector.getRegistration()(any())) thenReturn Future.successful(Some(RegistrationData.registration))
 
         val app =
           applicationBuilder
             .overrides(bind[VatReturnService].toInstance(mockVatReturnService))
             .overrides(bind[PeriodService].toInstance(mockPeriodService))
             .overrides(bind[SaveForLaterRepository].toInstance(mockS4LaterRepository))
+            .overrides(bind[RegistrationConnector].toInstance(mockRegConnector))
             .overrides(bind[Clock].toInstance(stubClock))
             .build()
 
@@ -123,6 +128,8 @@ class ReturnStatusControllerSpec
         val mockVatReturnService = mock[VatReturnService]
         val mockPeriodService = mock[PeriodService]
         val mockS4LaterRepository = mock[SaveForLaterRepository]
+        val mockRegConnector = mock[RegistrationConnector]
+
         val vatReturn =
           Gen
             .nonEmptyListOf(arbitrary[VatReturn])
@@ -132,12 +139,14 @@ class ReturnStatusControllerSpec
         when(mockVatReturnService.get(any())) thenReturn Future.successful(Seq(vatReturn.copy(period = period)))
         when(mockPeriodService.getReturnPeriods(any())) thenReturn Seq(period)
         when(mockS4LaterRepository.get(any())) thenReturn Future.successful(Seq.empty)
+        when(mockRegConnector.getRegistration()(any())) thenReturn Future.successful(Some(RegistrationData.registration))
 
         val app =
           applicationBuilder
             .overrides(bind[VatReturnService].toInstance(mockVatReturnService))
             .overrides(bind[PeriodService].toInstance(mockPeriodService))
             .overrides(bind[SaveForLaterRepository].toInstance(mockS4LaterRepository))
+            .overrides(bind[RegistrationConnector].toInstance(mockRegConnector))
             .overrides(bind[Clock].toInstance(stubClock))
             .build()
 
@@ -154,16 +163,19 @@ class ReturnStatusControllerSpec
         val mockVatReturnService = mock[VatReturnService]
         val mockPeriodService = mock[PeriodService]
         val mockS4LaterRepository = mock[SaveForLaterRepository]
+        val mockRegConnector = mock[RegistrationConnector]
 
         when(mockVatReturnService.get(any())) thenReturn Future.successful(Seq.empty)
         when(mockPeriodService.getReturnPeriods(any())) thenReturn Seq(period)
         when(mockS4LaterRepository.get(any())) thenReturn Future.successful(Seq.empty)
+        when(mockRegConnector.getRegistration()(any())) thenReturn Future.successful(Some(RegistrationData.registration))
 
         val app =
           applicationBuilder
             .overrides(bind[VatReturnService].toInstance(mockVatReturnService))
             .overrides(bind[PeriodService].toInstance(mockPeriodService))
             .overrides(bind[SaveForLaterRepository].toInstance(mockS4LaterRepository))
+            .overrides(bind[RegistrationConnector].toInstance(mockRegConnector))
             .overrides(bind[Clock].toInstance(stubClock))
             .build()
 
@@ -180,6 +192,7 @@ class ReturnStatusControllerSpec
         val mockVatReturnService = mock[VatReturnService]
         val mockPeriodService = mock[PeriodService]
         val mockS4LaterRepository = mock[SaveForLaterRepository]
+        val mockRegConnector = mock[RegistrationConnector]
         val periods = Seq(period, period0, period2)
         val returns = Seq(
           Return.fromPeriod(period),
@@ -188,12 +201,14 @@ class ReturnStatusControllerSpec
         when(mockVatReturnService.get(any())) thenReturn Future.successful(Seq.empty)
         when(mockPeriodService.getReturnPeriods(any())) thenReturn periods
         when(mockS4LaterRepository.get(any())) thenReturn Future.successful(Seq.empty)
+        when(mockRegConnector.getRegistration()(any())) thenReturn Future.successful(Some(RegistrationData.registration))
 
         val app =
           applicationBuilder
             .overrides(bind[VatReturnService].toInstance(mockVatReturnService))
             .overrides(bind[PeriodService].toInstance(mockPeriodService))
             .overrides(bind[SaveForLaterRepository].toInstance(mockS4LaterRepository))
+            .overrides(bind[RegistrationConnector].toInstance(mockRegConnector))
             .overrides(bind[Clock].toInstance(stubClock))
             .build()
 
@@ -210,15 +225,18 @@ class ReturnStatusControllerSpec
         val mockVatReturnService = mock[VatReturnService]
         val mockPeriodService = mock[PeriodService]
         val mockS4LaterRepository = mock[SaveForLaterRepository]
+        val mockRegConnector = mock[RegistrationConnector]
 
         when(mockVatReturnService.get(any())) thenReturn Future.successful(Seq.empty)
         when(mockPeriodService.getReturnPeriods(any())) thenReturn periods
         when(mockS4LaterRepository.get(any())) thenReturn Future.successful(Seq.empty)
+        when(mockRegConnector.getRegistration()(any())) thenReturn Future.successful(Some(RegistrationData.registration))
         val app =
           applicationBuilder
             .overrides(bind[VatReturnService].toInstance(mockVatReturnService))
             .overrides(bind[PeriodService].toInstance(mockPeriodService))
             .overrides(bind[SaveForLaterRepository].toInstance(mockS4LaterRepository))
+            .overrides(bind[RegistrationConnector].toInstance(mockRegConnector))
             .overrides(bind[Clock].toInstance(stubClock))
             .build()
 
@@ -237,17 +255,20 @@ class ReturnStatusControllerSpec
         val mockVatReturnService = mock[VatReturnService]
         val mockPeriodService = mock[PeriodService]
         val mockS4LaterRepository = mock[SaveForLaterRepository]
+        val mockRegConnector = mock[RegistrationConnector]
         val answers = arbitrary[SavedUserAnswers].sample.value.copy(period = period)
 
         when(mockVatReturnService.get(any())) thenReturn Future.successful(Seq.empty)
         when(mockPeriodService.getReturnPeriods(any())) thenReturn Seq(period)
         when(mockS4LaterRepository.get(any())) thenReturn Future.successful(Seq(answers))
+        when(mockRegConnector.getRegistration()(any())) thenReturn Future.successful(Some(RegistrationData.registration))
 
         val app =
           applicationBuilder
             .overrides(bind[VatReturnService].toInstance(mockVatReturnService))
             .overrides(bind[PeriodService].toInstance(mockPeriodService))
             .overrides(bind[SaveForLaterRepository].toInstance(mockS4LaterRepository))
+            .overrides(bind[RegistrationConnector].toInstance(mockRegConnector))
             .overrides(bind[Clock].toInstance(stubClock))
             .build()
 

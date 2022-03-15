@@ -16,6 +16,7 @@
 
 package controllers
 
+import connectors.RegistrationConnector
 import controllers.actions.{AuthAction, AuthorisedRequest}
 import models.SubmissionStatus.{Due, Overdue}
 import models.{PeriodWithStatus, SubmissionStatus}
@@ -35,6 +36,7 @@ class ReturnStatusController @Inject()(
                                         vatReturnService: VatReturnService,
                                         periodService: PeriodService,
                                         saveForLaterRepository: SaveForLaterRepository,
+                                        registrationConnector: RegistrationConnector,
                                         auth: AuthAction,
                                         clock: Clock
                                       )(implicit ec: ExecutionContext)
@@ -49,21 +51,26 @@ class ReturnStatusController @Inject()(
       }
   }
 
-  def getCurrentReturns(commencementDate: LocalDate): Action[AnyContent] = auth.async {
+  def getCurrentReturns(): Action[AnyContent] = auth.async {
     implicit request =>
-    for{
-      availablePeriodsWithStatus <- getStatuses(commencementDate)
-      savedAnswers <- saveForLaterRepository.get(request.vrn)
-    } yield {
-      val answers = savedAnswers.sortBy(_.lastUpdated).lastOption
-      val returnInProgress = answers.map(savedAnswers =>
-          Return.fromPeriod(savedAnswers.period))
-      val duePeriods = availablePeriodsWithStatus.find(_.status == Due).map(periodWithStatus => Return.fromPeriod(periodWithStatus.period))
-      val overduePeriods = availablePeriodsWithStatus.filter(_.status == Overdue).map(periodWithStatus => Return.fromPeriod(periodWithStatus.period))
-      val returns = OpenReturns(returnInProgress, duePeriods, overduePeriods)
+      registrationConnector.getRegistration().flatMap{
+        case Some(registration) =>
+          for{
+          availablePeriodsWithStatus <- getStatuses(registration.commencementDate)
+          savedAnswers <- saveForLaterRepository.get(request.vrn)
+        } yield {
+          val answers = savedAnswers.sortBy(_.lastUpdated).lastOption
+          val returnInProgress = answers.map(savedAnswers =>
+            Return.fromPeriod(savedAnswers.period))
+          val duePeriods = availablePeriodsWithStatus.find(_.status == Due).map(periodWithStatus => Return.fromPeriod(periodWithStatus.period))
+          val overduePeriods = availablePeriodsWithStatus.filter(_.status == Overdue).map(periodWithStatus => Return.fromPeriod(periodWithStatus.period))
+          val returns = OpenReturns(returnInProgress, duePeriods, overduePeriods)
 
-      Ok(Json.toJson(returns))
-    }
+          Ok(Json.toJson(returns))
+        }
+        case None => Future.successful(BadRequest("No registration found"))
+      }
+
 
   }
 
