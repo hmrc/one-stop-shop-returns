@@ -23,4 +23,4 @@ POST        /save-for-later                                         controllers.
 GET         /save-for-later                                         controllers.SaveForLaterController.get
 GET         /save-for-later/delete/:period                          controllers.SaveForLaterController.delete(period:Period)
 
-GET         /financial-data/prepare/:commencementDate               controllers.FinancialDataController.prepareFinancialData(commencementDate: LocalDate)
+GET         /financial-data/prepare                                 controllers.FinancialDataController.prepareFinancialData()

@@ -17,6 +17,7 @@
 package controllers
 
 import base.SpecBase
+import connectors.RegistrationConnector
 import generators.Generators
 import models._
 import models.Quarter.{Q3, Q4}
@@ -33,6 +34,7 @@ import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import services.{FinancialDataService, VatReturnSalesService}
+import testutils.RegistrationData
 
 import java.time.{Clock, Instant, LocalDate, ZoneId}
 import scala.concurrent.Future
@@ -45,10 +47,12 @@ class FinancialDataControllerSpec
 
   val mockFinancialDataService = mock[FinancialDataService]
   val mockVatReturnSalesService = mock[VatReturnSalesService]
+  val mockRegistrationConnector = mock[RegistrationConnector]
 
   override def beforeEach(): Unit = {
     Mockito.reset(mockFinancialDataService)
     Mockito.reset(mockVatReturnSalesService)
+    Mockito.reset(mockRegistrationConnector)
     super.beforeEach()
   }
 
@@ -201,7 +205,7 @@ class FinancialDataControllerSpec
   ".prepareFinancialData" - {
 
     lazy val request =
-      FakeRequest(GET, routes.FinancialDataController.prepareFinancialData(LocalDate.now).url)
+      FakeRequest(GET, routes.FinancialDataController.prepareFinancialData().url)
 
     "must return both Current Payments as Json when there are due payments and overdue payments" in {
 
@@ -224,11 +228,12 @@ class FinancialDataControllerSpec
       when(mockFinancialDataService.getVatReturnWithFinancialData(any(), any())) thenReturn Future.successful(Seq(vatReturnWithFinancialData1, vatReturnWithFinancialData2))
       when(mockFinancialDataService.filterIfPaymentIsOutstanding(any())) thenReturn Seq(vatReturnWithFinancialData1, vatReturnWithFinancialData2)
       when(mockVatReturnSalesService.getTotalVatOnSalesAfterCorrection(any(), any())) thenReturn BigDecimal(0)
-
+      when(mockRegistrationConnector.getRegistration(any())) thenReturn(Future.successful(Some(RegistrationData.registration.copy(vrn = vrn))))
       val app =
         applicationBuilder
           .overrides(bind[FinancialDataService].to(mockFinancialDataService))
           .overrides(bind[VatReturnSalesService].to(mockVatReturnSalesService))
+          .overrides(bind[RegistrationConnector].to(mockRegistrationConnector))
           .overrides(bind[Clock].toInstance(stubClock))
           .build()
 
@@ -257,11 +262,13 @@ class FinancialDataControllerSpec
       when(mockFinancialDataService.getVatReturnWithFinancialData(any(), any())) thenReturn Future.successful(Seq(vatReturnWithFinancialData))
       when(mockFinancialDataService.filterIfPaymentIsOutstanding(any())) thenReturn Seq(vatReturnWithFinancialData)
       when(mockVatReturnSalesService.getTotalVatOnSalesAfterCorrection(any(), any())) thenReturn BigDecimal(0)
+      when(mockRegistrationConnector.getRegistration(any())) thenReturn(Future.successful(Some(RegistrationData.registration.copy(vrn = vrn))))
 
       val app =
         applicationBuilder
           .overrides(bind[FinancialDataService].to(mockFinancialDataService))
           .overrides(bind[VatReturnSalesService].to(mockVatReturnSalesService))
+          .overrides(bind[RegistrationConnector].to(mockRegistrationConnector))
           .overrides(bind[Clock].toInstance(stubClock))
           .build()
 
@@ -295,11 +302,13 @@ class FinancialDataControllerSpec
       when(mockFinancialDataService.getVatReturnWithFinancialData(any(), any())) thenReturn Future.successful(Seq(vatReturnWithFinancialData1, vatReturnWithFinancialData2))
       when(mockFinancialDataService.filterIfPaymentIsOutstanding(any())) thenReturn Seq(vatReturnWithFinancialData1, vatReturnWithFinancialData2)
       when(mockVatReturnSalesService.getTotalVatOnSalesAfterCorrection(any(), any())) thenReturn BigDecimal(0)
+      when(mockRegistrationConnector.getRegistration(any())) thenReturn(Future.successful(Some(RegistrationData.registration.copy(vrn = vrn))))
 
       val app =
         applicationBuilder
           .overrides(bind[FinancialDataService].to(mockFinancialDataService))
           .overrides(bind[VatReturnSalesService].to(mockVatReturnSalesService))
+          .overrides(bind[RegistrationConnector].to(mockRegistrationConnector))
           .overrides(bind[Clock].toInstance(stubClock))
           .build()
 
@@ -309,6 +318,23 @@ class FinancialDataControllerSpec
 
         status(result) mustBe OK
         contentAsJson(result) mustBe Json.toJson(CurrentPayments(Seq.empty, Seq(payment1, payment2)))
+      }
+    }
+
+    "must return Bad Request if no registration is found for VRN" in {
+
+      when(mockRegistrationConnector.getRegistration(any())) thenReturn(Future.successful(None))
+
+      val app =
+        applicationBuilder
+          .overrides(bind[RegistrationConnector].to(mockRegistrationConnector))
+          .build()
+
+      running(app) {
+
+        val result = route(app, request).value
+
+        status(result) mustBe BAD_REQUEST
       }
     }
   }
