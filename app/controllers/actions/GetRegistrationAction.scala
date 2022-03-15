@@ -36,8 +36,7 @@ class GetRegistrationAction @Inject()(
 
   override protected def refine[A](request: AuthorisedRequest[A]): Future[Either[Result, RegistrationRequest[A]]] = {
     if(request.vrn.vrn == vrn) {
-      val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request.request, request.request.session)
-      registrationConnector.getRegistration()(hc) flatMap {
+      registrationConnector.getRegistration(request.vrn) flatMap {
         case Some(registration) =>
           Future.successful(Right(RegistrationRequest(request.request, request.vrn, registration)))
         case None =>
