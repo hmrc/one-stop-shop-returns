@@ -16,13 +16,12 @@
 
 package controllers
 
-import connectors.RegistrationConnector
-import controllers.actions.{AuthAction, GetRegistrationAction}
+import controllers.actions.{AuthAction, GetRegistrationActionProvider}
 import models.Period
 import models.financialdata.{CurrentPayments, Payment}
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
-import services.{FinancialDataService, VatReturnSalesService}
+import services.FinancialDataService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import java.time.{Clock, LocalDate}
@@ -32,10 +31,8 @@ import scala.concurrent.{ExecutionContext, Future}
 class FinancialDataController @Inject()(
                                          cc: ControllerComponents,
                                          service: FinancialDataService,
-                                         vatReturnSalesService: VatReturnSalesService,
-                                         registrationConnector: RegistrationConnector,
                                          auth: AuthAction,
-                                         getRegistration: GetRegistrationAction,
+                                         getRegistration: GetRegistrationActionProvider,
                                          clock: Clock
                                        )(implicit ec: ExecutionContext) extends BackendController(cc) {
 
@@ -67,30 +64,34 @@ class FinancialDataController @Inject()(
       }
   }
 
-  def prepareFinancialData(): Action[AnyContent] = (auth andThen getRegistration).async {
+  def prepareFinancialData(vrn: String): Action[AnyContent] = (auth andThen getRegistration(vrn)).async {
     implicit request =>
-      for {
-        vatReturnsWithFinancialData <- service.getVatReturnWithFinancialData(request.vrn, request.registration.commencementDate)
-      } yield {
+      if (request.vrn.vrn == vrn) {
+        for {
+          vatReturnsWithFinancialData <- service.getVatReturnWithFinancialData(request.vrn, request.registration.commencementDate)
+        } yield {
 
-        val filteredPeriodsWithOutstandingAmounts = service
-          .filterIfPaymentIsOutstanding(vatReturnsWithFinancialData)
-        val duePeriodsWithOutstandingAmounts =
-          filteredPeriodsWithOutstandingAmounts.filterNot(_.vatReturn.period.isOverdue(clock))
-        val overduePeriodsWithOutstandingAmounts =
-          filteredPeriodsWithOutstandingAmounts.filter(_.vatReturn.period.isOverdue(clock))
+          val filteredPeriodsWithOutstandingAmounts = service
+            .filterIfPaymentIsOutstanding(vatReturnsWithFinancialData)
+          val duePeriodsWithOutstandingAmounts =
+            filteredPeriodsWithOutstandingAmounts.filterNot(_.vatReturn.period.isOverdue(clock))
+          val overduePeriodsWithOutstandingAmounts =
+            filteredPeriodsWithOutstandingAmounts.filter(_.vatReturn.period.isOverdue(clock))
 
-        val duePayments = duePeriodsWithOutstandingAmounts.map(
-          duePeriods =>
-            Payment.fromVatReturnWithFinancialData(duePeriods)
-        )
+          val duePayments = duePeriodsWithOutstandingAmounts.map(
+            duePeriods =>
+              Payment.fromVatReturnWithFinancialData(duePeriods)
+          )
 
-        val overduePayments = overduePeriodsWithOutstandingAmounts.map(
-          overdue =>
-            Payment.fromVatReturnWithFinancialData(overdue)
-        )
+          val overduePayments = overduePeriodsWithOutstandingAmounts.map(
+            overdue =>
+              Payment.fromVatReturnWithFinancialData(overdue)
+          )
 
-        Ok(Json.toJson(CurrentPayments(duePayments, overduePayments)))
+          Ok(Json.toJson(CurrentPayments(duePayments, overduePayments)))
+        }
+      } else {
+        Future.successful(Unauthorized("Vrn doesn't match"))
       }
 
   }

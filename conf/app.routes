@@ -7,7 +7,7 @@ GET         /vat-returns/period/:period                                    contr
 POST        /vat-return-with-corrections                            controllers.VatReturnController.postWithCorrection
 
 GET         /vat-returns/statuses/:commencementDate                 controllers.ReturnStatusController.listStatuses(commencementDate: LocalDate)
-GET         /vat-returns/current-returns                            controllers.ReturnStatusController.getCurrentReturns
+GET         /vat-returns/current-returns/:vrn                       controllers.ReturnStatusController.getCurrentReturns(vrn: String)
 
 GET         /financial-data/get/:commencementDate                   controllers.FinancialDataController.get(commencementDate: LocalDate)
 GET         /financial-data/charge/:period                          controllers.FinancialDataController.getCharge(period: Period)
@@ -23,4 +23,4 @@ POST        /save-for-later                                         controllers.
 GET         /save-for-later                                         controllers.SaveForLaterController.get
 GET         /save-for-later/delete/:period                          controllers.SaveForLaterController.delete(period:Period)
 
-GET         /financial-data/prepare                                 controllers.FinancialDataController.prepareFinancialData()
+GET         /financial-data/prepare/:vrn                            controllers.FinancialDataController.prepareFinancialData(vrn: String)

@@ -35,6 +35,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import services.{FinancialDataService, VatReturnSalesService}
 import testutils.RegistrationData
+import uk.gov.hmrc.domain.Vrn
 
 import java.time.{Clock, Instant, LocalDate, ZoneId}
 import scala.concurrent.Future
@@ -45,6 +46,8 @@ class FinancialDataControllerSpec
     with Generators
     with BeforeAndAfterEach {
 
+  private val authorisedVrn = Vrn("123456789")
+  private val notAuthorisedVrn = arbitraryVrn.arbitrary.retryUntil(_ != authorisedVrn).sample.value
   val mockFinancialDataService = mock[FinancialDataService]
   val mockVatReturnSalesService = mock[VatReturnSalesService]
   val mockRegistrationConnector = mock[RegistrationConnector]
@@ -205,7 +208,7 @@ class FinancialDataControllerSpec
   ".prepareFinancialData" - {
 
     lazy val request =
-      FakeRequest(GET, routes.FinancialDataController.prepareFinancialData().url)
+      FakeRequest(GET, routes.FinancialDataController.prepareFinancialData(authorisedVrn.vrn).url)
 
     "must return both Current Payments as Json when there are due payments and overdue payments" in {
 
@@ -335,6 +338,20 @@ class FinancialDataControllerSpec
         val result = route(app, request).value
 
         status(result) mustBe NOT_FOUND
+      }
+    }
+
+    "must return Unauthorised if VRNs in the URI and in the request do not match" in {
+
+      val app =
+        applicationBuilder
+          .build()
+
+      running(app) {
+
+        val result = route(app, FakeRequest(GET, routes.FinancialDataController.prepareFinancialData(notAuthorisedVrn.vrn).url)).value
+
+        status(result) mustBe UNAUTHORIZED
       }
     }
   }

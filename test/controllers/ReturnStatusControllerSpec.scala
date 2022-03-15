@@ -37,6 +37,7 @@ import repositories.SaveForLaterRepository
 import services.{PeriodService, VatReturnService}
 import testutils.RegistrationData
 import uk.gov.hmrc.auth.core.{AuthConnector, MissingBearerToken}
+import uk.gov.hmrc.domain.Vrn
 
 import java.time.{Clock, LocalDate, ZoneId}
 import scala.concurrent.Future
@@ -45,6 +46,9 @@ class ReturnStatusControllerSpec
   extends SpecBase
     with ScalaCheckPropertyChecks
     with Generators {
+
+  private val authorisedVrn = Vrn("123456789")
+  private val notAuthorisedVrn = arbitraryVrn.arbitrary.retryUntil(_ != authorisedVrn).sample.value
 
   ".listStatus(commencementDate)" - {
     val period = Period(2021, Q3)
@@ -91,7 +95,7 @@ class ReturnStatusControllerSpec
     val periods = Seq(period, period0, period1, period2, period3)
     val commencementDate = LocalDate.of(2021, 1, 1)
 
-    lazy val request = FakeRequest(GET, routes.ReturnStatusController.getCurrentReturns().url)
+    lazy val request = FakeRequest(GET, routes.ReturnStatusController.getCurrentReturns(vrn.vrn).url)
     "must respond with OK and the OpenReturns model" - {
 
       "with no returns in progress, due or overdue if there are no returns due yet" in {
@@ -280,6 +284,7 @@ class ReturnStatusControllerSpec
         }
       }
     }
+
     "must return Not Found when no registration is found for VRN" in {
 
       val mockRegConnector = mock[RegistrationConnector]
@@ -296,6 +301,19 @@ class ReturnStatusControllerSpec
         val result = route(app, request).value
 
         status(result) mustEqual NOT_FOUND
+      }
+    }
+
+    "must return Unauthorised if VRNs in the URI and in the request do not match" in {
+
+      val app =
+        applicationBuilder
+          .build()
+
+      running(app) {
+        val result = route(app, FakeRequest(GET, routes.FinancialDataController.prepareFinancialData(notAuthorisedVrn.vrn).url)).value
+
+        status(result) mustEqual UNAUTHORIZED
       }
     }
 

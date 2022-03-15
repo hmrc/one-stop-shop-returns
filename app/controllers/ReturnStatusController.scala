@@ -16,11 +16,10 @@
 
 package controllers
 
-import connectors.RegistrationConnector
-import controllers.actions.{AuthAction, AuthorisedRequest, GetRegistrationAction}
+import controllers.actions.{AuthAction, GetRegistrationActionProvider}
 import models.SubmissionStatus.{Due, Overdue}
-import models.{PeriodWithStatus, SubmissionStatus}
 import models.yourAccount._
+import models.{PeriodWithStatus, SubmissionStatus}
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import repositories.SaveForLaterRepository
@@ -37,9 +36,8 @@ class ReturnStatusController @Inject()(
                                         vatReturnService: VatReturnService,
                                         periodService: PeriodService,
                                         saveForLaterRepository: SaveForLaterRepository,
-                                        registrationConnector: RegistrationConnector,
                                         auth: AuthAction,
-                                        getRegistration: GetRegistrationAction,
+                                        getRegistration: GetRegistrationActionProvider,
                                         clock: Clock
                                       )(implicit ec: ExecutionContext)
   extends BackendController(cc) {
@@ -53,20 +51,24 @@ class ReturnStatusController @Inject()(
       }
   }
 
-  def getCurrentReturns(): Action[AnyContent] = (auth andThen getRegistration).async {
+  def getCurrentReturns(vrn: String): Action[AnyContent] = (auth andThen getRegistration(vrn)).async {
     implicit request =>
-      for {
-        availablePeriodsWithStatus <- getStatuses(request.registration.commencementDate, request.vrn)
-        savedAnswers <- saveForLaterRepository.get(request.vrn)
-      } yield {
-        val answers = savedAnswers.sortBy(_.lastUpdated).lastOption
-        val returnInProgress = answers.map(savedAnswers =>
-          Return.fromPeriod(savedAnswers.period))
-        val duePeriods = availablePeriodsWithStatus.find(_.status == Due).map(periodWithStatus => Return.fromPeriod(periodWithStatus.period))
-        val overduePeriods = availablePeriodsWithStatus.filter(_.status == Overdue).map(periodWithStatus => Return.fromPeriod(periodWithStatus.period))
-        val returns = OpenReturns(returnInProgress, duePeriods, overduePeriods)
+      if(request.vrn.vrn == vrn) {
+        for {
+          availablePeriodsWithStatus <- getStatuses(request.registration.commencementDate, request.vrn)
+          savedAnswers <- saveForLaterRepository.get(request.vrn)
+        } yield {
+          val answers = savedAnswers.sortBy(_.lastUpdated).lastOption
+          val returnInProgress = answers.map(savedAnswers =>
+            Return.fromPeriod(savedAnswers.period))
+          val duePeriods = availablePeriodsWithStatus.find(_.status == Due).map(periodWithStatus => Return.fromPeriod(periodWithStatus.period))
+          val overduePeriods = availablePeriodsWithStatus.filter(_.status == Overdue).map(periodWithStatus => Return.fromPeriod(periodWithStatus.period))
+          val returns = OpenReturns(returnInProgress, duePeriods, overduePeriods)
 
-        Ok(Json.toJson(returns))
+          Ok(Json.toJson(returns))
+        }
+      } else {
+        Future.successful(Unauthorized)
       }
   }
 

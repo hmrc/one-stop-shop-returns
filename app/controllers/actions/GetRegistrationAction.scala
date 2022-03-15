@@ -20,7 +20,7 @@ import connectors.RegistrationConnector
 import controllers.routes
 import models.requests.RegistrationRequest
 import play.api.mvc.Results.{NotFound, Redirect, Unauthorized}
-import play.api.mvc.{ActionRefiner, Result}
+import play.api.mvc.{ActionRefiner, ActionTransformer, Result}
 import uk.gov.hmrc.auth.core.AuthorisationException
 import uk.gov.hmrc.http.{HeaderCarrier, UnauthorizedException}
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
@@ -29,18 +29,29 @@ import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class GetRegistrationAction @Inject()(
+                                       vrn: String,
                                        val registrationConnector: RegistrationConnector
                                      )(implicit val executionContext: ExecutionContext)
   extends ActionRefiner[AuthorisedRequest, RegistrationRequest] {
 
   override protected def refine[A](request: AuthorisedRequest[A]): Future[Either[Result, RegistrationRequest[A]]] = {
-
-    val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request.request, request.request.session)
-    registrationConnector.getRegistration()(hc) flatMap {
-      case Some(registration) =>
-            Future.successful(Right(RegistrationRequest(request.request, request.vrn, registration)))
-      case None =>
-        Future.successful(Left(NotFound("Not found registration")))
+    if(request.vrn.vrn == vrn) {
+      val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request.request, request.request.session)
+      registrationConnector.getRegistration()(hc) flatMap {
+        case Some(registration) =>
+          Future.successful(Right(RegistrationRequest(request.request, request.vrn, registration)))
+        case None =>
+          Future.successful(Left(NotFound("Not found registration")))
+      }
+    } else {
+      Future.successful(Left(Unauthorized("VRNs do not match")))
     }
   }
+}
+
+class GetRegistrationActionProvider @Inject()(registrationConnector: RegistrationConnector)
+                                           (implicit ec: ExecutionContext) {
+
+  def apply(vrn: String): GetRegistrationAction =
+    new GetRegistrationAction(vrn, registrationConnector)
 }
