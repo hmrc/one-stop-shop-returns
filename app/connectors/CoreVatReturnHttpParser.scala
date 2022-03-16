@@ -16,6 +16,7 @@
 
 package connectors
 
+import com.fasterxml.jackson.databind.JsonMappingException
 import logging.Logging
 import models.core.{CoreErrorResponse, EisErrorResponse}
 import play.api.http.Status._
@@ -35,16 +36,25 @@ object CoreVatReturnHttpParser extends Logging {
           Right()
         case status =>
           logger.info(s"Response received from core vat returns ${response.status} with body ${response.body}")
-          response.json.validate[EisErrorResponse] match {
-            case JsSuccess(value, _) =>
-              logger.error(s"Error response from core $url, received status $status, body of response was: ${response.body}")
-              Left(value)
-            case _ =>
-              logger.error(s"Unexpected error response from core $url, received status $status, body of response was: ${response.body}")
+          try {
+            response.json.validate[EisErrorResponse] match {
+              case JsSuccess(value, _) =>
+                logger.error(s"Error response from core $url, received status $status, body of response was: ${response.body}")
+                Left(value)
+              case _ =>
+                logger.error(s"Unexpected error response from core $url, received status $status, body of response was: ${response.body}")
+                Left(
+                  EisErrorResponse(
+                    CoreErrorResponse(Instant.now(), None, s"UNEXPECTED_$status", response.body)
+                  ))
+            }
+          } catch {
+            case exception: JsonMappingException =>
+              logger.error(s"Unexpected error response from core $url, received status $status, there was an exception parsing the response ${exception.getMessage}")
               Left(
-                EisErrorResponse(
-                  CoreErrorResponse(Instant.now(), None, s"UNEXPECTED_$status", response.body)
-                ))
+              EisErrorResponse(
+                CoreErrorResponse(Instant.now(), None, s"UNEXPECTED_$status", exception.getMessage)
+              ))
           }
       }
   }
