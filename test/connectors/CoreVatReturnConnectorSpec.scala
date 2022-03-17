@@ -1,6 +1,7 @@
 package connectors
 
 import base.SpecBase
+import com.fasterxml.jackson.databind.exc.MismatchedInputException
 import com.github.tomakehurst.wiremock.client.WireMock._
 import models.core.{CoreCorrection, CoreErrorResponse, CoreEuTraderVatId, CoreMsconSupply, CoreMsestSupply, CorePeriod, CoreSupply, CoreTraderId, CoreVatReturn, EisErrorResponse}
 import play.api.inject.guice.GuiceApplicationBuilder
@@ -97,6 +98,28 @@ class CoreVatReturnConnectorSpec extends SpecBase with WireMockHelper {
           val result = connector.submit(coreVatReturn).futureValue
 
           val expectedResponse = EisErrorResponse(CoreErrorResponse(result.left.get.errorDetail.timestamp, result.left.get.errorDetail.transactionId, s"UNEXPECTED_404", errorResponseJson))
+
+          result mustBe Left(expectedResponse)
+        }
+      }
+
+      "the response has no json body" in {
+
+        val app = application
+
+
+        server.stubFor(
+          post(urlEqualTo(url))
+            .willReturn(aResponse()
+              .withStatus(404)
+            )
+        )
+
+        running(app) {
+          val connector = app.injector.instanceOf[CoreVatReturnConnector]
+          val result = connector.submit(coreVatReturn).futureValue
+
+          val expectedResponse = EisErrorResponse(CoreErrorResponse(result.left.get.errorDetail.timestamp, result.left.get.errorDetail.transactionId, "UNEXPECTED_404", "The response body was empty"))
 
           result mustBe Left(expectedResponse)
         }
