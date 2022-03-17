@@ -16,6 +16,7 @@
 
 package controllers.actions
 
+import models.requests.RegistrationRequest
 import play.api.http.FileMimeTypes
 import play.api.i18n.{Langs, MessagesApi}
 import play.api.mvc._
@@ -27,9 +28,13 @@ trait AuthenticatedControllerComponents extends ControllerComponents {
 
   def actionBuilder: DefaultActionBuilder
   def identify: AuthAction
+  def getRegistration: GetRegistrationActionProvider
 
   def auth: ActionBuilder[AuthorisedRequest, AnyContent] =
     actionBuilder andThen identify
+
+  def authAndGetRegistration(vrn: String): ActionBuilder[RegistrationRequest, AnyContent] =
+    auth andThen getRegistration(vrn)
 }
 
 case class DefaultAuthenticatedControllerComponents @Inject()(
@@ -39,5 +44,6 @@ case class DefaultAuthenticatedControllerComponents @Inject()(
                                                                langs: Langs,
                                                                fileMimeTypes: FileMimeTypes,
                                                                executionContext: ExecutionContext,
-                                                               identify: AuthAction
+                                                               identify: AuthAction,
+                                                               getRegistration: GetRegistrationActionProvider
                                                              ) extends AuthenticatedControllerComponents

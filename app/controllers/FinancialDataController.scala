@@ -16,12 +16,12 @@
 
 package controllers
 
-import controllers.actions.AuthAction
+import controllers.actions.AuthenticatedControllerComponents
 import models.Period
 import models.financialdata.{CurrentPayments, Payment}
 import play.api.libs.json.Json
-import play.api.mvc.{Action, AnyContent, ControllerComponents}
-import services.{FinancialDataService, VatReturnSalesService}
+import play.api.mvc.{Action, AnyContent}
+import services.FinancialDataService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import java.time.{Clock, LocalDate}
@@ -29,45 +29,43 @@ import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
 class FinancialDataController @Inject()(
-                                         cc: ControllerComponents,
+                                         cc: AuthenticatedControllerComponents,
                                          service: FinancialDataService,
-                                         vatReturnSalesService: VatReturnSalesService,
-                                         auth: AuthAction,
                                          clock: Clock
                                        )(implicit ec: ExecutionContext) extends BackendController(cc) {
 
-  def get(commencementDate: LocalDate): Action[AnyContent] = auth.async {
+  def get(commencementDate: LocalDate): Action[AnyContent] = cc.auth.async {
     implicit request =>
       service.getFinancialData(request.vrn, commencementDate).map { data =>
         Ok(Json.toJson(data))
       }
   }
 
-  def getCharge(period: Period): Action[AnyContent] = auth.async {
+  def getCharge(period: Period): Action[AnyContent] = cc.auth.async {
     implicit request =>
       service.getCharge(request.vrn, period).map { data =>
         Ok(Json.toJson(data))
       }
   }
 
-  def getOutstandingAmounts: Action[AnyContent] = auth.async {
+  def getOutstandingAmounts: Action[AnyContent] = cc.auth.async {
     implicit request =>
       service.getOutstandingAmounts(request.vrn).map { data =>
         Ok(Json.toJson(data))
       }
   }
 
-  def getVatReturnWithFinancialData(commencementDate: LocalDate): Action[AnyContent] = auth.async {
+  def getVatReturnWithFinancialData(commencementDate: LocalDate): Action[AnyContent] = cc.auth.async {
     implicit request =>
       service.getVatReturnWithFinancialData(request.vrn, commencementDate).map {
         data => Ok(Json.toJson(data))
       }
   }
 
-  def prepareFinancialData(commencementDate: LocalDate): Action[AnyContent] = auth.async {
+  def prepareFinancialData(vrn: String): Action[AnyContent] = cc.authAndGetRegistration(vrn).async {
     implicit request =>
       for {
-        vatReturnsWithFinancialData <- service.getVatReturnWithFinancialData(request.vrn, commencementDate)
+        vatReturnsWithFinancialData <- service.getVatReturnWithFinancialData(request.vrn, request.registration.commencementDate)
       } yield {
 
         val filteredPeriodsWithOutstandingAmounts = service
@@ -79,7 +77,7 @@ class FinancialDataController @Inject()(
 
         val duePayments = duePeriodsWithOutstandingAmounts.map(
           duePeriods =>
-           Payment.fromVatReturnWithFinancialData(duePeriods)
+            Payment.fromVatReturnWithFinancialData(duePeriods)
         )
 
         val overduePayments = overduePeriodsWithOutstandingAmounts.map(
@@ -89,5 +87,6 @@ class FinancialDataController @Inject()(
 
         Ok(Json.toJson(CurrentPayments(duePayments, overduePayments)))
       }
+
   }
 }

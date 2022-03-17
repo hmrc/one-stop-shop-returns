@@ -17,6 +17,7 @@
 package controllers
 
 import base.SpecBase
+import connectors.RegistrationConnector
 import controllers.actions.FakeFailingAuthConnector
 import generators.Generators
 import models._
@@ -34,7 +35,9 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import repositories.SaveForLaterRepository
 import services.{PeriodService, VatReturnService}
+import testutils.RegistrationData
 import uk.gov.hmrc.auth.core.{AuthConnector, MissingBearerToken}
+import uk.gov.hmrc.domain.Vrn
 
 import java.time.{Clock, LocalDate, ZoneId}
 import scala.concurrent.Future
@@ -43,6 +46,9 @@ class ReturnStatusControllerSpec
   extends SpecBase
     with ScalaCheckPropertyChecks
     with Generators {
+
+  private val authorisedVrn = Vrn("123456789")
+  private val notAuthorisedVrn = arbitraryVrn.arbitrary.retryUntil(_ != authorisedVrn).sample.value
 
   ".listStatus(commencementDate)" - {
     val period = Period(2021, Q3)
@@ -79,7 +85,7 @@ class ReturnStatusControllerSpec
 
   }
 
-  ".getCurrentReturns(commencementDate)" - {
+  ".getCurrentReturns()" - {
     val stubClock: Clock = Clock.fixed(LocalDate.of(2022, 10, 1).atStartOfDay(ZoneId.systemDefault).toInstant, ZoneId.systemDefault)
     val period = Period(2021, Q2)
     val period0 = Period(2021, Q3)
@@ -89,7 +95,7 @@ class ReturnStatusControllerSpec
     val periods = Seq(period, period0, period1, period2, period3)
     val commencementDate = LocalDate.of(2021, 1, 1)
 
-    lazy val request = FakeRequest(GET, routes.ReturnStatusController.getCurrentReturns(commencementDate).url)
+    lazy val request = FakeRequest(GET, routes.ReturnStatusController.getCurrentReturns(vrn.vrn).url)
     "must respond with OK and the OpenReturns model" - {
 
       "with no returns in progress, due or overdue if there are no returns due yet" in {
@@ -97,16 +103,19 @@ class ReturnStatusControllerSpec
         val mockVatReturnService = mock[VatReturnService]
         val mockPeriodService = mock[PeriodService]
         val mockS4LaterRepository = mock[SaveForLaterRepository]
+        val mockRegConnector = mock[RegistrationConnector]
 
         when(mockVatReturnService.get(any())) thenReturn Future.successful(Seq.empty)
         when(mockPeriodService.getReturnPeriods(any())) thenReturn Seq.empty
         when(mockS4LaterRepository.get(any())) thenReturn Future.successful(Seq.empty)
+        when(mockRegConnector.getRegistration(any())) thenReturn Future.successful(Some(RegistrationData.registration))
 
         val app =
           applicationBuilder
             .overrides(bind[VatReturnService].toInstance(mockVatReturnService))
             .overrides(bind[PeriodService].toInstance(mockPeriodService))
             .overrides(bind[SaveForLaterRepository].toInstance(mockS4LaterRepository))
+            .overrides(bind[RegistrationConnector].toInstance(mockRegConnector))
             .overrides(bind[Clock].toInstance(stubClock))
             .build()
 
@@ -123,6 +132,8 @@ class ReturnStatusControllerSpec
         val mockVatReturnService = mock[VatReturnService]
         val mockPeriodService = mock[PeriodService]
         val mockS4LaterRepository = mock[SaveForLaterRepository]
+        val mockRegConnector = mock[RegistrationConnector]
+
         val vatReturn =
           Gen
             .nonEmptyListOf(arbitrary[VatReturn])
@@ -132,12 +143,14 @@ class ReturnStatusControllerSpec
         when(mockVatReturnService.get(any())) thenReturn Future.successful(Seq(vatReturn.copy(period = period)))
         when(mockPeriodService.getReturnPeriods(any())) thenReturn Seq(period)
         when(mockS4LaterRepository.get(any())) thenReturn Future.successful(Seq.empty)
+        when(mockRegConnector.getRegistration(any())) thenReturn Future.successful(Some(RegistrationData.registration))
 
         val app =
           applicationBuilder
             .overrides(bind[VatReturnService].toInstance(mockVatReturnService))
             .overrides(bind[PeriodService].toInstance(mockPeriodService))
             .overrides(bind[SaveForLaterRepository].toInstance(mockS4LaterRepository))
+            .overrides(bind[RegistrationConnector].toInstance(mockRegConnector))
             .overrides(bind[Clock].toInstance(stubClock))
             .build()
 
@@ -154,16 +167,19 @@ class ReturnStatusControllerSpec
         val mockVatReturnService = mock[VatReturnService]
         val mockPeriodService = mock[PeriodService]
         val mockS4LaterRepository = mock[SaveForLaterRepository]
+        val mockRegConnector = mock[RegistrationConnector]
 
         when(mockVatReturnService.get(any())) thenReturn Future.successful(Seq.empty)
         when(mockPeriodService.getReturnPeriods(any())) thenReturn Seq(period)
         when(mockS4LaterRepository.get(any())) thenReturn Future.successful(Seq.empty)
+        when(mockRegConnector.getRegistration(any())) thenReturn Future.successful(Some(RegistrationData.registration))
 
         val app =
           applicationBuilder
             .overrides(bind[VatReturnService].toInstance(mockVatReturnService))
             .overrides(bind[PeriodService].toInstance(mockPeriodService))
             .overrides(bind[SaveForLaterRepository].toInstance(mockS4LaterRepository))
+            .overrides(bind[RegistrationConnector].toInstance(mockRegConnector))
             .overrides(bind[Clock].toInstance(stubClock))
             .build()
 
@@ -180,6 +196,7 @@ class ReturnStatusControllerSpec
         val mockVatReturnService = mock[VatReturnService]
         val mockPeriodService = mock[PeriodService]
         val mockS4LaterRepository = mock[SaveForLaterRepository]
+        val mockRegConnector = mock[RegistrationConnector]
         val periods = Seq(period, period0, period2)
         val returns = Seq(
           Return.fromPeriod(period),
@@ -188,12 +205,14 @@ class ReturnStatusControllerSpec
         when(mockVatReturnService.get(any())) thenReturn Future.successful(Seq.empty)
         when(mockPeriodService.getReturnPeriods(any())) thenReturn periods
         when(mockS4LaterRepository.get(any())) thenReturn Future.successful(Seq.empty)
+        when(mockRegConnector.getRegistration(any())) thenReturn Future.successful(Some(RegistrationData.registration))
 
         val app =
           applicationBuilder
             .overrides(bind[VatReturnService].toInstance(mockVatReturnService))
             .overrides(bind[PeriodService].toInstance(mockPeriodService))
             .overrides(bind[SaveForLaterRepository].toInstance(mockS4LaterRepository))
+            .overrides(bind[RegistrationConnector].toInstance(mockRegConnector))
             .overrides(bind[Clock].toInstance(stubClock))
             .build()
 
@@ -210,15 +229,18 @@ class ReturnStatusControllerSpec
         val mockVatReturnService = mock[VatReturnService]
         val mockPeriodService = mock[PeriodService]
         val mockS4LaterRepository = mock[SaveForLaterRepository]
+        val mockRegConnector = mock[RegistrationConnector]
 
         when(mockVatReturnService.get(any())) thenReturn Future.successful(Seq.empty)
         when(mockPeriodService.getReturnPeriods(any())) thenReturn periods
         when(mockS4LaterRepository.get(any())) thenReturn Future.successful(Seq.empty)
+        when(mockRegConnector.getRegistration(any())) thenReturn Future.successful(Some(RegistrationData.registration))
         val app =
           applicationBuilder
             .overrides(bind[VatReturnService].toInstance(mockVatReturnService))
             .overrides(bind[PeriodService].toInstance(mockPeriodService))
             .overrides(bind[SaveForLaterRepository].toInstance(mockS4LaterRepository))
+            .overrides(bind[RegistrationConnector].toInstance(mockRegConnector))
             .overrides(bind[Clock].toInstance(stubClock))
             .build()
 
@@ -237,17 +259,20 @@ class ReturnStatusControllerSpec
         val mockVatReturnService = mock[VatReturnService]
         val mockPeriodService = mock[PeriodService]
         val mockS4LaterRepository = mock[SaveForLaterRepository]
+        val mockRegConnector = mock[RegistrationConnector]
         val answers = arbitrary[SavedUserAnswers].sample.value.copy(period = period)
 
         when(mockVatReturnService.get(any())) thenReturn Future.successful(Seq.empty)
         when(mockPeriodService.getReturnPeriods(any())) thenReturn Seq(period)
         when(mockS4LaterRepository.get(any())) thenReturn Future.successful(Seq(answers))
+        when(mockRegConnector.getRegistration(any())) thenReturn Future.successful(Some(RegistrationData.registration))
 
         val app =
           applicationBuilder
             .overrides(bind[VatReturnService].toInstance(mockVatReturnService))
             .overrides(bind[PeriodService].toInstance(mockPeriodService))
             .overrides(bind[SaveForLaterRepository].toInstance(mockS4LaterRepository))
+            .overrides(bind[RegistrationConnector].toInstance(mockRegConnector))
             .overrides(bind[Clock].toInstance(stubClock))
             .build()
 
@@ -257,6 +282,38 @@ class ReturnStatusControllerSpec
           status(result) mustEqual OK
           contentAsJson(result) mustEqual Json.toJson(OpenReturns(Some(Return.fromPeriod(period)), Some(Return.fromPeriod(period)), Seq.empty))
         }
+      }
+    }
+
+    "must return Not Found when no registration is found for VRN" in {
+
+      val mockRegConnector = mock[RegistrationConnector]
+
+      when(mockRegConnector.getRegistration(any())) thenReturn Future.successful(None)
+
+      val app =
+        applicationBuilder
+          .overrides(bind[RegistrationConnector].toInstance(mockRegConnector))
+          .overrides(bind[Clock].toInstance(stubClock))
+          .build()
+
+      running(app) {
+        val result = route(app, request).value
+
+        status(result) mustEqual NOT_FOUND
+      }
+    }
+
+    "must return Unauthorised if VRNs in the URI and in the request do not match" in {
+
+      val app =
+        applicationBuilder
+          .build()
+
+      running(app) {
+        val result = route(app, FakeRequest(GET, routes.FinancialDataController.prepareFinancialData(notAuthorisedVrn.vrn).url)).value
+
+        status(result) mustEqual UNAUTHORIZED
       }
     }
 
