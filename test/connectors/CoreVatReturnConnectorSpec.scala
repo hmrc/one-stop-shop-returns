@@ -119,7 +119,7 @@ class CoreVatReturnConnectorSpec extends SpecBase with WireMockHelper {
           val connector = app.injector.instanceOf[CoreVatReturnConnector]
           val result = connector.submit(coreVatReturn).futureValue
 
-          val expectedResponse = EisErrorResponse(CoreErrorResponse(result.left.get.errorDetail.timestamp, result.left.get.errorDetail.transactionId, s"UNEXPECTED_404", "No content to map due to end-of-input\n at [Source: (String)\"\"; line: 1, column: 0]"))
+          val expectedResponse = EisErrorResponse(CoreErrorResponse(result.left.get.errorDetail.timestamp, result.left.get.errorDetail.transactionId, "UNEXPECTED_404", "The response body was empty"))
 
           result mustBe Left(expectedResponse)
         }

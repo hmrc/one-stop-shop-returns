@@ -36,7 +36,12 @@ object CoreVatReturnHttpParser extends Logging {
           Right()
         case status =>
           logger.info(s"Response received from core vat returns ${response.status} with body ${response.body}")
-
+          if(response.body.isEmpty) {
+            Left(
+              EisErrorResponse(
+                CoreErrorResponse(Instant.now(), None, s"UNEXPECTED_$status", "The response body was empty")
+              ))
+          } else {
             response.json.validateOpt[EisErrorResponse] match {
               case JsSuccess(Some(value), _) =>
                 logger.error(s"Error response from core $url, received status $status, body of response was: ${response.body}")
@@ -49,6 +54,7 @@ object CoreVatReturnHttpParser extends Logging {
                   ))
             }
           }
+      }
 
   }
 
