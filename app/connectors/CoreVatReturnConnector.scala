@@ -17,12 +17,13 @@
 package connectors
 
 import config.IfConfig
-import connectors.CoreVatReturnHttpParser._
+import connectors.CoreVatReturnHttpParser.{logger, _}
 import logging.Logging
-import models.core.CoreVatReturn
+import models.core.{CoreErrorResponse, CoreVatReturn, EisErrorResponse}
 import play.api.http.HeaderNames.AUTHORIZATION
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient}
+import uk.gov.hmrc.http.{BadGatewayException, GatewayTimeoutException, HeaderCarrier, HttpClient, HttpException}
 
+import java.time.Instant
 import java.util.UUID
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -41,7 +42,7 @@ class CoreVatReturnConnector @Inject()(
     val correlationId = UUID.randomUUID().toString
     val headersWithCorrelationId = headers(correlationId)
 
-    val headersWithoutAuth = headersWithCorrelationId.filterNot{
+    val headersWithoutAuth = headersWithCorrelationId.filterNot {
       case (key, _) => key.matches(AUTHORIZATION)
     }
 
@@ -51,7 +52,14 @@ class CoreVatReturnConnector @Inject()(
       url,
       coreVatReturn,
       headers = headersWithCorrelationId
-    )
+    ).recover {
+      case e: HttpException =>
+        logger.error(s"Unexpected error response from core $url, received status ${e.responseCode}, body of response was: ${e.message}")
+        Left(
+          EisErrorResponse(
+            CoreErrorResponse(Instant.now(), None, s"UNEXPECTED_${e.responseCode}", e.message)
+          ))
+    }
   }
 
 }
