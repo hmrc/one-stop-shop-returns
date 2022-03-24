@@ -4,9 +4,14 @@ import base.SpecBase
 import com.fasterxml.jackson.databind.exc.MismatchedInputException
 import com.github.tomakehurst.wiremock.client.WireMock._
 import models.core.{CoreCorrection, CoreErrorResponse, CoreEuTraderVatId, CoreMsconSupply, CoreMsestSupply, CorePeriod, CoreSupply, CoreTraderId, CoreVatReturn, EisErrorResponse}
+import org.openqa.selenium.net.UrlChecker.TimeoutException
+import org.scalatest.concurrent.PatienceConfiguration.Timeout
+import org.scalatest.time.{Seconds, Span}
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.Application
 import play.api.test.Helpers.running
+import uk.gov.hmrc.http.HttpReads.gatewayTimeoutMessage
+import uk.gov.hmrc.http.HttpVerbs.POST
 
 import java.time.{Instant, LocalDate}
 import java.util.UUID
@@ -75,6 +80,29 @@ class CoreVatReturnConnectorSpec extends SpecBase with WireMockHelper {
           val expectedResponse = EisErrorResponse(CoreErrorResponse(Instant.parse(timestamp),  Some(UUID.fromString(uuid)), "OSS_405", "Method Not Allowed"))
 
           result mustBe Left(expectedResponse)
+        }
+
+      }
+
+      "Http Exception must result in EisErrorResponse" in {
+
+        val app = application
+
+        server.stubFor(
+          post(urlEqualTo(url))
+            .willReturn(aResponse()
+              .withStatus(504)
+              .withFixedDelay(21000)
+            )
+        )
+
+        running(app) {
+          val connector = app.injector.instanceOf[CoreVatReturnConnector]
+          whenReady(connector.submit(coreVatReturn), Timeout(Span(30, Seconds))) { exp =>
+            exp.isLeft mustBe true
+            exp.left.get mustBe a[EisErrorResponse]
+          }
+
         }
 
       }
