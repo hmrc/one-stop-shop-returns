@@ -18,10 +18,13 @@ package connectors
 import config.DesConfig
 import connectors.FinancialDataHttpParser._
 import logging.Logging
+import models.core.{CoreErrorResponse, EisErrorResponse}
+import models.des.UnexpectedResponseStatus
 import models.financialdata.FinancialDataQueryParameters
 import uk.gov.hmrc.domain.Vrn
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpException}
 
+import java.time.Instant
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -42,6 +45,12 @@ class FinancialDataConnector @Inject() (
       url,
       queryParameters.toSeqQueryParams,
       headers = headers
-    )
+    ).recover {
+      case e: HttpException =>
+        logger.error(s"Unexpected error response getting financial data from $url, received status ${e.responseCode}, body of response was: ${e.message}")
+        Left(
+          UnexpectedResponseStatus(e.responseCode, s"Unexpected response from DES, received status ${e.responseCode}")
+        )
+    }
   }
 }
