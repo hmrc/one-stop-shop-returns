@@ -142,12 +142,26 @@ class HistoricalReturnSubmitServiceImpl @Inject()(
         Future.sequence[CoreVatReturn, Seq](convertedReturnsAndCorrections)
       }
 
+
+      val returnsToSubmit = if(appConfig.historicCoreVatReturnIndexFilteringEnabled) {
+        coreReturns.map(_.sortBy(coreVatReturn =>
+          (coreVatReturn.period.year, coreVatReturn.period.quarter, coreVatReturn.submissionDateTime.getEpochSecond))
+          .zipWithIndex
+          .filter(returnWithIndex =>
+            returnWithIndex._2 >= appConfig.historicCoreVatReturnStartIdx && returnWithIndex._2 <= appConfig.historicCoreVatReturnEndIdx)
+          .map(_._1)
+        )
+      } else {
+        coreReturns
+      }
+
       val orderedGroupedReturns: Future[Seq[Seq[CoreVatReturn]]] = for {
-        returnsGroupedByPeriod <- coreReturns.map(_.groupBy(_.period))
+        returnsGroupedByPeriod <- returnsToSubmit.map(_.groupBy(_.period))
       } yield {
         val periods = returnsGroupedByPeriod.keys.toList.sortBy{ case CorePeriod(year, quarter) => (year, quarter) }
         periods.map(period => returnsGroupedByPeriod.getOrElse(period, Seq.empty))
-      }
+      }.map(_.sortBy(_.submissionDateTime.getEpochSecond))
+
 
       logger.debug("Submitting returns to core")
 

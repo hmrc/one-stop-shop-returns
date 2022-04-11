@@ -32,5 +32,8 @@ class AppConfig @Inject()(config: Configuration, servicesConfig: ServicesConfig)
   val coreVatReturnsEnabled: Boolean = config.get[Boolean]("features.coreVatReturns")
   val historicCoreVatReturnsEnabled: Boolean = config.get[Boolean]("features.historicCoreVatReturns")
   val historicPeriodsToSubmit: Seq[Period] = config.get[Seq[String]]("historicPeriodsToSubmit").flatMap(Period.fromString)
+  val historicCoreVatReturnIndexFilteringEnabled: Boolean = config.get[Boolean]("historicCoreVatReturns.indexFiltering")
+  val historicCoreVatReturnStartIdx: Int = config.get[Int]("historicCoreVatReturns.startIdx")
+  val historicCoreVatReturnEndIdx: Int = config.get[Int]("historicCoreVatReturns.endIdx")
 
 }
