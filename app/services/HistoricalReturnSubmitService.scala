@@ -56,18 +56,18 @@ class HistoricalReturnSubmitServiceImpl @Inject()(
 
   def submitReturnsByQuarter(returnsByQuarter: Seq[Seq[CoreVatReturn]], completedPeriods: Int = 0): Future[Either[EisErrorResponse, Unit]] = {
 
-     def submitSequentially(returns: Seq[CoreVatReturn], completedReturns: Int = 0): Future[Either[EisErrorResponse, Unit]] = {
+     def submitSequentially(returns: Seq[(CoreVatReturn, Int)], completedReturns: Int = 0): Future[Either[EisErrorResponse, Unit]] = {
        if(returns.isEmpty) {
          Future.successful(Right())
        } else {
-         coreVatReturnConnector.submit(returns.head).flatMap {
+         coreVatReturnConnector.submit(returns.head._1).flatMap {
              case Right(_) => {
-               logger.info(s"Successfully sent return to core for ${obfuscateVrn(returns.head.vatReturnReferenceNumber)} and ${returns.head.period}")
+               logger.info(s"Successfully sent return to core for index ${returns.head._2}, ${obfuscateVrn(returns.head._1.vatReturnReferenceNumber)} and ${returns.head._1.period}")
                submitSequentially(returns.tail, completedReturns + 1)
              }
              case Left(t) => {
-               logger.error(s"Failure sending return to core for ${obfuscateVrn(returns.head.vatReturnReferenceNumber)} and ${returns.head.period}: ${t.errorDetail.errorMessage}")
-               logger.error(s"$completedReturns successful, ${returns.length} unsuccessful submissions for ${returns.head.period}")
+               logger.error(s"Failure sending return to core for index ${returns.head._2}, ${obfuscateVrn(returns.head._1.vatReturnReferenceNumber)} and ${returns.head._1.period}: ${t.errorDetail.errorMessage}")
+               logger.error(s"$completedReturns successful, ${returns.length} unsuccessful submissions for ${returns.head._1.period}")
                Future.successful(Left(t))
              }
          }
@@ -79,7 +79,7 @@ class HistoricalReturnSubmitServiceImpl @Inject()(
       Future.successful(Right())
     } else  {
       logger.info(s"Submitting ${returnsByQuarter.head.length} returns for quarter ${returnsByQuarter.head.head.period}")
-      submitSequentially(returnsByQuarter.head).flatMap {
+      submitSequentially(returnsByQuarter.head.zipWithIndex).flatMap {
         case Right(_) => {
           logger.info(s"Successfully sent ${returnsByQuarter.head.length} returns to core for ${returnsByQuarter.head.head.period}")
           submitReturnsByQuarter(returnsByQuarter.tail, completedPeriods + 1)
