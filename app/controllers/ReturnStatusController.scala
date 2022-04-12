@@ -17,7 +17,7 @@
 package controllers
 
 import controllers.actions.AuthenticatedControllerComponents
-import models.SubmissionStatus.{Due, Overdue}
+import models.SubmissionStatus.{Complete, Due, Overdue}
 import models.yourAccount._
 import models.{PeriodWithStatus, SubmissionStatus}
 import play.api.libs.json.Json
@@ -56,11 +56,19 @@ class ReturnStatusController @Inject()(
         savedAnswers <- saveForLaterRepository.get(request.vrn)
       } yield {
         val answers = savedAnswers.sortBy(_.lastUpdated).lastOption
-        val returnInProgress = answers.map(savedAnswers =>
-          Return.fromPeriod(savedAnswers.period))
-        val duePeriods = availablePeriodsWithStatus.find(_.status == Due).map(periodWithStatus => Return.fromPeriod(periodWithStatus.period))
-        val overduePeriods = availablePeriodsWithStatus.filter(_.status == Overdue).map(periodWithStatus => Return.fromPeriod(periodWithStatus.period))
-        val returns = OpenReturns(returnInProgress, duePeriods, overduePeriods)
+
+        val incompletePeriods = availablePeriodsWithStatus.filterNot(_.status == Complete)
+
+        val periodInProgress = answers.map(answer => answer.period)
+        val oldestPeriod = incompletePeriods.sortBy(_.period).headOption
+        val returns = incompletePeriods.sortBy(_.period).map(
+          periodWithStatus => Return.fromPeriod(
+            periodWithStatus.period,
+            periodWithStatus.status,
+            periodInProgress.contains(periodWithStatus.period),
+            oldestPeriod.contains(periodWithStatus)
+          )
+        )
 
         Ok(Json.toJson(returns))
       }

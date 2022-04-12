@@ -23,6 +23,7 @@ import generators.Generators
 import models._
 import models.yourAccount._
 import models.Quarter.{Q1, Q2, Q3}
+import models.SubmissionStatus.{Due, Overdue}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
@@ -30,7 +31,7 @@ import org.scalacheck.Gen
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.libs.json.Json
+import play.api.libs.json.{JsArray, Json}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import repositories.SaveForLaterRepository
@@ -123,7 +124,7 @@ class ReturnStatusControllerSpec
           val result = route(app, request).value
 
           status(result) mustEqual OK
-          contentAsJson(result) mustEqual Json.toJson(OpenReturns(None, None, Seq.empty))
+          contentAsJson(result) mustEqual JsArray.empty
         }
       }
 
@@ -158,7 +159,7 @@ class ReturnStatusControllerSpec
           val result = route(app, request).value
 
           status(result) mustEqual OK
-          contentAsJson(result) mustEqual Json.toJson(OpenReturns(None, None, Seq.empty))
+          contentAsJson(result) mustEqual JsArray.empty
         }
       }
 
@@ -187,7 +188,7 @@ class ReturnStatusControllerSpec
           val result = route(app, request).value
 
           status(result) mustEqual OK
-          contentAsJson(result) mustEqual Json.toJson(OpenReturns(None, Some(Return(period, period.firstDay, period.lastDay, period.paymentDeadline)), Seq.empty))
+          contentAsJson(result) mustEqual Json.toJson(Seq(Return.fromPeriod(period, Due, false, true)))
         }
       }
 
@@ -199,9 +200,9 @@ class ReturnStatusControllerSpec
         val mockRegConnector = mock[RegistrationConnector]
         val periods = Seq(period, period0, period2)
         val returns = Seq(
-          Return.fromPeriod(period),
-          Return.fromPeriod(period0),
-          Return.fromPeriod(period2))
+          Return.fromPeriod(period, Overdue, false, true),
+          Return.fromPeriod(period0, Overdue, false, false),
+          Return.fromPeriod(period2, Overdue, false, false))
         when(mockVatReturnService.get(any())) thenReturn Future.successful(Seq.empty)
         when(mockPeriodService.getReturnPeriods(any())) thenReturn periods
         when(mockS4LaterRepository.get(any())) thenReturn Future.successful(Seq.empty)
@@ -220,7 +221,7 @@ class ReturnStatusControllerSpec
           val result = route(app, request).value
 
           status(result) mustEqual OK
-          contentAsJson(result) mustEqual Json.toJson(OpenReturns(None, None, returns))
+          contentAsJson(result) mustEqual Json.toJson(returns)
         }
       }
 
@@ -248,9 +249,14 @@ class ReturnStatusControllerSpec
           val result = route(app, request).value
 
           status(result) mustEqual OK
-          contentAsJson(result) mustEqual Json.toJson(OpenReturns(None, Some(Return.fromPeriod(period3)),
-            Seq(Return.fromPeriod(period), Return.fromPeriod(period0), Return.fromPeriod(period1), Return.fromPeriod(period2))
-          ))
+          contentAsJson(result) mustEqual Json.toJson(
+            Seq(
+              Return.fromPeriod(period, Overdue, false, true),
+              Return.fromPeriod(period0, Overdue, false, false),
+              Return.fromPeriod(period1, Overdue, false, false),
+              Return.fromPeriod(period2, Overdue, false, false),
+              Return.fromPeriod(period3, Due, false, false)
+            ))
         }
       }
 
@@ -280,7 +286,9 @@ class ReturnStatusControllerSpec
           val result = route(app, request).value
 
           status(result) mustEqual OK
-          contentAsJson(result) mustEqual Json.toJson(OpenReturns(Some(Return.fromPeriod(period)), Some(Return.fromPeriod(period)), Seq.empty))
+          contentAsJson(result) mustEqual Json.toJson(Seq(
+            Return.fromPeriod(period, Due, true, true)
+          ))
         }
       }
     }
