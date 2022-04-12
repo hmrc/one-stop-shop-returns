@@ -80,12 +80,14 @@ class HistoricalReturnSubmitServiceSpec extends SpecBase with BeforeAndAfterEach
       def getCoreVatReturn(vatReturn: VatReturn) = {
         coreVatReturn.copy(
           vatReturnReferenceNumber = vatReturn.vrn.value,
-          period = CorePeriod(vatReturn.period.year, vatReturn.period.quarter.toString.tail.toInt))
+          period = CorePeriod(vatReturn.period.year, vatReturn.period.quarter.toString.tail.toInt),
+          submissionDateTime = vatReturn.submissionReceived
+        )
       }
 
       "submit vat returns in order" in {
 
-        val completeVatReturn2 = completeVatReturn.copy(vrn = Vrn("987654321"), period = Period(2086, Q4))
+        val completeVatReturn2 = completeVatReturn.copy(vrn = Vrn("987654321"), period = Period(2086, Q4), submissionReceived = completeVatReturn.submissionReceived.plus(java.time.Period.ofDays(1)))
         val completeVatReturn2a = completeVatReturn.copy(vrn = Vrn("987654322"), period = Period(2086, Q4))
         val completeVatReturn3 = completeVatReturn.copy(vrn = Vrn("987654322"), period = Period(2087, Q1))
 
@@ -123,9 +125,56 @@ class HistoricalReturnSubmitServiceSpec extends SpecBase with BeforeAndAfterEach
         // submit vat returns in order
         val inOrder = Mockito.inOrder(coreVatReturnConnector)
         inOrder.verify(coreVatReturnConnector).submit(coreVatReturn1)
-        inOrder.verify(coreVatReturnConnector).submit(coreVatReturn2)
         inOrder.verify(coreVatReturnConnector).submit(coreVatReturn2a)
+        inOrder.verify(coreVatReturnConnector).submit(coreVatReturn2)
         inOrder.verify(coreVatReturnConnector).submit(coreVatReturn3)
+
+      }
+
+      "submit vat returns with specific indexes when index filtering is toggled on" in {
+
+        val completeVatReturn2 = completeVatReturn.copy(vrn = Vrn("987654321"), period = Period(2086, Q4), submissionReceived = completeVatReturn.submissionReceived.plus(java.time.Period.ofDays(1)))
+        val completeVatReturn2a = completeVatReturn.copy(vrn = Vrn("987654322"), period = Period(2086, Q4))
+        val completeVatReturn3 = completeVatReturn.copy(vrn = Vrn("987654322"), period = Period(2087, Q1))
+
+        val coreVatReturn1 = getCoreVatReturn(completeVatReturn)
+        val coreVatReturn2 = getCoreVatReturn(completeVatReturn2)
+        val coreVatReturn2a = getCoreVatReturn(completeVatReturn2a)
+        val coreVatReturn3 = getCoreVatReturn(completeVatReturn3)
+
+        val emptyCorrectionPayload2: CorrectionPayload =
+          CorrectionPayload(
+            Vrn("063407423"),
+            Period("2086", "Q3").get,
+            List.empty,
+            Instant.ofEpochSecond(1630670836),
+            Instant.ofEpochSecond(1630670836)
+          )
+
+        // retrieve vat returns out of order
+        when(appConfig.historicCoreVatReturnIndexFilteringEnabled) thenReturn true
+        when(appConfig.historicCoreVatReturnStartIdx) thenReturn 0
+        when(appConfig.historicCoreVatReturnEndIdx) thenReturn 1
+        when(vatReturnService.getByPeriods(any())) thenReturn Future.successful(List(completeVatReturn2,  completeVatReturn, completeVatReturn2a,  completeVatReturn3))
+        when(correctionService.getByPeriods(any())) thenReturn Future.successful(List(emptyCorrectionPayload2))
+
+        when(coreVatReturnService.toCore(eqTo(completeVatReturn), any(), any())) thenReturn Future.successful(coreVatReturn1)
+        when(coreVatReturnService.toCore(eqTo(completeVatReturn2), any(), any())) thenReturn Future.successful(coreVatReturn2)
+        when(coreVatReturnService.toCore(eqTo(completeVatReturn2a), any(), any())) thenReturn Future.successful(coreVatReturn2a)
+        when(coreVatReturnService.toCore(eqTo(completeVatReturn3), any(), any())) thenReturn Future.successful(coreVatReturn3)
+
+        when(coreVatReturnConnector.submit(any())) thenReturn Future.successful(Right())
+
+        when(registrationConnector.getRegistration(any())) thenReturn Future.successful(Some(RegistrationData.registration))
+
+        service.transfer().futureValue mustBe Success()
+
+        verify(coreVatReturnConnector, times(2)).submit(any())
+
+        // submit vat returns in order
+        val inOrder = Mockito.inOrder(coreVatReturnConnector)
+        inOrder.verify(coreVatReturnConnector).submit(coreVatReturn1)
+        inOrder.verify(coreVatReturnConnector).submit(coreVatReturn2a)
 
       }
 

@@ -56,18 +56,18 @@ class HistoricalReturnSubmitServiceImpl @Inject()(
 
   def submitReturnsByQuarter(returnsByQuarter: Seq[Seq[CoreVatReturn]], completedPeriods: Int = 0): Future[Either[EisErrorResponse, Unit]] = {
 
-     def submitSequentially(returns: Seq[CoreVatReturn], completedReturns: Int = 0): Future[Either[EisErrorResponse, Unit]] = {
+     def submitSequentially(returns: Seq[(CoreVatReturn, Int)], completedReturns: Int = 0): Future[Either[EisErrorResponse, Unit]] = {
        if(returns.isEmpty) {
          Future.successful(Right())
        } else {
-         coreVatReturnConnector.submit(returns.head).flatMap {
+         coreVatReturnConnector.submit(returns.head._1).flatMap {
              case Right(_) => {
-               logger.info(s"Successfully sent return to core for ${obfuscateVrn(returns.head.vatReturnReferenceNumber)} and ${returns.head.period}")
+               logger.info(s"Successfully sent return to core for index ${returns.head._2}, ${obfuscateVrn(returns.head._1.vatReturnReferenceNumber)} and ${returns.head._1.period}")
                submitSequentially(returns.tail, completedReturns + 1)
              }
              case Left(t) => {
-               logger.error(s"Failure sending return to core for ${obfuscateVrn(returns.head.vatReturnReferenceNumber)} and ${returns.head.period}: ${t.errorDetail.errorMessage}")
-               logger.error(s"$completedReturns successful, ${returns.length} unsuccessful submissions for ${returns.head.period}")
+               logger.error(s"Failure sending return to core for index ${returns.head._2}, ${obfuscateVrn(returns.head._1.vatReturnReferenceNumber)} and ${returns.head._1.period}: ${t.errorDetail.errorMessage}")
+               logger.error(s"$completedReturns successful, ${returns.length} unsuccessful submissions for ${returns.head._1.period}")
                Future.successful(Left(t))
              }
          }
@@ -79,7 +79,7 @@ class HistoricalReturnSubmitServiceImpl @Inject()(
       Future.successful(Right())
     } else  {
       logger.info(s"Submitting ${returnsByQuarter.head.length} returns for quarter ${returnsByQuarter.head.head.period}")
-      submitSequentially(returnsByQuarter.head).flatMap {
+      submitSequentially(returnsByQuarter.head.zipWithIndex).flatMap {
         case Right(_) => {
           logger.info(s"Successfully sent ${returnsByQuarter.head.length} returns to core for ${returnsByQuarter.head.head.period}")
           submitReturnsByQuarter(returnsByQuarter.tail, completedPeriods + 1)
@@ -142,12 +142,26 @@ class HistoricalReturnSubmitServiceImpl @Inject()(
         Future.sequence[CoreVatReturn, Seq](convertedReturnsAndCorrections)
       }
 
+
+      val returnsToSubmit = if(appConfig.historicCoreVatReturnIndexFilteringEnabled) {
+        coreReturns.map(_.sortBy(coreVatReturn =>
+          (coreVatReturn.period.year, coreVatReturn.period.quarter, coreVatReturn.submissionDateTime.getEpochSecond))
+          .zipWithIndex
+          .filter(returnWithIndex =>
+            returnWithIndex._2 >= appConfig.historicCoreVatReturnStartIdx && returnWithIndex._2 <= appConfig.historicCoreVatReturnEndIdx)
+          .map(_._1)
+        )
+      } else {
+        coreReturns
+      }
+
       val orderedGroupedReturns: Future[Seq[Seq[CoreVatReturn]]] = for {
-        returnsGroupedByPeriod <- coreReturns.map(_.groupBy(_.period))
+        returnsGroupedByPeriod <- returnsToSubmit.map(_.groupBy(_.period))
       } yield {
         val periods = returnsGroupedByPeriod.keys.toList.sortBy{ case CorePeriod(year, quarter) => (year, quarter) }
         periods.map(period => returnsGroupedByPeriod.getOrElse(period, Seq.empty))
-      }
+      }.map(_.sortBy(_.submissionDateTime.getEpochSecond))
+
 
       logger.debug("Submitting returns to core")
 
