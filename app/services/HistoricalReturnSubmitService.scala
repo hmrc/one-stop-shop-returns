@@ -154,6 +154,7 @@ class HistoricalReturnSubmitServiceImpl @Inject()(
       } else {
         coreReturns.map(_.sortBy(coreVatReturn =>
           (coreVatReturn.period.year, coreVatReturn.period.quarter, coreVatReturn.submissionDateTime.getEpochSecond))
+        )
       }
 
       val orderedGroupedReturns: Future[Seq[Seq[CoreVatReturn]]] = for {
