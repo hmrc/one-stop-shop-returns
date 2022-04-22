@@ -62,11 +62,11 @@ class HistoricalReturnSubmitServiceImpl @Inject()(
        } else {
          coreVatReturnConnector.submit(returns.head._1).flatMap {
              case Right(_) => {
-               logger.info(s"Successfully sent return to core for index ${returns.head._2}, ${obfuscateVrn(returns.head._1.vatReturnReferenceNumber)} and ${returns.head._1.period}")
+               logger.info(s"Successfully sent return to core for index ${returns.head._2}, ${obfuscateVrn(returns.head._1.vatReturnReferenceNumber)} and ${returns.head._1.period} with submission date ${returns.head._1.submissionDateTime}")
                submitSequentially(returns.tail, completedReturns + 1)
              }
              case Left(t) => {
-               logger.error(s"Failure sending return to core for index ${returns.head._2}, ${obfuscateVrn(returns.head._1.vatReturnReferenceNumber)} and ${returns.head._1.period}: ${t.errorDetail.errorMessage}")
+               logger.error(s"Failure sending return to core for index ${returns.head._2}, ${obfuscateVrn(returns.head._1.vatReturnReferenceNumber)} and ${returns.head._1.period} with submission date ${returns.head._1.submissionDateTime} : ${t.errorDetail.errorMessage}")
                logger.error(s"$completedReturns successful, ${returns.length} unsuccessful submissions for ${returns.head._1.period}")
                Future.successful(Left(t))
              }
