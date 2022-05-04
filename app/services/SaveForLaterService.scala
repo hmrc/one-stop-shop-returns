@@ -23,13 +23,12 @@ import uk.gov.hmrc.domain.Vrn
 
 import java.time.{Clock, Instant}
 import javax.inject.Inject
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 class SaveForLaterService @Inject()(
                                   repository: SaveForLaterRepository,
                                   clock: Clock
-                                )
-                                   (implicit ec: ExecutionContext) {
+                                ) {
 
   def saveAnswers(request: SaveForLaterRequest): Future[SavedUserAnswers] = {
     val answers = SavedUserAnswers(

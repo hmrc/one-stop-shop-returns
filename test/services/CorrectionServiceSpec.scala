@@ -17,8 +17,8 @@
 package services
 
 import generators.Generators
-import models.corrections.CorrectionPayload
 import models.Period
+import models.corrections.CorrectionPayload
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 import org.scalacheck.Arbitrary.arbitrary
@@ -33,7 +33,6 @@ import repositories.CorrectionRepository
 import uk.gov.hmrc.domain.Vrn
 
 import java.time.{Clock, Instant, ZoneId}
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class CorrectionServiceSpec

@@ -17,13 +17,9 @@
 package controllers.actions
 
 import connectors.RegistrationConnector
-import controllers.routes
 import models.requests.RegistrationRequest
-import play.api.mvc.Results.{NotFound, Redirect, Unauthorized}
-import play.api.mvc.{ActionRefiner, ActionTransformer, Result}
-import uk.gov.hmrc.auth.core.AuthorisationException
-import uk.gov.hmrc.http.{HeaderCarrier, UnauthorizedException}
-import uk.gov.hmrc.play.http.HeaderCarrierConverter
+import play.api.mvc.Results.{NotFound, Unauthorized}
+import play.api.mvc.{ActionRefiner, Result}
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}

@@ -58,7 +58,7 @@ class HistoricalReturnSubmitServiceImpl @Inject()(
 
      def submitSequentially(returns: Seq[(CoreVatReturn, Int)], completedReturns: Int = 0): Future[Either[EisErrorResponse, Unit]] = {
        if(returns.isEmpty) {
-         Future.successful(Right())
+         Future.successful(Right(()))
        } else {
          coreVatReturnConnector.submit(returns.head._1).flatMap {
              case Right(_) => {
@@ -76,7 +76,7 @@ class HistoricalReturnSubmitServiceImpl @Inject()(
 
     if(returnsByQuarter.isEmpty) {
       logger.info(s"No periods to submit, successfully submitted $completedPeriods periods")
-      Future.successful(Right())
+      Future.successful(Right(()))
     } else  {
       logger.info(s"Submitting ${returnsByQuarter.head.length} returns for quarter ${returnsByQuarter.head.head.period}")
       submitSequentially(returnsByQuarter.head.zipWithIndex).flatMap {
@@ -173,7 +173,7 @@ class HistoricalReturnSubmitServiceImpl @Inject()(
           submissionsResult <- submitReturnsByQuarter(returns)
         } yield {
           submissionsResult match {
-            case Right(_) => Success()
+            case Right(_) => Success(())
             case Left(t) => {
               logger.error(s"Error while submitting vat returns: ${t.errorDetail.errorMessage}")
               Failure(t.errorDetail.asException)

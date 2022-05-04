@@ -21,6 +21,7 @@ import models.domain.Registration
 import play.api.Configuration
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient}
+import uk.gov.hmrc.http.HttpReads.Implicits._
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
