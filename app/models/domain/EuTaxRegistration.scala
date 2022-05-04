@@ -26,6 +26,7 @@ object EuTaxRegistration {
   implicit val reads: Reads[EuTaxRegistration] =
     RegistrationWithFixedEstablishment.format.widen[EuTaxRegistration] orElse
       EuVatRegistration.format.widen[EuTaxRegistration] orElse
+      RegistrationSendingGoods.format.widen[EuTaxRegistration] orElse
       RegistrationWithoutFixedEstablishment.format.widen[EuTaxRegistration] orElse
       RegistrationWithoutTaxId.format.widen[EuTaxRegistration]
 
@@ -33,6 +34,7 @@ object EuTaxRegistration {
   implicit val writes: Writes[EuTaxRegistration] = Writes {
     case v: EuVatRegistration => Json.toJson(v)(EuVatRegistration.format)
     case fe: RegistrationWithFixedEstablishment => Json.toJson(fe)(RegistrationWithFixedEstablishment.format)
+    case wfe: RegistrationSendingGoods => Json.toJson(wfe)(RegistrationSendingGoods.format)
     case wfe: RegistrationWithoutFixedEstablishment => Json.toJson(wfe)(RegistrationWithoutFixedEstablishment.format)
     case w: RegistrationWithoutTaxId => Json.toJson(w)(RegistrationWithoutTaxId.format)
   }
@@ -67,9 +69,30 @@ object RegistrationWithoutTaxId {
     Json.format[RegistrationWithoutTaxId]
 }
 
-final case class RegistrationWithoutFixedEstablishment(country: Country, taxIdentifier: EuTaxIdentifier) extends EuTaxRegistration
+final case class RegistrationSendingGoods(
+                                           country: Country,
+                                           taxIdentifier: EuTaxIdentifier,
+                                           sendsGoods: Boolean,
+                                           tradingName: String,
+                                           address: InternationalAddress
+                                         ) extends EuTaxRegistration
+
+object RegistrationSendingGoods {
+
+  implicit val format: OFormat[RegistrationSendingGoods] =
+    Json.format[RegistrationSendingGoods]
+}
+
+
+final case class RegistrationWithoutFixedEstablishment(
+                                                        country: Country,
+                                                        taxIdentifier: EuTaxIdentifier,
+                                                        sendsGoods: Option[Boolean]
+                                                      ) extends EuTaxRegistration
 
 object RegistrationWithoutFixedEstablishment {
+
   implicit val format: OFormat[RegistrationWithoutFixedEstablishment] =
     Json.format[RegistrationWithoutFixedEstablishment]
 }
+
