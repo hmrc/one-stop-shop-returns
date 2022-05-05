@@ -17,7 +17,7 @@
 package models
 
 import java.time.Month
-import java.time.Month.{APRIL, JANUARY, JULY, OCTOBER}
+import java.time.Month.{APRIL, AUGUST, DECEMBER, FEBRUARY, JANUARY, JULY, JUNE, MARCH, MAY, NOVEMBER, OCTOBER, SEPTEMBER}
 import scala.util.{Failure, Success, Try}
 
 sealed trait Quarter {
@@ -45,10 +45,10 @@ object Quarter extends Enumerable.Implicits {
   }
 
   def quarterFromStartMonth(month: Month): Quarter = month.firstMonthOfQuarter() match {
-    case JANUARY => Q1
-    case APRIL => Q2
-    case JULY => Q3
-    case OCTOBER => Q4
+    case JANUARY | FEBRUARY | MARCH => Q1
+    case APRIL | MAY | JUNE => Q2
+    case JULY |  AUGUST | SEPTEMBER => Q3
+    case OCTOBER | NOVEMBER | DECEMBER  => Q4
   }
 
 }

@@ -17,11 +17,11 @@
 package connectors
 
 import config.IfConfig
-import connectors.CoreVatReturnHttpParser.{logger, _}
+import connectors.CoreVatReturnHttpParser._
 import logging.Logging
 import models.core.{CoreErrorResponse, CoreVatReturn, EisErrorResponse}
 import play.api.http.HeaderNames.AUTHORIZATION
-import uk.gov.hmrc.http.{BadGatewayException, GatewayTimeoutException, HeaderCarrier, HttpClient, HttpException}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpException}
 
 import java.time.Instant
 import java.util.UUID

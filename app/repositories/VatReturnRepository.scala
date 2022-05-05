@@ -69,7 +69,7 @@ class VatReturnRepository @Inject()(
         for {
           _ <- collection.insertOne(session, encryptedVatReturn).toFuture()
           _ <- correctionRepository.collection.insertOne(session, encryptedCorrectionPayload).toFuture()
-        } yield Some(vatReturn, correction)
+        } yield Some((vatReturn, correction))
       }.recover {
         case e: Exception =>
           logger.warn(s"There was an error while inserting vat return with correction ${e.getMessage}", e)

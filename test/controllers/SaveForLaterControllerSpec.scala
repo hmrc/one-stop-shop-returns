@@ -19,21 +19,18 @@ package controllers
 import base.SpecBase
 import controllers.actions.FakeFailingAuthConnector
 import generators.Generators
-import models.Quarter.Q3
 import models._
-import models.corrections.CorrectionPayload
-import models.requests.{SaveForLaterRequest, VatReturnRequest, VatReturnWithCorrectionRequest}
+import models.requests.SaveForLaterRequest
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito.{times, verify, when}
 import org.scalacheck.Arbitrary.arbitrary
-import org.scalacheck.Gen
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import services.{SaveForLaterService, VatReturnService}
+import services.SaveForLaterService
 import uk.gov.hmrc.auth.core.{AuthConnector, MissingBearerToken}
 
 import scala.concurrent.Future

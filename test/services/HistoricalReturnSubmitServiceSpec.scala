@@ -3,10 +3,10 @@ package services
 import base.SpecBase
 import config.AppConfig
 import connectors.{CoreVatReturnConnector, RegistrationConnector}
-import models.{Period, VatReturn}
-import models.Quarter.{Q1, Q2, Q3, Q4}
-import models.core.{CoreErrorResponse, CorePeriod, CoreVatReturn, EisErrorResponse}
+import models.Quarter.{Q1, Q3, Q4}
+import models.core.{CoreErrorResponse, CorePeriod, EisErrorResponse}
 import models.corrections.CorrectionPayload
+import models.{Period, VatReturn}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchersSugar.eqTo
 import org.mockito.Mockito
@@ -14,7 +14,6 @@ import org.mockito.Mockito.{times, verify, when}
 import org.scalatest.BeforeAndAfterEach
 import testutils.RegistrationData
 import uk.gov.hmrc.domain.Vrn
-import uk.gov.hmrc.http.HeaderCarrier
 
 import java.time.Instant
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -29,7 +28,6 @@ class HistoricalReturnSubmitServiceSpec extends SpecBase with BeforeAndAfterEach
   private val coreVatReturnConnector = mock[CoreVatReturnConnector]
   private val registrationConnector = mock[RegistrationConnector]
   private val appConfig = mock[AppConfig]
-  implicit private lazy val hc: HeaderCarrier = HeaderCarrier()
 
   override def beforeEach(): Unit = {
     Mockito.reset(coreVatReturnService, coreVatReturnConnector)
@@ -52,10 +50,10 @@ class HistoricalReturnSubmitServiceSpec extends SpecBase with BeforeAndAfterEach
         when(vatReturnService.getByPeriods(any())) thenReturn Future.successful(List(completeVatReturn))
         when(correctionService.getByPeriods(any())) thenReturn Future.successful(List(emptyCorrectionPayload))
         when(coreVatReturnService.toCore(any(), any(), any())) thenReturn Future.successful(coreVatReturn)
-        when(coreVatReturnConnector.submit(any())) thenReturn Future.successful(Right())
+        when(coreVatReturnConnector.submit(any())) thenReturn Future.successful(Right(()))
         when(registrationConnector.getRegistration(any())) thenReturn Future.successful(Some(RegistrationData.registration))
 
-        service.transfer().futureValue mustBe Success()
+        service.transfer().futureValue mustBe Success(())
       }
 
       "fail when vat return cannot be converted to core format" in {
@@ -69,7 +67,7 @@ class HistoricalReturnSubmitServiceSpec extends SpecBase with BeforeAndAfterEach
         when(coreVatReturnService.toCore(eqTo(completeVatReturn), any(), any())) thenReturn Future.successful(coreVatReturn)
         when(coreVatReturnService.toCore(eqTo(completeVatReturn2), any(), any())) thenReturn Future.failed(genericException)
         when(coreVatReturnService.toCore(eqTo(completeVatReturn3), any(), any())) thenReturn Future.successful(coreVatReturn)
-        when(coreVatReturnConnector.submit(any())) thenReturn Future.successful(Right())
+        when(coreVatReturnConnector.submit(any())) thenReturn Future.successful(Right(()))
         when(registrationConnector.getRegistration(any())) thenReturn Future.successful(Some(RegistrationData.registration))
 
         service.transfer().futureValue mustBe Failure(genericException)
@@ -114,11 +112,11 @@ class HistoricalReturnSubmitServiceSpec extends SpecBase with BeforeAndAfterEach
         when(coreVatReturnService.toCore(eqTo(completeVatReturn2a), any(), any())) thenReturn Future.successful(coreVatReturn2a)
         when(coreVatReturnService.toCore(eqTo(completeVatReturn3), any(), any())) thenReturn Future.successful(coreVatReturn3)
 
-        when(coreVatReturnConnector.submit(any())) thenReturn Future.successful(Right())
+        when(coreVatReturnConnector.submit(any())) thenReturn Future.successful(Right(()))
 
         when(registrationConnector.getRegistration(any())) thenReturn Future.successful(Some(RegistrationData.registration))
 
-        service.transfer().futureValue mustBe Success()
+        service.transfer().futureValue mustBe Success(())
 
         verify(coreVatReturnConnector, times(4)).submit(any())
 
@@ -163,11 +161,11 @@ class HistoricalReturnSubmitServiceSpec extends SpecBase with BeforeAndAfterEach
         when(coreVatReturnService.toCore(eqTo(completeVatReturn2a), any(), any())) thenReturn Future.successful(coreVatReturn2a)
         when(coreVatReturnService.toCore(eqTo(completeVatReturn3), any(), any())) thenReturn Future.successful(coreVatReturn3)
 
-        when(coreVatReturnConnector.submit(any())) thenReturn Future.successful(Right())
+        when(coreVatReturnConnector.submit(any())) thenReturn Future.successful(Right(()))
 
         when(registrationConnector.getRegistration(any())) thenReturn Future.successful(Some(RegistrationData.registration))
 
-        service.transfer().futureValue mustBe Success()
+        service.transfer().futureValue mustBe Success(())
 
         verify(coreVatReturnConnector, times(2)).submit(any())
 
@@ -192,7 +190,7 @@ class HistoricalReturnSubmitServiceSpec extends SpecBase with BeforeAndAfterEach
         when(coreVatReturnService.toCore(eqTo(completeVatReturn), any(), any())) thenReturn Future.successful(coreVatReturn)
         when(coreVatReturnService.toCore(eqTo(completeVatReturn2), any(), any())) thenReturn Future.successful(coreVatReturnFail)
         when(coreVatReturnService.toCore(eqTo(completeVatReturn3), any(), any())) thenReturn Future.successful(coreVatReturn)
-        when(coreVatReturnConnector.submit(any())) thenReturn Future.successful(Right())
+        when(coreVatReturnConnector.submit(any())) thenReturn Future.successful(Right(()))
         when(coreVatReturnConnector.submit(eqTo(coreVatReturnFail))) thenReturn Future.successful(Left(coreErrorResponse))
         when(registrationConnector.getRegistration(any())) thenReturn Future.successful(Some(RegistrationData.registration))
 
@@ -235,7 +233,7 @@ class HistoricalReturnSubmitServiceSpec extends SpecBase with BeforeAndAfterEach
 
       "return empty future unit and do nothing" in {
         when(appConfig.historicCoreVatReturnsEnabled) thenReturn false
-        service.transfer().futureValue mustBe ()
+        service.transfer().futureValue.mustBe(())
       }
     }
   }

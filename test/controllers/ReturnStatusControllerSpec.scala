@@ -94,7 +94,6 @@ class ReturnStatusControllerSpec
     val period2 = Period(2022, Q2)
     val period3 = Period(2022, Q3)
     val periods = Seq(period, period0, period1, period2, period3)
-    val commencementDate = LocalDate.of(2021, 1, 1)
 
     lazy val request = FakeRequest(GET, routes.ReturnStatusController.getCurrentReturns(vrn.vrn).url)
     "must respond with OK and the OpenReturns model" - {

@@ -18,13 +18,11 @@ package connectors
 import config.DesConfig
 import connectors.FinancialDataHttpParser._
 import logging.Logging
-import models.core.{CoreErrorResponse, EisErrorResponse}
 import models.des.UnexpectedResponseStatus
 import models.financialdata.FinancialDataQueryParameters
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpException}
 
-import java.time.Instant
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 

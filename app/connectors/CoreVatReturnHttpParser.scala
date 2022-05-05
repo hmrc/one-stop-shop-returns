@@ -16,7 +16,6 @@
 
 package connectors
 
-import com.fasterxml.jackson.databind.JsonMappingException
 import logging.Logging
 import models.core.{CoreErrorResponse, EisErrorResponse}
 import play.api.http.Status._
@@ -33,7 +32,7 @@ object CoreVatReturnHttpParser extends Logging {
     override def read(method: String, url: String, response: HttpResponse): CoreVatReturnResponse =
       response.status match {
         case ACCEPTED =>
-          Right()
+          Right(())
         case status =>
           logger.info(s"Response received from core vat returns ${response.status} with body ${response.body}")
           if(response.body.isEmpty) {

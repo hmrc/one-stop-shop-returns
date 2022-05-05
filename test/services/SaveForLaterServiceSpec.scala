@@ -17,24 +17,21 @@
 package services
 
 import generators.Generators
-import models.{Period, SavedUserAnswers, VatReturn}
-import models.corrections.CorrectionPayload
-import models.requests.{SaveForLaterRequest, VatReturnRequest, VatReturnWithCorrectionRequest}
+import models.requests.SaveForLaterRequest
+import models.{Period, SavedUserAnswers}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{times, verify, when}
 import org.scalacheck.Arbitrary.arbitrary
-import org.scalacheck.Gen
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-import repositories.{SaveForLaterRepository, VatReturnRepository}
+import repositories.SaveForLaterRepository
 import uk.gov.hmrc.domain.Vrn
 
 import java.time.{Clock, Instant, ZoneId}
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class SaveForLaterServiceSpec
