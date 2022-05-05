@@ -22,7 +22,7 @@ import models._
 import models.core._
 import models.corrections.{CorrectionPayload, PeriodWithCorrections}
 import models.domain.EuTaxIdentifierType.Vat
-import models.domain.{EuVatRegistration, Registration, RegistrationSendingGoods, RegistrationWithFixedEstablishment, RegistrationWithoutFixedEstablishment, RegistrationWithoutTaxId}
+import models.domain.{EuVatRegistration, Registration, RegistrationWithoutFixedEstablishmentWithTradeDetails, RegistrationWithFixedEstablishment, RegistrationWithoutFixedEstablishment, RegistrationWithoutTaxId}
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.CorrectionUtils
 import utils.ObfuscationUtils.obfuscateVrn
@@ -162,7 +162,7 @@ class CoreVatReturnService @Inject()(
       case euRegistration: EuVatRegistration => euRegistration.country == country
       case euRegistrationWithFE: RegistrationWithFixedEstablishment => euRegistrationWithFE.country == country
       case euRegistrationWithoutTaxId: RegistrationWithoutTaxId => euRegistrationWithoutTaxId.country == country
-      case euRegistrationSendingGoods: RegistrationSendingGoods => euRegistrationSendingGoods.country == country
+      case euRegistrationSendingGoods: RegistrationWithoutFixedEstablishmentWithTradeDetails => euRegistrationSendingGoods.country == country
       case euRegistrationWithoutFE: RegistrationWithoutFixedEstablishment => euRegistrationWithoutFE.country == country
     }
 
@@ -180,7 +180,7 @@ class CoreVatReturnService @Inject()(
         } else {
           Some(CoreEuTraderTaxId(euRegistrationWithoutFE.taxIdentifier.value, euRegistrationWithoutFE.country.code))
         }
-      case euRegistrationSendingGoods: RegistrationSendingGoods =>
+      case euRegistrationSendingGoods: RegistrationWithoutFixedEstablishmentWithTradeDetails =>
         if(euRegistrationSendingGoods.taxIdentifier.identifierType.equals(Vat)) {
           Some(CoreEuTraderVatId(euRegistrationSendingGoods.taxIdentifier.value, euRegistrationSendingGoods.country.code))
         } else {

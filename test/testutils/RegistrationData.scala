@@ -62,10 +62,10 @@ object RegistrationData extends Generators with EitherValues {
           EuTaxIdentifier(EuTaxIdentifierType.Other, "PL123456789"),
           FixedEstablishment("Polish trading name", InternationalAddress("Line 1", None, "Town", None, None, Country("PL", "Poland")))
         ),
-        RegistrationSendingGoods(
+        RegistrationWithoutFixedEstablishmentWithTradeDetails(
           Country("IT", "Italy"),
           EuTaxIdentifier(EuTaxIdentifierType.Vat, "IT123456789"),
-          true,
+          SendGoodsTradeDetails(
           "Name",
           InternationalAddress(
             "line 1",
@@ -74,12 +74,11 @@ object RegistrationData extends Generators with EitherValues {
             None,
             None,
             Country("IT", "Italy")
-          )
+          ))
         ),
         RegistrationWithoutFixedEstablishment(
           Country("NL", "Netherlands"),
-          EuTaxIdentifier(EuTaxIdentifierType.Other, "NL123456789"),
-          Some(false)
+          EuTaxIdentifier(EuTaxIdentifierType.Other, "NL123456789")
         ),
         RegistrationWithoutTaxId(
           Country("IE", "Ireland")
