@@ -167,39 +167,10 @@ class CoreVatReturnService @Inject()(
     }
 
     matchedRegistration.headOption.flatMap {
-      case euRegistrationWithFETaxId: RegistrationWithFixedEstablishment =>
-        logger.info("sending tax id for fixed establishment")
-        val taxIdValue = euRegistrationWithFETaxId.taxIdentifier.value
-        val countryCode = euRegistrationWithFETaxId.country.code
-
-        val formattedTaxIdValue =
-          if (taxIdValue.startsWith(countryCode)) {
-            country.code match {
-              case "FR" => if (taxIdValue.length == 13) {
-                logger.info(s"Stripping country code for ${countryCode}")
-                taxIdValue.substring(countryCode.length)
-              } else {
-                taxIdValue
-              }
-              case "NL" => if (taxIdValue.length == 14) {
-                logger.info(s"Stripping country code for ${countryCode}")
-                taxIdValue.substring(countryCode.length)
-              } else {
-                taxIdValue
-              }
-              case _ =>
-                logger.info(s"Stripping country code for ${countryCode}")
-                taxIdValue.substring(countryCode.length)
-            }
-          } else {
-            taxIdValue
-          }
-
-        if (euRegistrationWithFETaxId.taxIdentifier.identifierType.equals(Vat)) {
-          Some(CoreEuTraderVatId(formattedTaxIdValue, euRegistrationWithFETaxId.country.code))
-        } else {
-          Some(CoreEuTraderTaxId(euRegistrationWithFETaxId.taxIdentifier.value, euRegistrationWithFETaxId.country.code))
-        }
+      case euRegistrationWithFE: RegistrationWithFixedEstablishment =>
+        extractFormattedTaxId(euRegistrationWithFE.taxIdentifier.value, euRegistrationWithFE.taxIdentifier.identifierType, euRegistrationWithFE.country.code)
+      case euRegistrationWithoutFEWithTaxDetails: RegistrationWithoutFixedEstablishmentWithTradeDetails =>
+        extractFormattedTaxId(euRegistrationWithoutFEWithTaxDetails.taxIdentifier.value, euRegistrationWithoutFEWithTaxDetails.taxIdentifier.identifierType, euRegistrationWithoutFEWithTaxDetails.country.code)
       case _ =>
         logger.info("not sending tax id for no fixed establishment")
         None
@@ -231,6 +202,38 @@ class CoreVatReturnService @Inject()(
       period.year,
       period.quarter.toString.tail.toInt
     )
+  }
+
+  private def extractFormattedTaxId(taxIdValue: String, taxIdType: models.domain.EuTaxIdentifierType, countryCode: String): Option[CoreEuTraderId] = {
+    logger.info("sending tax id for fixed establishment")
+    val formattedTaxIdValue =
+      if (taxIdValue.startsWith(countryCode)) {
+        countryCode match {
+          case "FR" => if (taxIdValue.length == 13) {
+            logger.info(s"Stripping country code for ${countryCode}")
+            taxIdValue.substring(countryCode.length)
+          } else {
+            taxIdValue
+          }
+          case "NL" => if (taxIdValue.length == 14) {
+            logger.info(s"Stripping country code for ${countryCode}")
+            taxIdValue.substring(countryCode.length)
+          } else {
+            taxIdValue
+          }
+          case _ =>
+            logger.info(s"Stripping country code for ${countryCode}")
+            taxIdValue.substring(countryCode.length)
+        }
+      } else {
+        taxIdValue
+      }
+
+    if (taxIdType.equals(Vat)) {
+      Some(CoreEuTraderVatId(formattedTaxIdValue, countryCode))
+    } else {
+      Some(CoreEuTraderTaxId(taxIdValue, countryCode))
+    }
   }
 
 
