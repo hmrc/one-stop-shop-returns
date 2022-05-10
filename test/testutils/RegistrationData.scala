@@ -44,7 +44,7 @@ object RegistrationData extends Generators with EitherValues {
         EuVatRegistration(Country("FR", "France"), "FR123456789"),
         RegistrationWithFixedEstablishment(
           Country("ES", "Spain"),
-          EuTaxIdentifier(EuTaxIdentifierType.Vat, "ES123456789"),
+          EuTaxIdentifier(EuTaxIdentifierType.Vat, "123456789"),
           FixedEstablishment("Spanish trading name", InternationalAddress("Line 1", None, "Town", None, None, Country("ES", "Spain")))
         ),
         RegistrationWithFixedEstablishment(

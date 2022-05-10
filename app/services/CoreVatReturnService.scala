@@ -158,7 +158,8 @@ class CoreVatReturnService @Inject()(
   }
 
   private def getEuTraderIdForCountry(country: Country, registration: Registration): Option[CoreEuTraderId] = {
-    val matchedRegistration = registration.euRegistrations.filter {
+    val matchedRegistration = registration.euRegistrations.filter
+    {
       case euRegistration: EuVatRegistration => euRegistration.country == country
       case euRegistrationWithFE: RegistrationWithFixedEstablishment => euRegistrationWithFE.country == country
       case euRegistrationWithoutTaxId: RegistrationWithoutTaxId => euRegistrationWithoutTaxId.country == country
@@ -166,20 +167,29 @@ class CoreVatReturnService @Inject()(
     }
 
     matchedRegistration.headOption.flatMap {
-      case euRegistration: EuVatRegistration => Some(CoreEuTraderVatId(euRegistration.vatNumber, euRegistration.country.code))
       case euRegistrationWithFETaxId: RegistrationWithFixedEstablishment =>
+        val taxIdValue =
+          if(euRegistrationWithFETaxId.taxIdentifier.value.startsWith(euRegistrationWithFETaxId.country.code)) {
+            country.code match {
+              case "FR" => if(euRegistrationWithFETaxId.taxIdentifier.value.length == 13) {
+                euRegistrationWithFETaxId.taxIdentifier.value.substring(euRegistrationWithFETaxId.country.code.length)
+              } else { euRegistrationWithFETaxId.taxIdentifier.value}
+              case "NL" => if(euRegistrationWithFETaxId.taxIdentifier.value.length == 14) {
+                euRegistrationWithFETaxId.taxIdentifier.value.substring(euRegistrationWithFETaxId.country.code.length)
+              } else { euRegistrationWithFETaxId.taxIdentifier.value }
+              case _ => euRegistrationWithFETaxId.taxIdentifier.value.substring(euRegistrationWithFETaxId.country.code.length)
+            }
+        } else {
+          euRegistrationWithFETaxId.taxIdentifier.value
+        }
+
+
         if(euRegistrationWithFETaxId.taxIdentifier.identifierType.equals(Vat)) {
-          Some(CoreEuTraderVatId(euRegistrationWithFETaxId.taxIdentifier.value, euRegistrationWithFETaxId.country.code))
+            Some(CoreEuTraderVatId(taxIdValue, euRegistrationWithFETaxId.country.code))
         } else {
-          Some(CoreEuTraderTaxId(euRegistrationWithFETaxId.taxIdentifier.value, euRegistrationWithFETaxId.country.code))
+            Some(CoreEuTraderTaxId(euRegistrationWithFETaxId.taxIdentifier.value, euRegistrationWithFETaxId.country.code))
         }
-      case euRegistrationWithoutFE: RegistrationWithoutFixedEstablishment =>
-        if(euRegistrationWithoutFE.taxIdentifier.identifierType.equals(Vat)) {
-          Some(CoreEuTraderVatId(euRegistrationWithoutFE.taxIdentifier.value, euRegistrationWithoutFE.country.code))
-        } else {
-          Some(CoreEuTraderTaxId(euRegistrationWithoutFE.taxIdentifier.value, euRegistrationWithoutFE.country.code))
-        }
-      case _: RegistrationWithoutTaxId => None
+      case _ => None
     }
   }
 
