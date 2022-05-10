@@ -167,9 +167,9 @@ class CoreVatReturnService @Inject()(
 
     matchedRegistration.headOption.flatMap {
       case euRegistrationWithFETaxId: RegistrationWithFixedEstablishment =>
-        logger.info("sending tax id for fixed establishment")
         val taxIdValue = euRegistrationWithFETaxId.taxIdentifier.value
         val countryCode = euRegistrationWithFETaxId.country.code
+        logger.info(s"sending vrn for fixed establishment for ${countryCode}")
 
         val formattedTaxIdValue =
           if (taxIdValue.startsWith(countryCode)) {
@@ -197,6 +197,7 @@ class CoreVatReturnService @Inject()(
         if (euRegistrationWithFETaxId.taxIdentifier.identifierType.equals(Vat)) {
           Some(CoreEuTraderVatId(formattedTaxIdValue, euRegistrationWithFETaxId.country.code))
         } else {
+          logger.info(s"Sending tax id for fixed establishment for ${countryCode}")
           Some(CoreEuTraderTaxId(euRegistrationWithFETaxId.taxIdentifier.value, euRegistrationWithFETaxId.country.code))
         }
       case _ =>
