@@ -1,19 +1,15 @@
 package connectors
 
 import base.SpecBase
-import com.fasterxml.jackson.databind.exc.MismatchedInputException
 import com.github.tomakehurst.wiremock.client.WireMock._
-import models.core.{CoreCorrection, CoreErrorResponse, CoreEuTraderVatId, CoreMsconSupply, CoreMsestSupply, CorePeriod, CoreSupply, CoreTraderId, CoreVatReturn, EisErrorResponse}
-import org.openqa.selenium.net.UrlChecker.TimeoutException
+import models.core.{CoreErrorResponse, EisErrorResponse}
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
 import org.scalatest.time.{Seconds, Span}
-import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.Application
+import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers.running
-import uk.gov.hmrc.http.HttpReads.gatewayTimeoutMessage
-import uk.gov.hmrc.http.HttpVerbs.POST
 
-import java.time.{Instant, LocalDate}
+import java.time.Instant
 import java.util.UUID
 
 class CoreVatReturnConnectorSpec extends SpecBase with WireMockHelper {
@@ -44,7 +40,7 @@ class CoreVatReturnConnectorSpec extends SpecBase with WireMockHelper {
           val connector = app.injector.instanceOf[CoreVatReturnConnector]
           val result = connector.submit(coreVatReturn).futureValue
 
-          result mustBe Right()
+          result mustBe Right(())
         }
       }
     }

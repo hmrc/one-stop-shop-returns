@@ -52,23 +52,23 @@ class CoreVatReturnService @Inject()(
     val totalVatDue = vatReturnSalesService.getTotalVatOnSalesAfterCorrection(vatReturn, Some(correctionPayload))
     val amountsToCountries = CorrectionUtils.groupByCountryAndSum(correctionPayload, vatReturn)
 
-      Future.successful(CoreVatReturn(
-        vatReturnReferenceNumber = vatReturn.reference.value,
-        version = vatReturn.lastUpdated.toString,
-        traderId = CoreTraderId(
-          vatNumber = vatReturn.vrn.vrn,
-          issuedBy = "XI"
-        ),
-        period = CorePeriod(
-          year = vatReturn.period.year,
-          quarter = vatReturn.period.quarter.toString.tail.toInt
-        ),
-        startDate = vatReturn.startDate.getOrElse(vatReturn.period.firstDay),
-        endDate = vatReturn.endDate.getOrElse(vatReturn.period.lastDay),
-        submissionDateTime = vatReturn.submissionReceived,
-        totalAmountVatDueGBP = totalVatDue,
-        msconSupplies = toCoreMsconSupplies(vatReturn.salesFromNi, vatReturn.salesFromEu, correctionPayload.corrections, amountsToCountries, registration)
-      ))
+    Future.successful(CoreVatReturn(
+      vatReturnReferenceNumber = vatReturn.reference.value,
+      version = vatReturn.lastUpdated.toString,
+      traderId = CoreTraderId(
+        vatNumber = vatReturn.vrn.vrn,
+        issuedBy = "XI"
+      ),
+      period = CorePeriod(
+        year = vatReturn.period.year,
+        quarter = vatReturn.period.quarter.toString.tail.toInt
+      ),
+      startDate = vatReturn.startDate.getOrElse(vatReturn.period.firstDay),
+      endDate = vatReturn.endDate.getOrElse(vatReturn.period.lastDay),
+      submissionDateTime = vatReturn.submissionReceived,
+      totalAmountVatDueGBP = totalVatDue,
+      msconSupplies = toCoreMsconSupplies(vatReturn.salesFromNi, vatReturn.salesFromEu, correctionPayload.corrections, amountsToCountries, registration)
+    ))
   }
 
   private def toCoreMsconSupplies(salesFromNi: List[SalesToCountry], salesFromEu: List[SalesFromEuCountry], corrections: List[PeriodWithCorrections], amountsToCountries: Map[Country, CountryAmounts], registration: Registration): List[CoreMsconSupply] = {
@@ -167,26 +167,42 @@ class CoreVatReturnService @Inject()(
     }
 
     matchedRegistration.headOption.flatMap {
-      case euRegistration: EuVatRegistration => Some(CoreEuTraderVatId(euRegistration.vatNumber, euRegistration.country.code))
       case euRegistrationWithFETaxId: RegistrationWithFixedEstablishment =>
-        if(euRegistrationWithFETaxId.taxIdentifier.identifierType.equals(Vat)) {
-          Some(CoreEuTraderVatId(euRegistrationWithFETaxId.taxIdentifier.value, euRegistrationWithFETaxId.country.code))
+        logger.info("sending tax id for fixed establishment")
+        val taxIdValue = euRegistrationWithFETaxId.taxIdentifier.value
+        val countryCode = euRegistrationWithFETaxId.country.code
+
+        val formattedTaxIdValue =
+          if (taxIdValue.startsWith(countryCode)) {
+            country.code match {
+              case "FR" => if (taxIdValue.length == 13) {
+                logger.info(s"Stripping country code for ${countryCode}")
+                taxIdValue.substring(countryCode.length)
+              } else {
+                taxIdValue
+              }
+              case "NL" => if (taxIdValue.length == 14) {
+                logger.info(s"Stripping country code for ${countryCode}")
+                taxIdValue.substring(countryCode.length)
+              } else {
+                taxIdValue
+              }
+              case _ =>
+                logger.info(s"Stripping country code for ${countryCode}")
+                taxIdValue.substring(countryCode.length)
+            }
+          } else {
+            taxIdValue
+          }
+
+        if (euRegistrationWithFETaxId.taxIdentifier.identifierType.equals(Vat)) {
+          Some(CoreEuTraderVatId(formattedTaxIdValue, euRegistrationWithFETaxId.country.code))
         } else {
           Some(CoreEuTraderTaxId(euRegistrationWithFETaxId.taxIdentifier.value, euRegistrationWithFETaxId.country.code))
         }
-      case euRegistrationWithoutFE: RegistrationWithoutFixedEstablishment =>
-        if(euRegistrationWithoutFE.taxIdentifier.identifierType.equals(Vat)) {
-          Some(CoreEuTraderVatId(euRegistrationWithoutFE.taxIdentifier.value, euRegistrationWithoutFE.country.code))
-        } else {
-          Some(CoreEuTraderTaxId(euRegistrationWithoutFE.taxIdentifier.value, euRegistrationWithoutFE.country.code))
-        }
-      case euRegistrationSendingGoods: RegistrationWithoutFixedEstablishmentWithTradeDetails =>
-        if(euRegistrationSendingGoods.taxIdentifier.identifierType.equals(Vat)) {
-          Some(CoreEuTraderVatId(euRegistrationSendingGoods.taxIdentifier.value, euRegistrationSendingGoods.country.code))
-        } else {
-          Some(CoreEuTraderTaxId(euRegistrationSendingGoods.taxIdentifier.value, euRegistrationSendingGoods.country.code))
-        }
-      case _: RegistrationWithoutTaxId => None
+      case _ =>
+        logger.info("not sending tax id for no fixed establishment")
+        None
     }
   }
 

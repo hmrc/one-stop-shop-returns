@@ -20,8 +20,8 @@ import base.SpecBase
 import config.AppConfig
 import connectors.CoreVatReturnConnector
 import models.VatReturn
-import models.core.{CoreErrorResponse, EisErrorResponse}
 import models.core.CoreErrorResponse.REGISTRATION_NOT_FOUND
+import models.core.{CoreErrorResponse, EisErrorResponse}
 import models.corrections.CorrectionPayload
 import models.requests.{VatReturnRequest, VatReturnWithCorrectionRequest}
 import org.mockito.ArgumentMatchers.any
@@ -32,7 +32,6 @@ import repositories.VatReturnRepository
 import uk.gov.hmrc.http.HeaderCarrier
 
 import java.time.Instant
-import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 

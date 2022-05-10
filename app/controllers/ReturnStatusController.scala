@@ -17,7 +17,7 @@
 package controllers
 
 import controllers.actions.AuthenticatedControllerComponents
-import models.SubmissionStatus.{Complete, Due, Overdue}
+import models.SubmissionStatus.Complete
 import models.yourAccount._
 import models.{PeriodWithStatus, SubmissionStatus}
 import play.api.libs.json.Json
