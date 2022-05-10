@@ -168,28 +168,34 @@ class CoreVatReturnService @Inject()(
 
     matchedRegistration.headOption.flatMap {
       case euRegistrationWithFETaxId: RegistrationWithFixedEstablishment =>
+        logger.info("sending tax id for fixed establishment")
         val taxIdValue =
           if(euRegistrationWithFETaxId.taxIdentifier.value.startsWith(euRegistrationWithFETaxId.country.code)) {
             country.code match {
               case "FR" => if(euRegistrationWithFETaxId.taxIdentifier.value.length == 13) {
+                logger.info(s"Stripping country code for ${euRegistrationWithFETaxId.country.name}")
                 euRegistrationWithFETaxId.taxIdentifier.value.substring(euRegistrationWithFETaxId.country.code.length)
               } else { euRegistrationWithFETaxId.taxIdentifier.value}
               case "NL" => if(euRegistrationWithFETaxId.taxIdentifier.value.length == 14) {
+                logger.info(s"Stripping country code for ${euRegistrationWithFETaxId.country.name}")
                 euRegistrationWithFETaxId.taxIdentifier.value.substring(euRegistrationWithFETaxId.country.code.length)
               } else { euRegistrationWithFETaxId.taxIdentifier.value }
-              case _ => euRegistrationWithFETaxId.taxIdentifier.value.substring(euRegistrationWithFETaxId.country.code.length)
+              case _ =>
+                logger.info(s"Stripping country code for ${euRegistrationWithFETaxId.country.name}")
+                euRegistrationWithFETaxId.taxIdentifier.value.substring(euRegistrationWithFETaxId.country.code.length)
             }
         } else {
           euRegistrationWithFETaxId.taxIdentifier.value
         }
-
 
         if(euRegistrationWithFETaxId.taxIdentifier.identifierType.equals(Vat)) {
             Some(CoreEuTraderVatId(taxIdValue, euRegistrationWithFETaxId.country.code))
         } else {
             Some(CoreEuTraderTaxId(euRegistrationWithFETaxId.taxIdentifier.value, euRegistrationWithFETaxId.country.code))
         }
-      case _ => None
+      case _ =>
+        logger.info("not sending tax id for no fixed establishment")
+        None
     }
   }
 
