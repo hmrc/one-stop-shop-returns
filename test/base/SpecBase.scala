@@ -106,7 +106,7 @@ trait SpecBase
 
   val coreVatReturn: CoreVatReturn = CoreVatReturn(
     vatReturnReferenceNumber = completeVatReturn.reference.value,
-    version = completeVatReturn.lastUpdated.toString,
+    version = completeVatReturn.lastUpdated,
     traderId = CoreTraderId(vrn.vrn, "XI"),
     period = CorePeriod(2021, 3),
     startDate = LocalDate.now(stubClock),
