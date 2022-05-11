@@ -21,8 +21,8 @@ import logging.Logging
 import models._
 import models.core._
 import models.corrections.{CorrectionPayload, PeriodWithCorrections}
+import models.domain._
 import models.domain.EuTaxIdentifierType.Vat
-import models.domain.{EuVatRegistration, Registration, RegistrationWithFixedEstablishment, RegistrationWithoutFixedEstablishment, RegistrationWithoutTaxId}
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.CorrectionUtils
 import utils.ObfuscationUtils.obfuscateVrn
@@ -54,7 +54,7 @@ class CoreVatReturnService @Inject()(
 
     Future.successful(CoreVatReturn(
       vatReturnReferenceNumber = vatReturn.reference.value,
-      version = vatReturn.lastUpdated.toString,
+      version = vatReturn.lastUpdated,
       traderId = CoreTraderId(
         vatNumber = vatReturn.vrn.vrn,
         issuedBy = "XI"
