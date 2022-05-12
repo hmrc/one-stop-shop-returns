@@ -21,8 +21,8 @@ import logging.Logging
 import models._
 import models.core._
 import models.corrections.{CorrectionPayload, PeriodWithCorrections}
+import models.domain._
 import models.domain.EuTaxIdentifierType.Vat
-import models.domain.{EuVatRegistration, Registration, RegistrationWithoutFixedEstablishmentWithTradeDetails, RegistrationWithFixedEstablishment, RegistrationWithoutFixedEstablishment, RegistrationWithoutTaxId}
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.CorrectionUtils
 import utils.ObfuscationUtils.obfuscateVrn
@@ -54,7 +54,7 @@ class CoreVatReturnService @Inject()(
 
     Future.successful(CoreVatReturn(
       vatReturnReferenceNumber = vatReturn.reference.value,
-      version = vatReturn.lastUpdated.toString,
+      version = vatReturn.lastUpdated,
       traderId = CoreTraderId(
         vatNumber = vatReturn.vrn.vrn,
         issuedBy = "XI"
@@ -205,7 +205,8 @@ class CoreVatReturnService @Inject()(
   }
 
   private def extractFormattedTaxId(taxIdValue: String, taxIdType: models.domain.EuTaxIdentifierType, countryCode: String): Option[CoreEuTraderId] = {
-    logger.info("sending tax id for fixed establishment")
+    logger.info(s"sending vrn for fixed establishment for ${countryCode}")
+
     val formattedTaxIdValue =
       if (taxIdValue.startsWith(countryCode)) {
         countryCode match {
@@ -232,6 +233,7 @@ class CoreVatReturnService @Inject()(
     if (taxIdType.equals(Vat)) {
       Some(CoreEuTraderVatId(formattedTaxIdValue, countryCode))
     } else {
+      logger.info(s"Sending tax id for fixed establishment for ${countryCode}")
       Some(CoreEuTraderTaxId(taxIdValue, countryCode))
     }
   }

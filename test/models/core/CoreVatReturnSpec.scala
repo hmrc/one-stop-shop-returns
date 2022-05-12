@@ -72,7 +72,7 @@ class CoreVatReturnSpec extends SpecBase {
 
       val expectedModel = CoreVatReturn(
         vatReturnReferenceNumber = "XI/XI195940512/Q1.2023",
-        version = "2021-07-01T09:21:29.922Z",
+        version = Instant.parse("2021-07-01T09:21:29.922Z"),
         traderId = CoreTraderId(vatNumber = "123456789012", issuedBy = "XI"),
         period = CorePeriod(year = 2021, quarter = 3),
         startDate = LocalDate.of(2021, 3, 12),

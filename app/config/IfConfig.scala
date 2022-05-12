@@ -17,13 +17,12 @@
 package config
 
 import play.api.Configuration
-
-import java.time.format.DateTimeFormatter
-import java.time.{Clock, LocalDateTime, ZoneId}
-import java.util.Locale
-import javax.inject.Inject
 import play.api.http.HeaderNames._
 import play.api.http.MimeTypes
+import utils.Formatters
+
+import java.time.{Clock, LocalDateTime}
+import javax.inject.Inject
 
 class IfConfig @Inject()(config: Configuration, clock: Clock) {
 
@@ -31,17 +30,13 @@ class IfConfig @Inject()(config: Configuration, clock: Clock) {
   val authorizationToken: String = config.get[String]("microservice.services.if.authorizationToken")
   val environment: String = config.get[String]("microservice.services.if.environment")
 
-  private val dateTimeFormatter = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss z")
-    .withLocale(Locale.UK)
-    .withZone(ZoneId.of("GMT"))
-
   private val XCorrelationId = "X-Correlation-Id"
 
   def ifHeaders(correlationId: String): Seq[(String, String)] = Seq(
     CONTENT_TYPE -> MimeTypes.JSON,
     ACCEPT -> MimeTypes.JSON,
     AUTHORIZATION -> s"Bearer $authorizationToken",
-    DATE -> dateTimeFormatter.format(LocalDateTime.now(clock)),
+    DATE -> Formatters.dateTimeFormatter.format(LocalDateTime.now(clock)),
     XCorrelationId -> correlationId,
     X_FORWARDED_HOST -> "MDTP"
   )

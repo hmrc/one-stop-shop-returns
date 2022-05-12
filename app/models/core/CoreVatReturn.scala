@@ -110,7 +110,7 @@ object CoreMsconSupply {
 
 case class CoreVatReturn(
                           vatReturnReferenceNumber: String,
-                          version: String,
+                          version: Instant,
                           traderId: CoreTraderId,
                           period: CorePeriod,
                           startDate: LocalDate,
