@@ -144,6 +144,7 @@ class HistoricalReturnSubmitServiceImpl @Inject()(
 
 
       val returnsToSubmit = if (appConfig.historicCoreVatReturnIndexFilteringEnabled) {
+
         coreReturns.map(_.sortBy(coreVatReturn =>
           (coreVatReturn.period.year, coreVatReturn.period.quarter, coreVatReturn.submissionDateTime.getEpochSecond))
           .zipWithIndex
@@ -153,7 +154,13 @@ class HistoricalReturnSubmitServiceImpl @Inject()(
             appConfig.historicCoreVatReturnIndexesToInclude.contains(returnWithIndex._2)
           } else true
           )
-          .filterNot(returnWithIndex => appConfig.historicCoreVatReturnIndexesToExclude.contains(returnWithIndex._2))
+          .filterNot(returnWithIndex =>
+            if(appConfig.historicCoreVatReturnIndexesToExclude.contains(returnWithIndex._2))
+              {
+                logger.info(s"return with submission date ${returnWithIndex._1.submissionDateTime} has been filtered out")
+                true
+              } else false
+          )
           .map(_._1)
         )
       } else {
