@@ -35,5 +35,7 @@ class AppConfig @Inject()(config: Configuration, servicesConfig: ServicesConfig)
   val historicCoreVatReturnIndexFilteringEnabled: Boolean = config.get[Boolean]("historicCoreVatReturns.indexFiltering")
   val historicCoreVatReturnStartIdx: Int = config.get[Int]("historicCoreVatReturns.startIdx")
   val historicCoreVatReturnEndIdx: Int = config.get[Int]("historicCoreVatReturns.endIdx")
+  val historicCoreVatReturnIndexesToInclude : Seq[Int] = config.get[Seq[Int]]("historicCoreVatReturns.includeIndexes")
+  val historicCoreVatReturnIndexesToExclude : Seq[Int] = config.get[Seq[Int]]("historicCoreVatReturns.excludeIndexes")
 
 }
