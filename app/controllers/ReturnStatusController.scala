@@ -79,7 +79,7 @@ class ReturnStatusController @Inject()(
     vatReturnService.get(vrn).map {
       returns =>
         val returnPeriods = returns.map(_.period)
-        periods.map {
+        val currentPeriods = periods.map {
           period =>
             if (returnPeriods.contains(period)) {
               PeriodWithStatus(period, SubmissionStatus.Complete)
@@ -90,6 +90,12 @@ class ReturnStatusController @Inject()(
                 PeriodWithStatus(period, SubmissionStatus.Due)
               }
             }
+        }
+        if (currentPeriods.filterNot(_.status == Complete).isEmpty) {
+          val nextPeriod = periodService.getNextPeriod(periodService.getAllPeriods.maxBy(_.lastDay.toEpochDay))
+          currentPeriods ++ Seq(PeriodWithStatus(nextPeriod, SubmissionStatus.Next))
+        } else {
+          currentPeriods
         }
     }
   }
