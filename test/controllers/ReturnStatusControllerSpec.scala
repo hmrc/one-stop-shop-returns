@@ -20,10 +20,10 @@ import base.SpecBase
 import connectors.RegistrationConnector
 import controllers.actions.FakeFailingAuthConnector
 import generators.Generators
-import models._
-import models.yourAccount._
 import models.Quarter.{Q1, Q2, Q3, Q4}
 import models.SubmissionStatus.{Due, Next, Overdue}
+import models._
+import models.yourAccount._
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
@@ -31,7 +31,7 @@ import org.scalacheck.Gen
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.libs.json.{JsArray, Json}
+import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import repositories.SaveForLaterRepository

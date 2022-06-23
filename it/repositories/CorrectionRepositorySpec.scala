@@ -3,9 +3,9 @@ package repositories
 import config.AppConfig
 import crypto.{CorrectionEncryptor, CountryEncryptor, SecureGCMCipher}
 import generators.Generators
-import org.mockito.Mockito.when
 import models.corrections.{CorrectionPayload, CorrectionToCountry, EncryptedCorrectionPayload, PeriodWithCorrections}
 import models.{Country, Period}
+import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
@@ -13,7 +13,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar.mock
 import uk.gov.hmrc.domain.Vrn
-import uk.gov.hmrc.mongo.test.{CleanMongoCollectionSupport, DefaultPlayMongoRepositorySupport, PlayMongoRepositorySupport}
+import uk.gov.hmrc.mongo.test.{CleanMongoCollectionSupport, PlayMongoRepositorySupport}
 import utils.StringUtils
 
 import java.time.Instant
