@@ -3,8 +3,8 @@ package repositories
 import config.AppConfig
 import crypto.{CorrectionEncryptor, CountryEncryptor, ReturnEncryptor, SecureGCMCipher}
 import generators.Generators
-import models.{EncryptedVatReturn, Period, ReturnReference, VatReturn}
 import models.corrections.CorrectionPayload
+import models.{EncryptedVatReturn, Period, ReturnReference, VatReturn}
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalatest.OptionValues
@@ -13,7 +13,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar.mock
 import uk.gov.hmrc.domain.Vrn
-import uk.gov.hmrc.mongo.test.{CleanMongoCollectionSupport, DefaultPlayMongoRepositorySupport, PlayMongoRepositorySupport}
+import uk.gov.hmrc.mongo.test.{CleanMongoCollectionSupport, PlayMongoRepositorySupport}
 import utils.StringUtils
 
 import scala.concurrent.ExecutionContext.Implicits.global
