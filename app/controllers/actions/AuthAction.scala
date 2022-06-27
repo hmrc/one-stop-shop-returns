@@ -16,7 +16,8 @@
 
 package controllers.actions
 
-import play.api.mvc.Results.Unauthorized
+import config.AppConfig
+import play.api.mvc.Results.{NotFound, Unauthorized}
 import play.api.mvc.{ActionBuilder, ActionFunction, AnyContent, BodyParsers, Request, Result}
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.auth.core.retrieve.~
@@ -32,7 +33,8 @@ trait AuthAction extends ActionBuilder[AuthorisedRequest, AnyContent] with Actio
 
 class AuthActionImpl @Inject()(
                                 override val authConnector: AuthConnector,
-                                val parser: BodyParsers.Default
+                                val parser: BodyParsers.Default,
+                                config: AppConfig
                               )(implicit val executionContext: ExecutionContext)
   extends AuthAction with AuthorisedFunctions {
 
@@ -43,9 +45,9 @@ class AuthActionImpl @Inject()(
     authorised().retrieve(Retrievals.internalId and Retrievals.allEnrolments) {
 
       case Some(internalId) ~ enrolments =>
-        findVrnFromEnrolments(enrolments) match {
-          case Some(vrn) => block(AuthorisedRequest(request, internalId, vrn))
-          case None      => throw InsufficientEnrolments("Insufficient enrolments")
+        (findVrnFromEnrolments(enrolments), hasOssEnrolment(enrolments)) match {
+          case (Some(vrn), true) => block(AuthorisedRequest(request, internalId, vrn))
+          case _      => throw InsufficientEnrolments("Insufficient enrolments")
         }
 
       case _ =>
@@ -66,4 +68,8 @@ class AuthActionImpl @Inject()(
         enrolment =>
           enrolment.identifiers.find(_.key == "VATRegNo").map(e => Vrn(e.value))
       }
+
+  private def hasOssEnrolment(enrolments: Enrolments): Boolean = {
+    !config.ossEnrolmentEnabled ||  enrolments.enrolments.exists(_.key == config.ossEnrolment)
+  }
 }
