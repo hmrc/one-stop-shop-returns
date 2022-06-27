@@ -38,4 +38,7 @@ class AppConfig @Inject()(config: Configuration, servicesConfig: ServicesConfig)
   val historicCoreVatReturnIndexesToInclude : Seq[Int] = config.get[Seq[Int]]("historicCoreVatReturns.includeIndexes")
   val historicCoreVatReturnIndexesToExclude : Seq[Int] = config.get[Seq[Int]]("historicCoreVatReturns.excludeIndexes")
 
+  val ossEnrolment: String = config.get[String]("oss-enrolment")
+  val ossEnrolmentEnabled: Boolean = config.get[Boolean]("features.oss-enrolment")
+
 }
