@@ -5,7 +5,7 @@ import connectors.RegistrationConnector
 import models._
 import models.core._
 import models.corrections.{CorrectionPayload, CorrectionToCountry, PeriodWithCorrections}
-import models.domain.{EuTaxIdentifier, EuTaxIdentifierType, FixedEstablishment, InternationalAddress, RegistrationWithFixedEstablishment}
+import models.domain.{EuTaxIdentifier, EuTaxIdentifierType, InternationalAddress, RegistrationWithFixedEstablishment, RegistrationWithoutFixedEstablishment, RegistrationWithoutFixedEstablishmentWithTradeDetails, TradeDetails}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito
 import org.mockito.Mockito.when
@@ -287,143 +287,266 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach with Pri
 
   "CoreVatReturnService#getEuTraderIdForCountry" - {
 
-    "must return a Some(CoreEuTraderVatId) and strip country code when registration contains a VatId and fixed establishment" in {
+    "with fixed establishment" - {
+      "must return a Some(CoreEuTraderVatId) and strip country code when registration contains a VatId and fixed establishment" in {
 
-      val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
+        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
 
-      val expected = Some(CoreEuTraderVatId("123456789", "BE"))
+        val expected = Some(CoreEuTraderVatId("123456789", "BE"))
 
-      val result = service.invokePrivate(getEuTraderIdForCountry(new Country("BE", "Belgium"), RegistrationData.registration))
+        val result = service.invokePrivate(getEuTraderIdForCountry(new Country("BE", "Belgium"), RegistrationData.registration))
 
-      result mustBe expected
+        result mustBe expected
+      }
+
+      "must return a Some(CoreEuTraderVatId) and not strip country code when it's not there when registration contains a VatId and fixed establishment" in {
+
+        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
+
+        val expected = Some(CoreEuTraderVatId("123456789", "ES"))
+
+        val result = service.invokePrivate(getEuTraderIdForCountry(new Country("ES", "Spain"), RegistrationData.registration))
+
+        result mustBe expected
+      }
+
+      "must return a Some(CoreEuTraderVatId) and not strip country code for France when registration contains a VatId shorter than 13 characters and fixed establishment" in {
+
+        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
+
+        val expected = Some(CoreEuTraderVatId("FR123456789", "FR"))
+
+        val result = service.invokePrivate(getEuTraderIdForCountry(new Country("FR", "France"), RegistrationData.registration.copy(euRegistrations = Seq(
+          RegistrationWithFixedEstablishment(
+            Country("FR", "France"),
+            EuTaxIdentifier(EuTaxIdentifierType.Vat, "FR123456789"),
+            TradeDetails("french trading name", InternationalAddress("Line 1", None, "Town", None, None, Country("FR", "France")))
+          )))))
+
+        result mustBe expected
+      }
+
+      "must return a Some(CoreEuTraderVatId) and strip country code for France when registration contains a VatId of 13 chars and fixed establishment" in {
+
+        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
+
+        val expected = Some(CoreEuTraderVatId("FR123456789", "FR"))
+
+        val result = service.invokePrivate(getEuTraderIdForCountry(new Country("FR", "France"), RegistrationData.registration.copy(euRegistrations = Seq(
+          RegistrationWithFixedEstablishment(
+            Country("FR", "France"),
+            EuTaxIdentifier(EuTaxIdentifierType.Vat, "FRFR123456789"),
+            TradeDetails("french trading name", InternationalAddress("Line 1", None, "Town", None, None, Country("FR", "France")))
+          )))))
+
+        result mustBe expected
+      }
+
+      "must return a Some(CoreEuTraderVatId) and not strip country code for Netherlands when registration contains a VatId shorter than 14 characters and fixed establishment" in {
+
+        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
+
+        val expected = Some(CoreEuTraderVatId("NL1234567890", "NL"))
+
+        val result = service.invokePrivate(getEuTraderIdForCountry(new Country("NL", "Netherlands"), RegistrationData.registration.copy(euRegistrations = Seq(
+          RegistrationWithFixedEstablishment(
+            Country("NL", "Netherlands"),
+            EuTaxIdentifier(EuTaxIdentifierType.Vat, "NL1234567890"),
+            TradeDetails("Netherlands trading name", InternationalAddress("Line 1", None, "Town", None, None, Country("NL", "Netherlands")))
+          )))))
+
+        result mustBe expected
+      }
+
+      "must return a Some(CoreEuTraderVatId) and strip country code for Netherlands when registration contains a VatId of 14 chars and fixed establishment" in {
+
+        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
+
+        val expected = Some(CoreEuTraderVatId("NL1234567890", "NL"))
+
+        val result = service.invokePrivate(getEuTraderIdForCountry(new Country("NL", "Netherlands"), RegistrationData.registration.copy(euRegistrations = Seq(
+          RegistrationWithFixedEstablishment(
+            Country("NL", "Netherlands"),
+            EuTaxIdentifier(EuTaxIdentifierType.Vat, "NLNL1234567890"),
+            TradeDetails("Netherlands trading name", InternationalAddress("Line 1", None, "Town", None, None, Country("NL", "Netherlands")))
+          )))))
+
+        result mustBe expected
+      }
+
+      "must return a Some(CoreEuTraderTaxId) when registration contains a TaxId" in {
+        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
+
+        val expected = Some(CoreEuTraderTaxId("PL123456789", "PL"))
+
+        val result = service.invokePrivate(getEuTraderIdForCountry(new Country("PL", "Poland"), RegistrationData.registration))
+
+        result mustBe expected
+      }
     }
 
-    "must return a Some(CoreEuTraderVatId) and not strip country code when it's not there when registration contains a VatId and fixed establishment" in {
+    "without fixed establishment with send goods trade details" - {
+      "must return a Some(CoreEuTraderVatId) and strip country code when registration contains a VatId and fixed establishment" in {
 
-      val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
+        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
 
-      val expected = Some(CoreEuTraderVatId("123456789", "ES"))
+        val expected = Some(CoreEuTraderVatId("123456789", "ES"))
 
-      val result = service.invokePrivate(getEuTraderIdForCountry(new Country("ES", "Spain"), RegistrationData.registration))
+        val result = service.invokePrivate(getEuTraderIdForCountry(new Country("ES", "Spain"), RegistrationData.registration.copy(euRegistrations = Seq(
+          RegistrationWithoutFixedEstablishmentWithTradeDetails(
+            Country("ES", "Spain"),
+            EuTaxIdentifier(EuTaxIdentifierType.Vat, "ES123456789"),
+            TradeDetails("spanish trading name", InternationalAddress("Line 1", None, "Town", None, None, Country("ES", "Spain")))
+          )))))
+        result mustBe expected
+      }
 
-      result mustBe expected
+      "must return a Some(CoreEuTraderVatId) and not strip country code when it's not there when registration contains a VatId and fixed establishment" in {
+
+        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
+
+        val expected = Some(CoreEuTraderVatId("123456789", "ES"))
+
+        val result = service.invokePrivate(getEuTraderIdForCountry(new Country("ES", "Spain"), RegistrationData.registration.copy(euRegistrations = Seq(
+          RegistrationWithoutFixedEstablishmentWithTradeDetails(
+            Country("ES", "Spain"),
+            EuTaxIdentifier(EuTaxIdentifierType.Vat, "123456789"),
+            TradeDetails("spanish trading name", InternationalAddress("Line 1", None, "Town", None, None, Country("ES", "Spain")))
+          )))))
+        result mustBe expected
+      }
+
+      "must return a Some(CoreEuTraderVatId) and not strip country code for France when registration contains a VatId shorter than 13 characters and fixed establishment" in {
+
+        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
+
+        val expected = Some(CoreEuTraderVatId("FR123456789", "FR"))
+
+        val result = service.invokePrivate(getEuTraderIdForCountry(new Country("FR", "France"), RegistrationData.registration.copy(euRegistrations = Seq(
+          RegistrationWithoutFixedEstablishmentWithTradeDetails(
+            Country("FR", "France"),
+            EuTaxIdentifier(EuTaxIdentifierType.Vat, "FR123456789"),
+            TradeDetails("french trading name", InternationalAddress("Line 1", None, "Town", None, None, Country("FR", "France")))
+          )))))
+
+        result mustBe expected
+      }
+
+      "must return a Some(CoreEuTraderVatId) and strip country code for France when registration contains a VatId of 13 chars and fixed establishment" in {
+
+        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
+
+        val expected = Some(CoreEuTraderVatId("FR123456789", "FR"))
+
+        val result = service.invokePrivate(getEuTraderIdForCountry(new Country("FR", "France"), RegistrationData.registration.copy(euRegistrations = Seq(
+          RegistrationWithoutFixedEstablishmentWithTradeDetails(
+            Country("FR", "France"),
+            EuTaxIdentifier(EuTaxIdentifierType.Vat, "FRFR123456789"),
+            TradeDetails("french trading name", InternationalAddress("Line 1", None, "Town", None, None, Country("FR", "France")))
+          )))))
+
+        result mustBe expected
+      }
+
+      "must return a Some(CoreEuTraderVatId) and not strip country code for Netherlands when registration contains a VatId shorter than 14 characters and fixed establishment" in {
+
+        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
+
+        val expected = Some(CoreEuTraderVatId("NL1234567890", "NL"))
+
+        val result = service.invokePrivate(getEuTraderIdForCountry(new Country("NL", "Netherlands"), RegistrationData.registration.copy(euRegistrations = Seq(
+          RegistrationWithoutFixedEstablishmentWithTradeDetails(
+            Country("NL", "Netherlands"),
+            EuTaxIdentifier(EuTaxIdentifierType.Vat, "NL1234567890"),
+            TradeDetails("Netherlands trading name", InternationalAddress("Line 1", None, "Town", None, None, Country("NL", "Netherlands")))
+          )))))
+
+        result mustBe expected
+      }
+
+      "must return a Some(CoreEuTraderVatId) and strip country code for Netherlands when registration contains a VatId of 14 chars and fixed establishment" in {
+
+        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
+
+        val expected = Some(CoreEuTraderVatId("NL1234567890", "NL"))
+
+        val result = service.invokePrivate(getEuTraderIdForCountry(new Country("NL", "Netherlands"), RegistrationData.registration.copy(euRegistrations = Seq(
+          RegistrationWithoutFixedEstablishmentWithTradeDetails(
+            Country("NL", "Netherlands"),
+            EuTaxIdentifier(EuTaxIdentifierType.Vat, "NLNL1234567890"),
+            TradeDetails("Netherlands trading name", InternationalAddress("Line 1", None, "Town", None, None, Country("NL", "Netherlands")))
+          )))))
+
+        result mustBe expected
+      }
+
+      "must return a Some(CoreEuTraderTaxId) when registration contains a TaxId" in {
+        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
+
+        val expected = Some(CoreEuTraderTaxId("PL123456789", "PL"))
+
+        val result = service.invokePrivate(getEuTraderIdForCountry(new Country("PL", "Poland"), RegistrationData.registration.copy(euRegistrations = Seq(
+          RegistrationWithoutFixedEstablishmentWithTradeDetails(
+            Country("PL", "Poland"),
+            EuTaxIdentifier(EuTaxIdentifierType.Other, "PL123456789"),
+            TradeDetails("polish trading name", InternationalAddress("Line 1", None, "Town", None, None, Country("PL", "Poland")))
+          )))))
+        result mustBe expected
+      }
+
     }
 
-    "must return a Some(CoreEuTraderVatId) and not strip country code for France when registration contains a VatId shorter than 13 characters and fixed establishment" in {
 
-      val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
+    "with no fixed establishment and no trade details" - {
+      "must return a None when registration contains a VatId" in {
 
-      val expected = Some(CoreEuTraderVatId("FR123456789", "FR"))
+        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
 
-      val result = service.invokePrivate(getEuTraderIdForCountry(new Country("FR", "France"), RegistrationData.registration.copy(euRegistrations = Seq(
-        RegistrationWithFixedEstablishment(
-          Country("FR", "France"),
-          EuTaxIdentifier(EuTaxIdentifierType.Vat, "FR123456789"),
-          FixedEstablishment("french trading name", InternationalAddress("Line 1", None, "Town", None, None, Country("FR", "France")))
-        )))))
+        val expected = None
 
-      result mustBe expected
+        val result = service.invokePrivate(getEuTraderIdForCountry(new Country("IT", "Italy"), RegistrationData.registration
+          .copy(euRegistrations = Seq(
+            RegistrationWithoutFixedEstablishment(
+              Country("IT", "Italy"),
+              EuTaxIdentifier(EuTaxIdentifierType.Vat, "IT123456789")
+            )
+          ))
+        ))
+
+        result mustBe expected
+      }
+
+      "must return a None when registration contains a TaxId" in {
+        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
+
+        val expected = None
+
+        val result = service.invokePrivate(getEuTraderIdForCountry(new Country("NL", "Netherlands"), RegistrationData.registration))
+
+        result mustBe expected
+      }
+
+      "must return a None when registration contains a VatId as a String" in {
+        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
+
+        val expected = None
+
+        val result = service.invokePrivate(getEuTraderIdForCountry(new Country("FR", "France"), RegistrationData.registration))
+
+        result mustBe expected
+      }
+
+      "must return None when registration does not contains a VatId or TaxId" in {
+        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
+
+        val expected = None
+
+        val result = service.invokePrivate(getEuTraderIdForCountry(new Country("IR", "Ireland"), RegistrationData.registration))
+
+        result mustBe expected
+      }
     }
 
-    "must return a Some(CoreEuTraderVatId) and strip country code for France when registration contains a VatId of 13 chars and fixed establishment" in {
-
-      val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
-
-      val expected = Some(CoreEuTraderVatId("FR123456789", "FR"))
-
-      val result = service.invokePrivate(getEuTraderIdForCountry(new Country("FR", "France"), RegistrationData.registration.copy(euRegistrations = Seq(
-        RegistrationWithFixedEstablishment(
-          Country("FR", "France"),
-          EuTaxIdentifier(EuTaxIdentifierType.Vat, "FRFR123456789"),
-          FixedEstablishment("french trading name", InternationalAddress("Line 1", None, "Town", None, None, Country("FR", "France")))
-        )))))
-
-      result mustBe expected
-    }
-
-    "must return a Some(CoreEuTraderVatId) and not strip country code for Netherlands when registration contains a VatId shorter than 14 characters and fixed establishment" in {
-
-      val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
-
-      val expected = Some(CoreEuTraderVatId("NL1234567890", "NL"))
-
-      val result = service.invokePrivate(getEuTraderIdForCountry(new Country("NL", "Netherlands"), RegistrationData.registration.copy(euRegistrations = Seq(
-        RegistrationWithFixedEstablishment(
-          Country("NL", "Netherlands"),
-          EuTaxIdentifier(EuTaxIdentifierType.Vat, "NL1234567890"),
-          FixedEstablishment("Netherlands trading name", InternationalAddress("Line 1", None, "Town", None, None, Country("NL", "Netherlands")))
-        )))))
-
-      result mustBe expected
-    }
-
-    "must return a Some(CoreEuTraderVatId) and strip country code for Netherlands when registration contains a VatId of 14 chars and fixed establishment" in {
-
-      val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
-
-      val expected = Some(CoreEuTraderVatId("NL1234567890", "NL"))
-
-      val result = service.invokePrivate(getEuTraderIdForCountry(new Country("NL", "Netherlands"), RegistrationData.registration.copy(euRegistrations = Seq(
-        RegistrationWithFixedEstablishment(
-          Country("NL", "Netherlands"),
-          EuTaxIdentifier(EuTaxIdentifierType.Vat, "NLNL1234567890"),
-          FixedEstablishment("Netherlands trading name", InternationalAddress("Line 1", None, "Town", None, None, Country("NL", "Netherlands")))
-        )))))
-
-      result mustBe expected
-    }
-
-
-    "must return a None when registration contains a VatId and no fixed establishment" in {
-
-      val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
-
-      val expected = None
-
-      val result = service.invokePrivate(getEuTraderIdForCountry(new Country("IT", "Italy"), RegistrationData.registration))
-
-      result mustBe expected
-    }
-
-    "must return a Some(CoreEuTraderTaxId) when registration contains a TaxId and fixed establishment" in {
-      val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
-
-      val expected = Some(CoreEuTraderTaxId("PL123456789", "PL"))
-
-      val result = service.invokePrivate(getEuTraderIdForCountry(new Country("PL", "Poland"), RegistrationData.registration))
-
-      result mustBe expected
-    }
-
-    "must return a None when registration contains a TaxId and no fixed establishment" in {
-      val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
-
-      val expected = None
-
-      val result = service.invokePrivate(getEuTraderIdForCountry(new Country("NL", "Netherlands"), RegistrationData.registration))
-
-      result mustBe expected
-    }
-
-    "must return a None when registration contains a VatId as a String" in {
-      val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
-
-      val expected = None
-
-      val result = service.invokePrivate(getEuTraderIdForCountry(new Country("FR", "France"), RegistrationData.registration))
-
-      result mustBe expected
-    }
-
-    "must return None when registration does not contains a VatId or TaxId" in {
-      val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
-
-      val expected = None
-
-      val result = service.invokePrivate(getEuTraderIdForCountry(new Country("IR", "Ireland"), RegistrationData.registration))
-
-      result mustBe expected
-    }
   }
 }
 
