@@ -9,6 +9,7 @@
 
     <logger name="application.services.HistoricalReturnSubmitServiceImpl" level="${logger.services.HistoricalReturnSubmitServiceImpl:-INFO}"/>
     <logger name="application.services.CoreVatReturnService" level="${logger.services.CoreVatReturnService:-INFO}"/>
+    <logger name="application.services.VatReturnService" level="${logger.services.VatReturnService:-INFO}"/>
 
     <root level="${logger.application:-WARN}">
         <appender-ref ref="STDOUT"/>
