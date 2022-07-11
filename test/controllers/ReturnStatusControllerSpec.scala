@@ -117,6 +117,7 @@ class ReturnStatusControllerSpec
         when(mockPeriodService.getNextPeriod(any())) thenReturn period
         when(mockS4LaterRepository.get(any())) thenReturn Future.successful(Seq.empty)
         when(mockRegConnector.getRegistration(any())) thenReturn Future.successful(Some(RegistrationData.registration))
+        when(mockPeriodService.getRunningPeriod(any())) thenReturn period
 
         val app =
           applicationBuilder
@@ -154,6 +155,7 @@ class ReturnStatusControllerSpec
         when(mockPeriodService.getNextPeriod(any())) thenReturn period
         when(mockS4LaterRepository.get(any())) thenReturn Future.successful(Seq.empty)
         when(mockRegConnector.getRegistration(any())) thenReturn Future.successful(Some(RegistrationData.registration))
+        when(mockPeriodService.getRunningPeriod(any())) thenReturn period
 
         val app =
           applicationBuilder
@@ -185,6 +187,7 @@ class ReturnStatusControllerSpec
         when(mockRegConnector.getRegistration(any())) thenReturn Future.successful(Some(RegistrationData.registration))
         when(mockPeriodService.getNextPeriod(any())) thenReturn period
         when(mockPeriodService.getAllPeriods) thenReturn Seq(period)
+        when(mockPeriodService.getRunningPeriod(any())) thenReturn period
 
         val app =
           applicationBuilder
@@ -220,6 +223,7 @@ class ReturnStatusControllerSpec
         when(mockRegConnector.getRegistration(any())) thenReturn Future.successful(Some(RegistrationData.registration))
         when(mockPeriodService.getNextPeriod(any())) thenReturn period
         when(mockPeriodService.getAllPeriods) thenReturn Seq(period)
+        when(mockPeriodService.getRunningPeriod(any())) thenReturn period
 
         val app =
           applicationBuilder
@@ -251,6 +255,7 @@ class ReturnStatusControllerSpec
         when(mockRegConnector.getRegistration(any())) thenReturn Future.successful(Some(RegistrationData.registration))
         when(mockPeriodService.getNextPeriod(any())) thenReturn period
         when(mockPeriodService.getAllPeriods) thenReturn Seq(period)
+        when(mockPeriodService.getRunningPeriod(any())) thenReturn period
         val app =
           applicationBuilder
             .overrides(bind[VatReturnService].toInstance(mockVatReturnService))
@@ -289,6 +294,7 @@ class ReturnStatusControllerSpec
         when(mockS4LaterRepository.get(any())) thenReturn Future.successful(Seq(answers))
         when(mockRegConnector.getRegistration(any())) thenReturn Future.successful(Some(RegistrationData.registration))
         when(mockPeriodService.getAllPeriods) thenReturn Seq(period)
+        when(mockPeriodService.getRunningPeriod(any())) thenReturn period
 
         val app =
           applicationBuilder

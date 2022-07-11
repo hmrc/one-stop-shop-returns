@@ -77,8 +77,21 @@ class ReturnStatusController @Inject()(
   private def getStatuses(commencementLocalDate: LocalDate, vrn: Vrn): Future[Seq[PeriodWithStatus]] = {
 
     for {
-      periods <- Future {periodService.getReturnPeriods(commencementLocalDate) }
-      nextPeriod <- Future {periodService.getNextPeriod(periodService.getAllPeriods.maxBy(_.lastDay.toEpochDay))}
+      periods <- Future {
+        periodService.getReturnPeriods(commencementLocalDate)
+      }
+      runningPeriod <- Future {
+        periodService.getRunningPeriod(LocalDate.now(clock))
+      }
+      nextPeriod <- Future {
+        if (periods.nonEmpty) {
+          periodService.getNextPeriod(
+            periods.maxBy(_.lastDay.toEpochDay)
+          )
+        } else {
+          runningPeriod
+        }
+      }
       returns <- vatReturnService.get(vrn)
     } yield {
       val returnPeriods = returns.map(_.period)
@@ -94,7 +107,7 @@ class ReturnStatusController @Inject()(
             }
           }
       }
-      if (currentPeriods.filterNot(_.status == Complete).isEmpty) {
+      if (currentPeriods.forall(_.status == Complete)) {
         currentPeriods ++ Seq(PeriodWithStatus(nextPeriod, SubmissionStatus.Next))
       } else {
         currentPeriods
