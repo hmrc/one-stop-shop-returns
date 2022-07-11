@@ -29,7 +29,7 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import java.time.{Clock, LocalDate}
 import javax.inject.Inject
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ExecutionContext, Future, future}
 
 class ReturnStatusController @Inject()(
                                         cc: AuthenticatedControllerComponents,
@@ -75,28 +75,30 @@ class ReturnStatusController @Inject()(
   }
 
   private def getStatuses(commencementLocalDate: LocalDate, vrn: Vrn): Future[Seq[PeriodWithStatus]] = {
-    val periods = periodService.getReturnPeriods(commencementLocalDate)
-    vatReturnService.get(vrn).map {
-      returns =>
-        val returnPeriods = returns.map(_.period)
-        val currentPeriods = periods.map {
-          period =>
-            if (returnPeriods.contains(period)) {
-              PeriodWithStatus(period, SubmissionStatus.Complete)
+
+    for {
+      periods <- Future {periodService.getReturnPeriods(commencementLocalDate) }
+      nextPeriod <- Future {periodService.getNextPeriod(periodService.getAllPeriods.maxBy(_.lastDay.toEpochDay))}
+      returns <- vatReturnService.get(vrn)
+    } yield {
+      val returnPeriods = returns.map(_.period)
+      val currentPeriods = periods.map {
+        period =>
+          if (returnPeriods.contains(period)) {
+            PeriodWithStatus(period, SubmissionStatus.Complete)
+          } else {
+            if (LocalDate.now(clock).isAfter(period.paymentDeadline)) {
+              PeriodWithStatus(period, SubmissionStatus.Overdue)
             } else {
-              if (LocalDate.now(clock).isAfter(period.paymentDeadline)) {
-                PeriodWithStatus(period, SubmissionStatus.Overdue)
-              } else {
-                PeriodWithStatus(period, SubmissionStatus.Due)
-              }
+              PeriodWithStatus(period, SubmissionStatus.Due)
             }
-        }
-        if (currentPeriods.filterNot(_.status == Complete).isEmpty) {
-          val nextPeriod = periodService.getNextPeriod(periodService.getAllPeriods.maxBy(_.lastDay.toEpochDay))
-          currentPeriods ++ Seq(PeriodWithStatus(nextPeriod, SubmissionStatus.Next))
-        } else {
-          currentPeriods
-        }
+          }
+      }
+      if (currentPeriods.filterNot(_.status == Complete).isEmpty) {
+        currentPeriods ++ Seq(PeriodWithStatus(nextPeriod, SubmissionStatus.Next))
+      } else {
+        currentPeriods
+      }
     }
   }
 
