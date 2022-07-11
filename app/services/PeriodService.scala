@@ -18,8 +18,9 @@ package services
 
 import models.{Period, PeriodYear}
 import models.Quarter._
+import org.mongodb.scala.internal.MapObservable
 
-import java.time.{Clock, LocalDate}
+import java.time.{Clock, LocalDate, Month}
 import javax.inject.Inject
 
 class PeriodService @Inject()(clock: Clock) {
@@ -53,6 +54,15 @@ class PeriodService @Inject()(clock: Clock) {
         Period(currentPeriod.year, Q3)
       case Q1 =>
         Period(currentPeriod.year, Q2)
+    }
+  }
+
+  def getRunningPeriod(localDate: LocalDate): Period = {
+    localDate.getMonth match {
+      case Month.JANUARY | Month.FEBRUARY | Month.MARCH=> Period(localDate.getYear, Q1)
+      case Month.APRIL | Month.MAY | Month.JUNE=> Period(localDate.getYear, Q2)
+      case Month.JULY | Month.AUGUST | Month.SEPTEMBER=> Period(localDate.getYear, Q3)
+      case Month.OCTOBER | Month.NOVEMBER | Month.DECEMBER=> Period(localDate.getYear, Q4)
     }
   }
 }
