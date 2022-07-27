@@ -70,7 +70,7 @@ class ReturnStatusController @Inject()(
           )
         )
 
-        Ok(Json.toJson(returns))
+        Ok(Json.toJson(CurrentReturns(returns)))
       }
   }
 
