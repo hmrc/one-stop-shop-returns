@@ -131,7 +131,7 @@ class ReturnStatusControllerSpec
           val result = route(app, request).value
 
           status(result) mustEqual OK
-          contentAsJson(result) mustEqual Json.toJson(Seq(Return.fromPeriod(period, Next, false, true)))
+          contentAsJson(result) mustEqual Json.toJson(CurrentReturns(Seq(Return.fromPeriod(period, Next, false, true))))
         }
       }
 
@@ -168,7 +168,7 @@ class ReturnStatusControllerSpec
           val result = route(app, request).value
 
           status(result) mustEqual OK
-          contentAsJson(result) mustEqual Json.toJson(Seq(Return.fromPeriod(period, Next, false, true)))
+          contentAsJson(result) mustEqual Json.toJson(CurrentReturns(Seq(Return.fromPeriod(period, Next, false, true))))
         }
       }
 
@@ -197,7 +197,7 @@ class ReturnStatusControllerSpec
           val result = route(app, request).value
 
           status(result) mustEqual OK
-          contentAsJson(result) mustEqual Json.toJson(Seq(Return.fromPeriod(period, Due, false, true)))
+          contentAsJson(result) mustEqual Json.toJson(CurrentReturns(Seq(Return.fromPeriod(period, Due, false, true))))
         }
       }
 
@@ -230,7 +230,7 @@ class ReturnStatusControllerSpec
           val result = route(app, request).value
 
           status(result) mustEqual OK
-          contentAsJson(result) mustEqual Json.toJson(returns)
+          contentAsJson(result) mustEqual Json.toJson(CurrentReturns(returns))
         }
       }
 
@@ -259,13 +259,13 @@ class ReturnStatusControllerSpec
 
           status(result) mustEqual OK
           contentAsJson(result) mustEqual Json.toJson(
-            Seq(
+            CurrentReturns(Seq(
               Return.fromPeriod(period, Overdue, false, true),
               Return.fromPeriod(period0, Overdue, false, false),
               Return.fromPeriod(period1, Overdue, false, false),
               Return.fromPeriod(period2, Overdue, false, false),
               Return.fromPeriod(period3, Due, false, false)
-            ))
+            )))
         }
       }
 
@@ -295,9 +295,9 @@ class ReturnStatusControllerSpec
           val result = route(app, request).value
 
           status(result) mustEqual OK
-          contentAsJson(result) mustEqual Json.toJson(Seq(
-            Return.fromPeriod(period, Due, true, true)
-          ))
+          contentAsJson(result) mustEqual Json.toJson(CurrentReturns(
+            Seq(Return.fromPeriod(period, Due, true, true)
+          )))
         }
       }
     }
