@@ -14,12 +14,18 @@
  * limitations under the License.
  */
 
-package models.financialdata
+package models.yourAccount
 
-import play.api.libs.json.{Format, Json}
+import play.api.libs.json.{Json, OFormat}
 
-case class CurrentPayments(duePayments: Seq[Payment], overduePayments: Seq[Payment], totalAmountOwed: BigDecimal, totalAmountOverdue: BigDecimal)
+case class CurrentReturns(
+                           returns: Seq[Return],
+                           excluded: Boolean = false
+                         )
 
-object CurrentPayments {
-  implicit val formatCurrentPayments: Format[CurrentPayments] = Json.format[CurrentPayments]
+
+case object CurrentReturns {
+
+  implicit val format: OFormat[CurrentReturns] = Json.format[CurrentReturns]
 }
+

@@ -245,7 +245,7 @@ class FinancialDataControllerSpec
         val result = route(app, request).value
 
         status(result) mustBe OK
-        contentAsJson(result) mustBe Json.toJson(CurrentPayments(Seq(payment1), Seq(payment2)))
+        contentAsJson(result) mustBe Json.toJson(CurrentPayments(Seq(payment1), Seq(payment2), payment1.amountOwed + payment2.amountOwed, payment1.amountOwed))
       }
     }
 
@@ -280,7 +280,7 @@ class FinancialDataControllerSpec
         val result = route(app, request).value
 
         status(result) mustBe OK
-        contentAsJson(result) mustBe Json.toJson(CurrentPayments(Seq(payment), Seq.empty))
+        contentAsJson(result) mustBe Json.toJson(CurrentPayments(Seq(payment), Seq.empty, payment.amountOwed, BigDecimal(0)))
       }
     }
 
@@ -301,6 +301,7 @@ class FinancialDataControllerSpec
 
       val payment1 = Payment.fromVatReturnWithFinancialData(vatReturnWithFinancialData1)
       val payment2 = Payment.fromVatReturnWithFinancialData(vatReturnWithFinancialData2)
+      val total = payment1.amountOwed + payment2.amountOwed
 
       when(mockFinancialDataService.getVatReturnWithFinancialData(any(), any())) thenReturn Future.successful(Seq(vatReturnWithFinancialData1, vatReturnWithFinancialData2))
       when(mockFinancialDataService.filterIfPaymentIsOutstanding(any())) thenReturn Seq(vatReturnWithFinancialData1, vatReturnWithFinancialData2)
@@ -320,7 +321,7 @@ class FinancialDataControllerSpec
         val result = route(app, request).value
 
         status(result) mustBe OK
-        contentAsJson(result) mustBe Json.toJson(CurrentPayments(Seq.empty, Seq(payment1, payment2)))
+        contentAsJson(result) mustBe Json.toJson(CurrentPayments(Seq.empty, Seq(payment1, payment2), total, total))
       }
     }
 

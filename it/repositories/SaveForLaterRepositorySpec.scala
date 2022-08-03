@@ -33,7 +33,6 @@ class SaveForLaterRepositorySpec
   private val appConfig = mock[AppConfig]
   private val secretKey = "VqmXp7yigDFxbCUdDdNZVIvbW6RgPNJsliv6swQNCL8="
   private val instant = Instant.now
-  private val stubClock: Clock = Clock.fixed(instant, ZoneId.systemDefault)
 
   when(appConfig.encryptionKey) thenReturn secretKey
   

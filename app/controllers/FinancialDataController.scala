@@ -85,7 +85,10 @@ class FinancialDataController @Inject()(
             Payment.fromVatReturnWithFinancialData(overdue)
         )
 
-        Ok(Json.toJson(CurrentPayments(duePayments, overduePayments)))
+        val totalAmountOverdue = overduePayments.map(_.amountOwed).sum
+        val totalAmountOwed = duePayments.map(_.amountOwed).sum + totalAmountOverdue
+
+        Ok(Json.toJson(CurrentPayments(duePayments, overduePayments, totalAmountOwed, totalAmountOverdue)))
       }
 
   }
