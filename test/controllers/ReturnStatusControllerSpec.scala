@@ -131,7 +131,7 @@ class ReturnStatusControllerSpec
           val result = route(app, request).value
 
           status(result) mustEqual OK
-          contentAsJson(result) mustEqual Json.toJson(CurrentReturns(Seq(Return.fromPeriod(period, Next, false, true))))
+          contentAsJson(result) mustEqual Json.toJson(CurrentReturns(Seq(Return.fromPeriod(period, Next, false, true)), false, false))
         }
       }
 
@@ -168,7 +168,7 @@ class ReturnStatusControllerSpec
           val result = route(app, request).value
 
           status(result) mustEqual OK
-          contentAsJson(result) mustEqual Json.toJson(CurrentReturns(Seq(Return.fromPeriod(period, Next, false, true))))
+          contentAsJson(result) mustEqual Json.toJson(CurrentReturns(Seq(Return.fromPeriod(period, Next, false, true)), false, false))
         }
       }
 
@@ -197,7 +197,7 @@ class ReturnStatusControllerSpec
           val result = route(app, request).value
 
           status(result) mustEqual OK
-          contentAsJson(result) mustEqual Json.toJson(CurrentReturns(Seq(Return.fromPeriod(period, Due, false, true))))
+          contentAsJson(result) mustEqual Json.toJson(CurrentReturns(Seq(Return.fromPeriod(period, Due, false, true)), false, false))
         }
       }
 
@@ -230,7 +230,7 @@ class ReturnStatusControllerSpec
           val result = route(app, request).value
 
           status(result) mustEqual OK
-          contentAsJson(result) mustEqual Json.toJson(CurrentReturns(returns))
+          contentAsJson(result) mustEqual Json.toJson(CurrentReturns(returns, false, false))
         }
       }
 
@@ -265,7 +265,10 @@ class ReturnStatusControllerSpec
               Return.fromPeriod(period1, Overdue, false, false),
               Return.fromPeriod(period2, Overdue, false, false),
               Return.fromPeriod(period3, Due, false, false)
-            )))
+            ),
+              false,
+              false
+            ))
         }
       }
 
@@ -297,7 +300,10 @@ class ReturnStatusControllerSpec
           status(result) mustEqual OK
           contentAsJson(result) mustEqual Json.toJson(CurrentReturns(
             Seq(Return.fromPeriod(period, Due, true, true)
-          )))
+          ),
+            false,
+            false
+          ))
         }
       }
     }
