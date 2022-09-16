@@ -35,6 +35,9 @@ trait AuthenticatedControllerComponents extends ControllerComponents {
 
   def authAndGetRegistration(vrn: String): ActionBuilder[RegistrationRequest, AnyContent] =
     auth andThen getRegistration(vrn)
+
+  def authAndGetRegistration(): ActionBuilder[RegistrationRequest, AnyContent] =
+    auth andThen getRegistration()
 }
 
 case class DefaultAuthenticatedControllerComponents @Inject()(

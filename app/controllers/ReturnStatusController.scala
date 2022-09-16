@@ -17,9 +17,10 @@
 package controllers
 
 import controllers.actions.AuthenticatedControllerComponents
-import models.SubmissionStatus.Complete
+import models.SubmissionStatus.{Complete, Excluded}
+import models.exclusions.ExcludedTrader
 import models.yourAccount._
-import models.{PeriodWithStatus, SubmissionStatus}
+import models.{Period, PeriodWithStatus, SubmissionStatus}
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent}
 import repositories.SaveForLaterRepository
@@ -42,9 +43,9 @@ class ReturnStatusController @Inject()(
                                       )(implicit ec: ExecutionContext)
   extends BackendController(cc) {
 
-  def listStatuses(commencementLocalDate: LocalDate): Action[AnyContent] = cc.auth.async {
+  def listStatuses(commencementLocalDate: LocalDate): Action[AnyContent] = cc.authAndGetRegistration().async {
     implicit request =>
-      val periodWithStatuses = getStatuses(commencementLocalDate, request.vrn)
+      val periodWithStatuses = getStatuses(commencementLocalDate, request.vrn, request.registration.excludedTrader)
 
       periodWithStatuses.map { pws =>
         Ok(Json.toJson(pws))
@@ -54,13 +55,13 @@ class ReturnStatusController @Inject()(
   def getCurrentReturns(vrn: String): Action[AnyContent] = cc.authAndGetRegistration(vrn).async {
     implicit request =>
       for {
-        availablePeriodsWithStatus <- getStatuses(request.registration.commencementDate, request.vrn)
+        availablePeriodsWithStatus <- getStatuses(request.registration.commencementDate, request.vrn, request.registration.excludedTrader)
         savedAnswers <- saveForLaterRepository.get(request.vrn)
         finalReturnsCompleted <- exclusionService.hasSubmittedFinalReturn()
       } yield {
         val answers = savedAnswers.sortBy(_.lastUpdated).lastOption
 
-        val incompletePeriods = availablePeriodsWithStatus.filterNot(_.status == Complete)
+        val incompletePeriods = availablePeriodsWithStatus.filterNot(pws => Seq(Complete, Excluded).contains(pws.status))
 
         val isExcluded = request.registration.excludedTrader.isDefined
 
@@ -79,14 +80,16 @@ class ReturnStatusController @Inject()(
       }
   }
 
-  private def getStatuses(commencementLocalDate: LocalDate, vrn: Vrn): Future[Seq[PeriodWithStatus]] = {
+  private def getStatuses(commencementLocalDate: LocalDate, vrn: Vrn, excludedTrader: Option[ExcludedTrader]): Future[Seq[PeriodWithStatus]] = {
     val periods = periodService.getReturnPeriods(commencementLocalDate)
     vatReturnService.get(vrn).map {
       returns =>
         val returnPeriods = returns.map(_.period)
         val currentPeriods = periods.map {
           period =>
-            if (returnPeriods.contains(period)) {
+            if (isPeriodExcluded(period, excludedTrader)) {
+              PeriodWithStatus(period, SubmissionStatus.Excluded)
+            } else if (returnPeriods.contains(period)) {
               PeriodWithStatus(period, SubmissionStatus.Complete)
             } else {
               if (LocalDate.now(clock).isAfter(period.paymentDeadline)) {
@@ -96,12 +99,20 @@ class ReturnStatusController @Inject()(
               }
             }
         }
-        if (currentPeriods.filterNot(_.status == Complete).isEmpty) {
+        if (currentPeriods.forall(_.status == Complete)) {
           val nextPeriod = periodService.getNextPeriod(periodService.getAllPeriods.maxBy(_.lastDay.toEpochDay))
           currentPeriods ++ Seq(PeriodWithStatus(nextPeriod, SubmissionStatus.Next))
         } else {
           currentPeriods
         }
+    }
+  }
+
+  private def isPeriodExcluded(period: Period, excludedTrader: Option[ExcludedTrader]): Boolean = {
+    excludedTrader match {
+      case Some(excluded) if period.lastDay.isAfter(periodService.getNextPeriod(excluded.effectivePeriod).firstDay) =>
+        true
+      case _ => false
     }
   }
 

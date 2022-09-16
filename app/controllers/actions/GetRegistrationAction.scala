@@ -17,6 +17,7 @@
 package controllers.actions
 
 import connectors.RegistrationConnector
+import logging.Logging
 import models.requests.RegistrationRequest
 import play.api.mvc.Results.{NotFound, Unauthorized}
 import play.api.mvc.{ActionRefiner, Result}
@@ -25,21 +26,30 @@ import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class GetRegistrationAction @Inject()(
-                                       vrn: String,
+                                       maybeVrn: Option[String],
                                        val registrationConnector: RegistrationConnector
                                      )(implicit val executionContext: ExecutionContext)
-  extends ActionRefiner[AuthorisedRequest, RegistrationRequest] {
+  extends ActionRefiner[AuthorisedRequest, RegistrationRequest] with Logging {
+
 
   override protected def refine[A](request: AuthorisedRequest[A]): Future[Either[Result, RegistrationRequest[A]]] = {
-    if(request.vrn.vrn == vrn) {
-      registrationConnector.getRegistration(request.vrn) flatMap {
-        case Some(registration) =>
-          Future.successful(Right(RegistrationRequest(request.request, request.vrn, registration)))
-        case None =>
-          Future.successful(Left(NotFound("Not found registration")))
-      }
-    } else {
-      Future.successful(Left(Unauthorized("VRNs do not match")))
+    maybeVrn match {
+      case Some(vrn) if vrn == request.vrn.vrn =>
+          getRegistrationFromRequest(request)
+      case Some(_) =>
+        logger.error("VRNs did not match")
+        Future.successful(Left(Unauthorized("VRNs do not match")))
+      case _ =>
+        getRegistrationFromRequest(request)
+    }
+  }
+
+  private def getRegistrationFromRequest[A](request: AuthorisedRequest[A]) = {
+    registrationConnector.getRegistration(request.vrn) flatMap {
+      case Some(registration) =>
+        Future.successful(Right(RegistrationRequest(request.request, request.vrn, registration)))
+      case None =>
+        Future.successful(Left(NotFound("Not found registration")))
     }
   }
 }
@@ -48,5 +58,8 @@ class GetRegistrationActionProvider @Inject()(registrationConnector: Registratio
                                            (implicit ec: ExecutionContext) {
 
   def apply(vrn: String): GetRegistrationAction =
-    new GetRegistrationAction(vrn, registrationConnector)
+    new GetRegistrationAction(Some(vrn), registrationConnector)
+
+  def apply(): GetRegistrationAction =
+    new GetRegistrationAction(None, registrationConnector)
 }
