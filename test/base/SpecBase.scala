@@ -14,6 +14,7 @@ import org.scalatestplus.mockito.MockitoSugar
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import services.{FakeHistoricalReturnSubmitService, HistoricalReturnSubmitService}
+import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.domain.Vrn
 
 import java.time.{Clock, Instant, LocalDate, ZoneId}
@@ -30,6 +31,9 @@ trait SpecBase
 
   protected val vrn: Vrn = Vrn("123456789")
   def period: Period = Period(2021, Quarter.Q3)
+
+  val userAnswersId: String        = "12345-credId"
+  val testCredentials: Credentials = Credentials(userAnswersId, "GGW")
 
   val completeVatReturn: VatReturn =
     VatReturn(

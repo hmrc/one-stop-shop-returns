@@ -23,6 +23,7 @@ import generators.Generators
 import models.Quarter.{Q1, Q2, Q3, Q4}
 import models.SubmissionStatus.{Due, Next, Overdue}
 import models._
+import models.exclusions.ExcludedTrader
 import models.yourAccount._
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
@@ -50,14 +51,26 @@ class ReturnStatusControllerSpec
 
   private val authorisedVrn = Vrn("123456789")
   private val notAuthorisedVrn = arbitraryVrn.arbitrary.retryUntil(_ != authorisedVrn).sample.value
+  private val exclusionSource = Gen.oneOf("TRADER", "HMRC").sample.value
+  private val exclusionReason = Gen.oneOf(1, 2, 3, 4, 5, 6, -1).sample.value
+  private val excludedTrader: ExcludedTrader = ExcludedTrader(
+    RegistrationData.registration.vrn,
+    exclusionSource,
+    exclusionReason,
+    period
+  )
 
   ".listStatus(commencementDate)" - {
-    val period = Period(2021, Q3)
+
+    val mockRegistrationConnector = mock[RegistrationConnector]
     val commencementDate = LocalDate.now()
 
     lazy val request = FakeRequest(GET, routes.ReturnStatusController.listStatuses(commencementDate).url)
 
     "must respond with OK and a sequence of periods with statuses" in {
+
+      when(mockRegistrationConnector.getRegistration(any())) thenReturn
+        Future.successful(Some(RegistrationData.registration))
 
       val mockVatReturnService = mock[VatReturnService]
       val mockPeriodService = mock[PeriodService]
@@ -78,6 +91,7 @@ class ReturnStatusControllerSpec
         applicationBuilder
           .overrides(bind[VatReturnService].toInstance(mockVatReturnService))
           .overrides(bind[PeriodService].toInstance(mockPeriodService))
+          .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
           .build()
 
       running(app) {
@@ -87,6 +101,48 @@ class ReturnStatusControllerSpec
         contentAsJson(result) mustEqual Json.toJson(Seq(
           PeriodWithStatus(period, SubmissionStatus.Complete),
           PeriodWithStatus(nextPeriod, SubmissionStatus.Next))
+        )
+      }
+    }
+
+    "must respond with OK and a sequence of periods with statuses and trader is excluded" in {
+
+      when(mockRegistrationConnector.getRegistration(any())) thenReturn
+        Future.successful(Some(RegistrationData.registration.copy(excludedTrader = Some(excludedTrader))))
+
+      val mockVatReturnService = mock[VatReturnService]
+      val mockPeriodService = mock[PeriodService]
+
+      val period2021Q4 = Period(2021, Q4)
+      val period2022Q1 = Period(2022, Q1)
+      val nextPeriod = period2021Q4
+      val vatReturn =
+        Gen
+          .nonEmptyListOf(arbitrary[VatReturn])
+          .sample.value
+          .map(r => r copy(vrn = vrn, reference = ReturnReference(vrn, r.period))).head
+
+      when(mockVatReturnService.get(any())) thenReturn Future.successful(Seq(vatReturn.copy(period = period)))
+      when(mockPeriodService.getReturnPeriods(any())) thenReturn Seq(period, period2021Q4, period2022Q1)
+      when(mockPeriodService.getAllPeriods) thenReturn Seq(period, period2021Q4, period2022Q1)
+      when(mockPeriodService.getNextPeriod(any())) thenReturn nextPeriod
+
+      val app =
+        applicationBuilder
+          .overrides(bind[VatReturnService].toInstance(mockVatReturnService))
+          .overrides(bind[PeriodService].toInstance(mockPeriodService))
+          .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
+
+          .build()
+
+      running(app) {
+        val result = route(app, request).value
+
+        status(result) mustEqual OK
+        contentAsJson(result) mustEqual Json.toJson(Seq(
+          PeriodWithStatus(period, SubmissionStatus.Complete),
+          PeriodWithStatus(period2021Q4, SubmissionStatus.Excluded),
+          PeriodWithStatus(period2022Q1, SubmissionStatus.Excluded))
         )
       }
     }
@@ -260,15 +316,15 @@ class ReturnStatusControllerSpec
           status(result) mustEqual OK
           contentAsJson(result) mustEqual Json.toJson(
             CurrentReturns(Seq(
-              Return.fromPeriod(period, Overdue, false, true),
-              Return.fromPeriod(period0, Overdue, false, false),
-              Return.fromPeriod(period1, Overdue, false, false),
-              Return.fromPeriod(period2, Overdue, false, false),
-              Return.fromPeriod(period3, Due, false, false)
+              Return.fromPeriod(period, Overdue, inProgress = false, isOldest = true),
+              Return.fromPeriod(period0, Overdue, inProgress = false, isOldest = false),
+              Return.fromPeriod(period1, Overdue, inProgress = false, isOldest = false),
+              Return.fromPeriod(period2, Overdue, inProgress = false, isOldest = false),
+              Return.fromPeriod(period3, Due, inProgress = false, isOldest = false)
             ),
-              false,
-              false
-            ))
+            excluded = false,
+            finalReturnsCompleted = false
+          ))
         }
       }
 
@@ -301,11 +357,89 @@ class ReturnStatusControllerSpec
           contentAsJson(result) mustEqual Json.toJson(CurrentReturns(
             Seq(Return.fromPeriod(period, Due, true, true)
           ),
-            false,
-            false
+            excluded = false,
+            finalReturnsCompleted = false
           ))
         }
       }
+
+      "with an excluded trader's final return due but not in progress and no saved answers" in {
+        val periodQ2 = Period(2022, Q2)
+        val periodQ3 = Period(2022, Q3)
+        val mockVatReturnService = mock[VatReturnService]
+        val mockPeriodService = mock[PeriodService]
+        val mockS4LaterRepository = mock[SaveForLaterRepository]
+        val mockRegConnector = mock[RegistrationConnector]
+
+        when(mockVatReturnService.get(any())) thenReturn Future.successful(Seq.empty)
+        when(mockVatReturnService.get(any(), any())) thenReturn Future.successful(None)
+        when(mockPeriodService.getReturnPeriods(any())) thenReturn Seq(periodQ2, periodQ3)
+        when(mockPeriodService.getNextPeriod(any())) thenReturn periodQ3
+        when(mockS4LaterRepository.get(any())) thenReturn Future.successful(Seq.empty)
+        when(mockRegConnector.getRegistration(any())) thenReturn
+          Future.successful(Some(RegistrationData.registration.copy(excludedTrader = Some(excludedTrader.copy(effectivePeriod = periodQ2)))))
+
+        val app =
+          applicationBuilder
+            .overrides(bind[VatReturnService].toInstance(mockVatReturnService))
+            .overrides(bind[PeriodService].toInstance(mockPeriodService))
+            .overrides(bind[SaveForLaterRepository].toInstance(mockS4LaterRepository))
+            .overrides(bind[RegistrationConnector].toInstance(mockRegConnector))
+            .overrides(bind[Clock].toInstance(stubClock))
+            .build()
+
+        running(app) {
+          val result = route(app, request).value
+
+          status(result) mustEqual OK
+          contentAsJson(result) mustEqual Json.toJson(CurrentReturns(
+            Seq(
+              Return.fromPeriod(periodQ2, Overdue, false, true)
+            ),
+            excluded = true,
+            finalReturnsCompleted = false
+          ))
+        }
+      }
+
+      "with an excluded trader's final return completed and can't start any more returns" in {
+        val periodQ2 = Period(2022, Q2)
+        val periodQ3 = Period(2022, Q3)
+        val mockVatReturnService = mock[VatReturnService]
+        val mockPeriodService = mock[PeriodService]
+        val mockS4LaterRepository = mock[SaveForLaterRepository]
+        val mockRegConnector = mock[RegistrationConnector]
+
+
+        when(mockVatReturnService.get(any())) thenReturn Future.successful(Seq(completeVatReturn.copy(period = periodQ2)))
+        when(mockVatReturnService.get(any(), any())) thenReturn Future.successful(Some(completeVatReturn.copy(period = periodQ2)))
+        when(mockPeriodService.getReturnPeriods(any())) thenReturn Seq(periodQ2, periodQ3)
+        when(mockPeriodService.getNextPeriod(any())) thenReturn periodQ3
+        when(mockS4LaterRepository.get(any())) thenReturn Future.successful(Seq.empty)
+        when(mockRegConnector.getRegistration(any())) thenReturn
+          Future.successful(Some(RegistrationData.registration.copy(excludedTrader = Some(excludedTrader.copy(effectivePeriod = periodQ2)))))
+
+        val app =
+          applicationBuilder
+            .overrides(bind[VatReturnService].toInstance(mockVatReturnService))
+            .overrides(bind[PeriodService].toInstance(mockPeriodService))
+            .overrides(bind[SaveForLaterRepository].toInstance(mockS4LaterRepository))
+            .overrides(bind[RegistrationConnector].toInstance(mockRegConnector))
+            .overrides(bind[Clock].toInstance(stubClock))
+            .build()
+
+        running(app) {
+          val result = route(app, request).value
+
+          status(result) mustEqual OK
+          contentAsJson(result) mustEqual Json.toJson(CurrentReturns(
+            Seq.empty,
+            excluded = true,
+            finalReturnsCompleted = true
+          ))
+        }
+      }
+
     }
 
     "must return Not Found when no registration is found for VRN" in {
