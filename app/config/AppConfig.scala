@@ -18,12 +18,11 @@ package config
 
 import models.Period
 import play.api.Configuration
-import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import javax.inject.{Inject, Singleton}
 
 @Singleton
-class AppConfig @Inject()(config: Configuration, servicesConfig: ServicesConfig) {
+class AppConfig @Inject()(config: Configuration) {
 
   val encryptionKey: String = config.get[String]("mongodb.encryption.key")
   val cacheTtl: Int = config.get[Int]("mongodb.timeToLiveInDays")
@@ -41,4 +40,5 @@ class AppConfig @Inject()(config: Configuration, servicesConfig: ServicesConfig)
   val ossEnrolment: String = config.get[String]("oss-enrolment")
   val ossEnrolmentEnabled: Boolean = config.get[Boolean]("features.oss-enrolment")
 
+  val exclusionsEnabled: Boolean = config.get[Boolean]("features.exclusions.enabled")
 }

@@ -23,6 +23,7 @@ import models.{PeriodWithStatus, SubmissionStatus}
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent}
 import repositories.SaveForLaterRepository
+import services.exclusions.ExclusionService
 import services.{PeriodService, VatReturnService}
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
@@ -35,6 +36,7 @@ class ReturnStatusController @Inject()(
                                         cc: AuthenticatedControllerComponents,
                                         vatReturnService: VatReturnService,
                                         periodService: PeriodService,
+                                        exclusionService: ExclusionService,
                                         saveForLaterRepository: SaveForLaterRepository,
                                         clock: Clock
                                       )(implicit ec: ExecutionContext)
@@ -54,10 +56,13 @@ class ReturnStatusController @Inject()(
       for {
         availablePeriodsWithStatus <- getStatuses(request.registration.commencementDate, request.vrn)
         savedAnswers <- saveForLaterRepository.get(request.vrn)
+        finalReturnsCompleted <- exclusionService.hasSubmittedFinalReturn()
       } yield {
         val answers = savedAnswers.sortBy(_.lastUpdated).lastOption
 
         val incompletePeriods = availablePeriodsWithStatus.filterNot(_.status == Complete)
+
+        val isExcluded = request.registration.excludedTrader.isDefined
 
         val periodInProgress = answers.map(answer => answer.period)
         val oldestPeriod = incompletePeriods.sortBy(_.period).headOption
@@ -70,7 +75,7 @@ class ReturnStatusController @Inject()(
           )
         )
 
-        Ok(Json.toJson(CurrentReturns(returns)))
+        Ok(Json.toJson(CurrentReturns(returns, isExcluded, finalReturnsCompleted)))
       }
   }
 
@@ -101,3 +106,4 @@ class ReturnStatusController @Inject()(
   }
 
 }
+

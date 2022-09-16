@@ -17,11 +17,11 @@
 package controllers.actions
 
 import config.AppConfig
-import play.api.mvc.Results.{NotFound, Unauthorized}
-import play.api.mvc.{ActionBuilder, ActionFunction, AnyContent, BodyParsers, Request, Result}
+import play.api.mvc.Results.Unauthorized
+import play.api.mvc._
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.auth.core.retrieve.~
-import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisationException, AuthorisedFunctions, Enrolments, InsufficientEnrolments}
+import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.http.{HeaderCarrier, UnauthorizedException}
 import uk.gov.hmrc.play.http.HeaderCarrierConverter

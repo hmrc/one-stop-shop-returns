@@ -14,19 +14,21 @@
  * limitations under the License.
  */
 
-package models.yourAccount
+package models.exclusions
 
+import models.Period
 import play.api.libs.json.{Json, OFormat}
+import uk.gov.hmrc.domain.Vrn
 
-case class CurrentReturns(
-                           returns: Seq[Return],
-                           excluded: Boolean,
-                           finalReturnsCompleted: Boolean
+case class ExcludedTrader(
+                           vrn: Vrn,
+                           exclusionSource: String,
+                           exclusionReason: Int,
+                           effectivePeriod: Period
                          )
 
+object ExcludedTrader {
 
-case object CurrentReturns {
+  implicit val format: OFormat[ExcludedTrader] = Json.format[ExcludedTrader]
 
-  implicit val format: OFormat[CurrentReturns] = Json.format[CurrentReturns]
 }
-

@@ -16,12 +16,13 @@
 
 package models.domain
 
+import models.exclusions.ExcludedTrader
 import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.domain.Vrn
 
 import java.time.LocalDate
 
-final case class Registration(
+case class Registration(
                                vrn: Vrn,
                                registeredCompanyName: String,
                                tradingNames: Seq[String],
@@ -34,7 +35,8 @@ final case class Registration(
                                bankDetails: BankDetails,
                                isOnlineMarketplace: Boolean,
                                niPresence: Option[NiPresence],
-                               dateOfFirstSale: Option[LocalDate]
+                               dateOfFirstSale: Option[LocalDate],
+                               excludedTrader: Option[ExcludedTrader]
                              )
 
 object Registration {
