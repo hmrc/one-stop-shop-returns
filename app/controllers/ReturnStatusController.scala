@@ -81,30 +81,45 @@ class ReturnStatusController @Inject()(
   }
 
   private def getStatuses(commencementLocalDate: LocalDate, vrn: Vrn, excludedTrader: Option[ExcludedTrader]): Future[Seq[PeriodWithStatus]] = {
-    val periods = periodService.getReturnPeriods(commencementLocalDate)
-    vatReturnService.get(vrn).map {
-      returns =>
-        val returnPeriods = returns.map(_.period)
-        val currentPeriods = periods.map {
-          period =>
-            if (isPeriodExcluded(period, excludedTrader)) {
-              PeriodWithStatus(period, SubmissionStatus.Excluded)
-            } else if (returnPeriods.contains(period)) {
-              PeriodWithStatus(period, SubmissionStatus.Complete)
-            } else {
-              if (LocalDate.now(clock).isAfter(period.paymentDeadline)) {
-                PeriodWithStatus(period, SubmissionStatus.Overdue)
-              } else {
-                PeriodWithStatus(period, SubmissionStatus.Due)
-              }
-            }
-        }
-        if (currentPeriods.forall(_.status == Complete)) {
-          val nextPeriod = periodService.getNextPeriod(periodService.getAllPeriods.maxBy(_.lastDay.toEpochDay))
-          currentPeriods ++ Seq(PeriodWithStatus(nextPeriod, SubmissionStatus.Next))
+
+    for {
+      periods <- Future {
+        periodService.getReturnPeriods(commencementLocalDate)
+      }
+      runningPeriod <- Future {
+        periodService.getRunningPeriod(LocalDate.now(clock))
+      }
+      nextPeriod <- Future {
+        if (periods.nonEmpty) {
+          periodService.getNextPeriod(
+            periods.maxBy(_.lastDay.toEpochDay)
+          )
         } else {
-          currentPeriods
+          runningPeriod
         }
+      }
+      returns <- vatReturnService.get(vrn)
+    } yield {
+      val returnPeriods = returns.map(_.period)
+      val currentPeriods = periods.map {
+        period =>
+          if (isPeriodExcluded(period, excludedTrader)) {
+            PeriodWithStatus(period, SubmissionStatus.Excluded)
+          } else if (returnPeriods.contains(period)) {
+            PeriodWithStatus(period, SubmissionStatus.Complete)
+          } else {
+            if (LocalDate.now(clock).isAfter(period.paymentDeadline)) {
+              PeriodWithStatus(period, SubmissionStatus.Overdue)
+            } else {
+              PeriodWithStatus(period, SubmissionStatus.Due)
+            }
+          }
+      }
+      if (currentPeriods.forall(_.status == Complete)) {
+        currentPeriods ++ Seq(PeriodWithStatus(nextPeriod, SubmissionStatus.Next))
+      } else {
+        currentPeriods
+      }
     }
   }
 
