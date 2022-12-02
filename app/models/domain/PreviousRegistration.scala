@@ -25,3 +25,21 @@ object PreviousRegistration {
 
   implicit val format: OFormat[PreviousRegistration] = Json.format[PreviousRegistration]
 }
+
+case class PreviousSchemeDetails(previousScheme: PreviousScheme, previousSchemeNumbers: PreviousSchemeNumbers)
+
+object PreviousSchemeDetails {
+
+  implicit val format: OFormat[PreviousSchemeDetails] = Json.format[PreviousSchemeDetails]
+}
+
+
+case class PreviousSchemeNumbers(
+                                  previousSchemeNumber: String,
+                                  previousIntermediaryNumber: Option[String]
+                                )
+
+object PreviousSchemeNumbers {
+
+  implicit val format: OFormat[PreviousSchemeNumbers] = Json.format[PreviousSchemeNumbers]
+}
