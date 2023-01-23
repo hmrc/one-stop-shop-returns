@@ -168,12 +168,30 @@ class CoreVatReturnService @Inject()(
 
     matchedRegistration.headOption.flatMap {
       case euRegistrationWithFE: RegistrationWithFixedEstablishment =>
-        extractFormattedTaxId(euRegistrationWithFE.taxIdentifier.value, euRegistrationWithFE.taxIdentifier.identifierType, euRegistrationWithFE.country.code)
+        val strippedTaxIdentifier = convertTaxIdentifierForTransfer(euRegistrationWithFE.taxIdentifier.value, euRegistrationWithFE.country.code)
+        extractFormattedTaxId(strippedTaxIdentifier, euRegistrationWithFE.taxIdentifier.identifierType, euRegistrationWithFE.country.code)
       case euRegistrationWithoutFEWithTaxDetails: RegistrationWithoutFixedEstablishmentWithTradeDetails =>
-        extractFormattedTaxId(euRegistrationWithoutFEWithTaxDetails.taxIdentifier.value, euRegistrationWithoutFEWithTaxDetails.taxIdentifier.identifierType, euRegistrationWithoutFEWithTaxDetails.country.code)
+        val strippedTaxIdentifier = convertTaxIdentifierForTransfer(euRegistrationWithoutFEWithTaxDetails.taxIdentifier.value, euRegistrationWithoutFEWithTaxDetails.country.code)
+        extractFormattedTaxId(strippedTaxIdentifier, euRegistrationWithoutFEWithTaxDetails.taxIdentifier.identifierType, euRegistrationWithoutFEWithTaxDetails.country.code)
       case _ =>
         logger.info("not sending tax id for no fixed establishment")
         None
+    }
+  }
+
+  private def convertTaxIdentifierForTransfer(identifier: String, countryCode: String): String = {
+
+    CountryWithValidationDetails.euCountriesWithVRNValidationRules.find(_.country.code == countryCode) match {
+      case Some(countryValidationDetails) =>
+        if(identifier.matches(countryValidationDetails.vrnRegex)) {
+          identifier.substring(2)
+        } else {
+          identifier
+        }
+
+      case _ =>
+        logger.error("Error occurred while getting country code regex, unable to convert identifier")
+        throw new IllegalStateException("Error occurred while getting country code regex, unable to convert identifier")
     }
   }
 
