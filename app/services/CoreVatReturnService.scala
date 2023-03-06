@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -162,47 +162,36 @@ class CoreVatReturnService @Inject()(
       case euRegistration: EuVatRegistration => euRegistration.country == country
       case euRegistrationWithFE: RegistrationWithFixedEstablishment => euRegistrationWithFE.country == country
       case euRegistrationWithoutTaxId: RegistrationWithoutTaxId => euRegistrationWithoutTaxId.country == country
+      case euRegistrationSendingGoods: RegistrationWithoutFixedEstablishmentWithTradeDetails => euRegistrationSendingGoods.country == country
       case euRegistrationWithoutFE: RegistrationWithoutFixedEstablishment => euRegistrationWithoutFE.country == country
     }
 
     matchedRegistration.headOption.flatMap {
-      case euRegistrationWithFETaxId: RegistrationWithFixedEstablishment =>
-        val taxIdValue = euRegistrationWithFETaxId.taxIdentifier.value
-        val countryCode = euRegistrationWithFETaxId.country.code
-        logger.info(s"sending vrn for fixed establishment for ${countryCode}")
-
-        val formattedTaxIdValue =
-          if (taxIdValue.startsWith(countryCode)) {
-            country.code match {
-              case "FR" => if (taxIdValue.length == 13) {
-                logger.info(s"Stripping country code for ${countryCode}")
-                taxIdValue.substring(countryCode.length)
-              } else {
-                taxIdValue
-              }
-              case "NL" => if (taxIdValue.length == 14) {
-                logger.info(s"Stripping country code for ${countryCode}")
-                taxIdValue.substring(countryCode.length)
-              } else {
-                taxIdValue
-              }
-              case _ =>
-                logger.info(s"Stripping country code for ${countryCode}")
-                taxIdValue.substring(countryCode.length)
-            }
-          } else {
-            taxIdValue
-          }
-
-        if (euRegistrationWithFETaxId.taxIdentifier.identifierType.equals(Vat)) {
-          Some(CoreEuTraderVatId(formattedTaxIdValue, euRegistrationWithFETaxId.country.code))
-        } else {
-          logger.info(s"Sending tax id for fixed establishment for ${countryCode}")
-          Some(CoreEuTraderTaxId(euRegistrationWithFETaxId.taxIdentifier.value, euRegistrationWithFETaxId.country.code))
-        }
+      case euRegistrationWithFE: RegistrationWithFixedEstablishment =>
+        val strippedTaxIdentifier = convertTaxIdentifierForTransfer(euRegistrationWithFE.taxIdentifier.value, euRegistrationWithFE.country.code)
+        extractFormattedTaxId(strippedTaxIdentifier, euRegistrationWithFE.taxIdentifier.identifierType, euRegistrationWithFE.country.code)
+      case euRegistrationWithoutFEWithTaxDetails: RegistrationWithoutFixedEstablishmentWithTradeDetails =>
+        val strippedTaxIdentifier = convertTaxIdentifierForTransfer(euRegistrationWithoutFEWithTaxDetails.taxIdentifier.value, euRegistrationWithoutFEWithTaxDetails.country.code)
+        extractFormattedTaxId(strippedTaxIdentifier, euRegistrationWithoutFEWithTaxDetails.taxIdentifier.identifierType, euRegistrationWithoutFEWithTaxDetails.country.code)
       case _ =>
         logger.info("not sending tax id for no fixed establishment")
         None
+    }
+  }
+
+  private def convertTaxIdentifierForTransfer(identifier: String, countryCode: String): String = {
+
+    CountryWithValidationDetails.euCountriesWithVRNValidationRules.find(_.country.code == countryCode) match {
+      case Some(countryValidationDetails) =>
+        if(identifier.matches(countryValidationDetails.vrnRegex)) {
+          identifier.substring(2)
+        } else {
+          identifier
+        }
+
+      case _ =>
+        logger.error("Error occurred while getting country code regex, unable to convert identifier")
+        throw new IllegalStateException("Error occurred while getting country code regex, unable to convert identifier")
     }
   }
 
@@ -231,6 +220,40 @@ class CoreVatReturnService @Inject()(
       period.year,
       period.quarter.toString.tail.toInt
     )
+  }
+
+  private def extractFormattedTaxId(taxIdValue: String, taxIdType: models.domain.EuTaxIdentifierType, countryCode: String): Option[CoreEuTraderId] = {
+    logger.info(s"sending vrn for fixed establishment for ${countryCode}")
+
+    val formattedTaxIdValue =
+      if (taxIdValue.startsWith(countryCode)) {
+        countryCode match {
+          case "FR" => if (taxIdValue.length == 13) {
+            logger.info(s"Stripping country code for ${countryCode}")
+            taxIdValue.substring(countryCode.length)
+          } else {
+            taxIdValue
+          }
+          case "NL" => if (taxIdValue.length == 14) {
+            logger.info(s"Stripping country code for ${countryCode}")
+            taxIdValue.substring(countryCode.length)
+          } else {
+            taxIdValue
+          }
+          case _ =>
+            logger.info(s"Stripping country code for ${countryCode}")
+            taxIdValue.substring(countryCode.length)
+        }
+      } else {
+        taxIdValue
+      }
+
+    if (taxIdType.equals(Vat)) {
+      Some(CoreEuTraderVatId(formattedTaxIdValue, countryCode))
+    } else {
+      logger.info(s"Sending tax id for fixed establishment for ${countryCode}")
+      Some(CoreEuTraderTaxId(taxIdValue, countryCode))
+    }
   }
 
 

@@ -18,17 +18,23 @@ package models.domain
 
 import models.{Enumerable, WithName}
 
-sealed trait VatDetailSource
+sealed trait PreviousScheme
 
-object VatDetailSource extends Enumerable.Implicits {
-  case object Etmp        extends WithName("etmp") with VatDetailSource
-  case object UserEntered extends WithName("userEntered") with VatDetailSource
-  case object Mixed       extends WithName("mixed") with VatDetailSource
+object PreviousScheme extends Enumerable.Implicits {
 
-  val values: Seq[VatDetailSource] = Seq(
-    Etmp, UserEntered, Mixed
+  case object OSSU extends WithName("ossu") with PreviousScheme
+  case object OSSNU extends WithName("ossnu") with PreviousScheme
+  case object IOSSWOI extends WithName("iosswoi") with PreviousScheme
+  case object IOSSWI extends WithName("iosswi") with PreviousScheme
+
+  val values: Seq[PreviousScheme] = Seq(
+    OSSU, OSSNU, IOSSWOI, IOSSWI
   )
 
-  implicit val enumerable: Enumerable[VatDetailSource] =
+  val iossValues: Seq[PreviousScheme] = Seq(
+    IOSSWOI, IOSSWI
+  )
+
+  implicit val enumerable: Enumerable[PreviousScheme] =
     Enumerable(values.map(v => v.toString -> v): _*)
 }

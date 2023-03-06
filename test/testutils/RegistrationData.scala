@@ -45,26 +45,36 @@ object RegistrationData extends Generators with EitherValues {
         RegistrationWithFixedEstablishment(
           Country("ES", "Spain"),
           EuTaxIdentifier(EuTaxIdentifierType.Vat, "123456789"),
-          FixedEstablishment("Spanish trading name", InternationalAddress("Line 1", None, "Town", None, None, Country("ES", "Spain")))
+          TradeDetails("Spanish trading name", InternationalAddress("Line 1", None, "Town", None, None, Country("ES", "Spain")))
         ),
         RegistrationWithFixedEstablishment(
           Country("DE", "Germany"),
           EuTaxIdentifier(EuTaxIdentifierType.Other, "DE123456789"),
-          FixedEstablishment("German trading name", InternationalAddress("Line 1", None, "Town", None, None, Country("DE", "Germany")))
+          TradeDetails("German trading name", InternationalAddress("Line 1", None, "Town", None, None, Country("DE", "Germany")))
         ),
         RegistrationWithFixedEstablishment(
           Country("BE", "Belgium"),
           EuTaxIdentifier(EuTaxIdentifierType.Vat, "BE123456789"),
-          FixedEstablishment("Belgium trading name", InternationalAddress("Line 1", None, "Town", None, None, Country("BE", "Belgium")))
+          TradeDetails("Belgium trading name", InternationalAddress("Line 1", None, "Town", None, None, Country("BE", "Belgium")))
         ),
         RegistrationWithFixedEstablishment(
           Country("PL", "Poland"),
           EuTaxIdentifier(EuTaxIdentifierType.Other, "PL123456789"),
-          FixedEstablishment("Polish trading name", InternationalAddress("Line 1", None, "Town", None, None, Country("PL", "Poland")))
+          TradeDetails("Polish trading name", InternationalAddress("Line 1", None, "Town", None, None, Country("PL", "Poland")))
         ),
-        RegistrationWithoutFixedEstablishment(
+        RegistrationWithoutFixedEstablishmentWithTradeDetails(
           Country("IT", "Italy"),
-          EuTaxIdentifier(EuTaxIdentifierType.Vat, "IT123456789")
+          EuTaxIdentifier(EuTaxIdentifierType.Vat, "IT123456789"),
+          TradeDetails(
+          "Name",
+          InternationalAddress(
+            "line 1",
+            None,
+            "town",
+            None,
+            None,
+            Country("IT", "Italy")
+          ))
         ),
         RegistrationWithoutFixedEstablishment(
           Country("NL", "Netherlands"),
@@ -78,7 +88,22 @@ object RegistrationData extends Generators with EitherValues {
       websites = Seq("website1", "website2"),
       commencementDate = LocalDate.now(),
       previousRegistrations = Seq(
-        PreviousRegistration(Country("DE", "Germany"), "DE123")
+        PreviousRegistrationNew(
+          country = Country("DE", "Germany"),
+          previousSchemesDetails = Seq(
+            PreviousSchemeDetails(
+              previousScheme = PreviousScheme.OSSU,
+              previousSchemeNumbers = PreviousSchemeNumbers(
+                previousSchemeNumber = "DE123",
+                previousIntermediaryNumber = None
+              )
+            )
+          )
+        ),
+        PreviousRegistrationLegacy(
+          country = Country("BE", "Belgium"),
+          vatNumber = "BE123"
+        )
       ),
       bankDetails = BankDetails("Account name", Some(bic), iban),
       isOnlineMarketplace = false,
