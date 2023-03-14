@@ -38,6 +38,8 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach with Pri
     val salesDetails1 = arbitrary[SalesDetails].sample.value
     val salesDetails2 = arbitrary[SalesDetails].sample.value
     val salesDetails3 = arbitrary[SalesDetails].sample.value
+    val salesDetails4 = arbitrary[SalesDetails].sample.value
+    val salesDetails5 = arbitrary[SalesDetails].sample.value
     val returnReference = ReturnReference(vrn, period)
     val now = Instant.now()
     val vatReturn = VatReturn(
@@ -74,12 +76,52 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach with Pri
       submissionReceived = now,
       lastUpdated = now
     )
+    val vatReturn2 = VatReturn(
+      vrn = vrn,
+      period = period,
+      reference = returnReference,
+      paymentReference = PaymentReference(vrn, period),
+      startDate = Some(period.firstDay),
+      endDate = Some(period.lastDay),
+      salesFromNi = List(
+        SalesToCountry(
+          country1,
+          List(
+            salesDetails1,
+            salesDetails4
+          )
+        )
+      ),
+      salesFromEu = List(
+        SalesFromEuCountry(
+          country2,
+          None,
+          List(
+            SalesToCountry(
+              country1,
+              List(salesDetails2)
+            ),
+            SalesToCountry(
+              country3,
+              List(
+                salesDetails3,
+                salesDetails5
+              )
+            )
+          )
+        )
+      ),
+      submissionReceived = now,
+      lastUpdated = now
+    )
 
     "convert from VatReturn to CoreVatReturn" - {
 
       val correctionPayload = CorrectionPayload(vrn, period, List.empty, now, now)
 
       val expectedTotal = salesDetails1.vatOnSales.amount + salesDetails2.vatOnSales.amount + salesDetails3.vatOnSales.amount
+
+      val expectedTotal2 = salesDetails1.vatOnSales.amount + salesDetails2.vatOnSales.amount + salesDetails3.vatOnSales.amount + salesDetails4.vatOnSales.amount + salesDetails5.vatOnSales.amount
 
       val expectedResultCoreVatReturn = CoreVatReturn(
         vatReturnReferenceNumber = returnReference.value,
@@ -146,6 +188,85 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach with Pri
         )
       )
 
+      val expectedResultCoreVatReturn2 = CoreVatReturn(
+        vatReturnReferenceNumber = returnReference.value,
+        version = vatReturn.lastUpdated,
+        traderId = CoreTraderId(vrn.vrn, "XI"),
+        period = CorePeriod(period.year, period.quarter.toString.tail.toInt),
+        startDate = period.firstDay,
+        endDate = period.lastDay,
+        submissionDateTime = now,
+        totalAmountVatDueGBP = expectedTotal2,
+        msconSupplies = List(
+          CoreMsconSupply(
+            msconCountryCode = country1.code,
+            balanceOfVatDueGBP = salesDetails1.vatOnSales.amount + salesDetails4.vatOnSales.amount + salesDetails2.vatOnSales.amount,
+            grandTotalMsidGoodsGBP = salesDetails1.vatOnSales.amount + salesDetails4.vatOnSales.amount,
+            grandTotalMsestGoodsGBP = salesDetails2.vatOnSales.amount,
+            correctionsTotalGBP = BigDecimal(0),
+            msidSupplies = List(
+              CoreSupply(
+                supplyType = "GOODS",
+                vatRate = salesDetails1.vatRate.rate,
+                vatRateType = salesDetails1.vatRate.rateType.toString,
+                taxableAmountGBP = salesDetails1.netValueOfSales,
+                vatAmountGBP = salesDetails1.vatOnSales.amount
+              ),
+              CoreSupply(
+                supplyType = "GOODS",
+                vatRate = salesDetails4.vatRate.rate,
+                vatRateType = salesDetails4.vatRate.rateType.toString,
+                taxableAmountGBP = salesDetails4.netValueOfSales,
+                vatAmountGBP = salesDetails4.vatOnSales.amount
+              ),
+            ),
+            msestSupplies = List(
+              CoreMsestSupply(
+                Some(country2.code),
+                None,
+                List(CoreSupply(
+                  supplyType = "GOODS",
+                  vatRate = salesDetails2.vatRate.rate,
+                  vatRateType = salesDetails2.vatRate.rateType.toString,
+                  taxableAmountGBP = salesDetails2.netValueOfSales,
+                  vatAmountGBP = salesDetails2.vatOnSales.amount
+                ))
+              )
+            ),
+            corrections = List.empty
+          ),
+          CoreMsconSupply(
+            msconCountryCode = country3.code,
+            balanceOfVatDueGBP = salesDetails3.vatOnSales.amount + salesDetails5.vatOnSales.amount,
+            grandTotalMsidGoodsGBP = BigDecimal(0),
+            grandTotalMsestGoodsGBP = salesDetails3.vatOnSales.amount + salesDetails5.vatOnSales.amount,
+            correctionsTotalGBP = BigDecimal(0),
+            msidSupplies = List.empty,
+            msestSupplies = List(
+              CoreMsestSupply(
+                Some(country2.code),
+                None,
+                List(CoreSupply(
+                  supplyType = "GOODS",
+                  vatRate = salesDetails3.vatRate.rate,
+                  vatRateType = salesDetails3.vatRate.rateType.toString,
+                  taxableAmountGBP = salesDetails3.netValueOfSales,
+                  vatAmountGBP = salesDetails3.vatOnSales.amount
+                ),
+                CoreSupply(
+                  supplyType = "GOODS",
+                  vatRate = salesDetails5.vatRate.rate,
+                  vatRateType = salesDetails5.vatRate.rateType.toString,
+                  taxableAmountGBP = salesDetails5.netValueOfSales,
+                  vatAmountGBP = salesDetails5.vatOnSales.amount
+                ))
+              )
+            ),
+            corrections = List.empty
+          )
+        )
+      )
+
       "successful when registration returns a registration" in {
         when(vatReturnSalesService.getTotalVatOnSalesAfterCorrection(vatReturn, Some(correctionPayload))).thenReturn(
           expectedTotal
@@ -155,6 +276,17 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach with Pri
         val result = service.toCore(vatReturn, correctionPayload).futureValue
 
         result mustBe expectedResultCoreVatReturn
+      }
+
+      "successful when more complex registration returns a registration" in {
+        when(vatReturnSalesService.getTotalVatOnSalesAfterCorrection(vatReturn2, Some(correctionPayload))).thenReturn(
+          expectedTotal2
+        )
+        when(registrationConnector.getRegistration()(any())) thenReturn Future.successful(Some(RegistrationData.registration))
+
+        val result = service.toCore(vatReturn2, correctionPayload).futureValue
+
+        result mustBe expectedResultCoreVatReturn2
       }
 
       "fails when registration returns empty" in {

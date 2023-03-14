@@ -103,10 +103,9 @@ class CoreVatReturnService @Inject()(
 
     (for {
       saleToCountry <- salesToCountry
-      amount <- saleToCountry.amounts
     } yield {
       saleToCountry.countryOfConsumption ->
-        List(toCoreSupply(amount))
+        saleToCountry.amounts.map(toCoreSupply)
     }).toMap
   }
 
