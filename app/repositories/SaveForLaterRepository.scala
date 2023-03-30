@@ -82,14 +82,14 @@ class SaveForLaterRepository @Inject()(
         replacement = encryptedAnswers,
         options     = ReplaceOptions().upsert(true)
       )
-      .toFuture
+      .toFuture()
       .map(_ => savedUserAnswers)
   }
 
   def get(vrn: Vrn): Future[Seq[SavedUserAnswers]] =
     collection
       .find(Filters.equal("vrn", toBson(vrn)))
-      .toFuture
+      .toFuture()
       .map(_.map {
         answers =>
           encryptor.decryptAnswers(answers, answers.vrn, encryptionKey)
@@ -102,7 +102,7 @@ class SaveForLaterRepository @Inject()(
           Filters.equal("vrn", toBson(vrn)),
           Filters.equal("period", toBson(period))
         )
-      ).headOption
+      ).headOption()
       .map(_.map {
         answers =>
           encryptor.decryptAnswers(answers, answers.vrn, encryptionKey)
@@ -111,6 +111,6 @@ class SaveForLaterRepository @Inject()(
   def clear(vrn: Vrn, period: Period): Future[Boolean] =
     collection
       .deleteOne(byVrnAndPeriod(vrn, period))
-      .toFuture
+      .toFuture()
       .map(_ => true)
 }

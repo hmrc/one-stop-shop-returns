@@ -18,7 +18,6 @@ package services
 
 import models.{Period, PeriodYear}
 import models.Quarter._
-import org.mongodb.scala.internal.MapObservable
 
 import java.time.{Clock, LocalDate, Month}
 import javax.inject.Inject

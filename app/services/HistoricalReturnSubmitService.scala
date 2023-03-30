@@ -139,7 +139,7 @@ class HistoricalReturnSubmitServiceImpl @Inject()(
           }
         }
 
-        Future.sequence[CoreVatReturn, Seq](convertedReturnsAndCorrections)
+        Future.sequence(convertedReturnsAndCorrections)
       }
 
 

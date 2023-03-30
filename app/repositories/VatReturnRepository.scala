@@ -63,8 +63,8 @@ class VatReturnRepository @Inject()(
     val encryptedCorrectionPayload = correctionEncryptor.encryptCorrectionPayload(correction, vatReturn.vrn, encryptionKey)
 
     for {
-      _ <- ensureIndexes
-      _ <- correctionRepository.ensureIndexes
+      _ <- ensureIndexes()
+      _ <- correctionRepository.ensureIndexes()
       result <- withSessionAndTransaction { session =>
         for {
           _ <- collection.insertOne(session, encryptedVatReturn).toFuture()
@@ -84,7 +84,7 @@ class VatReturnRepository @Inject()(
 
     collection
       .insertOne(encryptedVatReturn)
-      .toFuture
+      .toFuture()
       .map(_ => Some(vatReturn))
       .recover {
         case Duplicate(_) => None
@@ -103,7 +103,7 @@ class VatReturnRepository @Inject()(
   def get(vrn: Vrn): Future[Seq[VatReturn]] =
     collection
       .find(Filters.equal("vrn", toBson(vrn)))
-      .toFuture
+      .toFuture()
       .map(_.map {
         vatReturn =>
           returnEncryptor.decryptReturn(vatReturn, vatReturn.vrn, encryptionKey)
@@ -113,7 +113,7 @@ class VatReturnRepository @Inject()(
     collection
       .find(
         Filters.in("period", periods.map(toBson(_)):_*))
-      .toFuture
+      .toFuture()
       .map(_.map {
         vatReturn =>
           returnEncryptor.decryptReturn(vatReturn, vatReturn.vrn, encryptionKey)
@@ -127,7 +127,7 @@ class VatReturnRepository @Inject()(
           Filters.equal("vrn", toBson(vrn)),
           Filters.equal("period", toBson(period))
         )
-      ).headOption
+      ).headOption()
       .map(_.map {
         vatReturn =>
           returnEncryptor.decryptReturn(vatReturn, vatReturn.vrn, encryptionKey)

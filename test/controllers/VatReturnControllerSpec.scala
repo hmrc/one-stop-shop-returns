@@ -245,7 +245,7 @@ class VatReturnControllerSpec
         Gen
           .nonEmptyListOf(arbitrary[VatReturn])
           .sample.value
-          .map(r => r copy (vrn = vrn, reference = ReturnReference(vrn, r.period)))
+          .map(r => r.copy (vrn = vrn, reference = ReturnReference(vrn, r.period)))
 
       when(mockService.get(any())) thenReturn Future.successful(returns)
 
@@ -305,7 +305,7 @@ class VatReturnControllerSpec
         Gen
           .nonEmptyListOf(arbitrary[VatReturn])
           .sample.value
-          .map(r => r copy (vrn = vrn, reference = ReturnReference(vrn, r.period))).head
+          .map(r => r.copy (vrn = vrn, reference = ReturnReference(vrn, r.period))).head
 
       when(mockService.get(any(), any())) thenReturn Future.successful(Some(vatReturn))
 

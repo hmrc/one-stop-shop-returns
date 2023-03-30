@@ -156,7 +156,7 @@ class FinancialDataConnectorSpec extends SpecBase with WireMockHelper {
           val connector = application.injector.instanceOf[FinancialDataConnector]
           whenReady(connector.getFinancialData(vrn, queryParameters), Timeout(Span(30, Seconds))) { exp =>
             exp.isLeft mustBe true
-            exp.left.get mustBe a[DesErrorResponse]
+            exp.left.toOption.get mustBe a[DesErrorResponse]
           }
 
         }

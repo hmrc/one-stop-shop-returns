@@ -3,8 +3,8 @@ package repositories
 import config.AppConfig
 import crypto.{CorrectionEncryptor, CountryEncryptor, ReturnEncryptor, SecureGCMCipher}
 import generators.Generators
-import models.corrections.CorrectionPayload
 import models.{EncryptedVatReturn, Period, ReturnReference, VatReturn}
+import models.corrections.CorrectionPayload
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalatest.OptionValues
@@ -54,7 +54,7 @@ class VatReturnRepositorySpec
 
       val vatReturn1    = arbitrary[VatReturn].sample.value
       val return2Period = vatReturn1.period copy (year = vatReturn1.period.year + 1)
-      val vatReturn2    = vatReturn1 copy (
+      val vatReturn2    = vatReturn1.copy (
         period    = return2Period,
         reference = ReturnReference(vatReturn1.vrn, return2Period)
       )
@@ -74,7 +74,7 @@ class VatReturnRepositorySpec
 
       val vatReturn1 = arbitrary[VatReturn].sample.value
       val vrn2       = Vrn(StringUtils.rotateDigitsInString(vatReturn1.vrn.vrn).mkString)
-      val vatReturn2 = vatReturn1 copy (
+      val vatReturn2 = vatReturn1.copy (
         vrn       = vrn2,
         reference = ReturnReference(vrn2, vatReturn1.period)
       )
@@ -115,7 +115,7 @@ class VatReturnRepositorySpec
       val correction1    = arbitrary[CorrectionPayload].sample.value.copy(period = vatReturn1.period)
       val return2Period = vatReturn1.period copy (year = vatReturn1.period.year + 1)
       val correction2Period = correction1.period copy (year = correction1.period.year + 1)
-      val vatReturn2    = vatReturn1 copy (
+      val vatReturn2    = vatReturn1.copy (
         period    = return2Period,
         reference = ReturnReference(vatReturn1.vrn, return2Period)
       )
@@ -148,7 +148,7 @@ class VatReturnRepositorySpec
       val vatReturn1 = arbitrary[VatReturn].sample.value
       val correction1 = arbitrary[CorrectionPayload].sample.value.copy(period = vatReturn1.period)
       val vrn2       = Vrn(StringUtils.rotateDigitsInString(vatReturn1.vrn.vrn).mkString)
-      val vatReturn2 = vatReturn1 copy (
+      val vatReturn2 = vatReturn1.copy (
         vrn       = vrn2,
         reference = ReturnReference(vrn2, vatReturn1.period)
       )
@@ -191,12 +191,12 @@ class VatReturnRepositorySpec
 
       val vatReturn1    = arbitrary[VatReturn].sample.value
       val return2Period = vatReturn1.period copy (year = vatReturn1.period.year + 1)
-      val vatReturn2    = vatReturn1 copy (
+      val vatReturn2    = vatReturn1.copy (
         period    = return2Period,
         reference = ReturnReference(vatReturn1.vrn, return2Period)
       )
       val vrn3       = Vrn(StringUtils.rotateDigitsInString(vatReturn1.vrn.vrn).mkString)
-      val vatReturn3 = vatReturn1 copy (
+      val vatReturn3 = vatReturn1.copy (
         vrn       = vrn3,
         reference = ReturnReference(vrn3, vatReturn1.period)
       )
@@ -217,12 +217,12 @@ class VatReturnRepositorySpec
 
       val vatReturn1    = arbitrary[VatReturn].sample.value
       val return2Period = vatReturn1.period copy (year = vatReturn1.period.year + 1)
-      val vatReturn2    = vatReturn1 copy (
+      val vatReturn2    = vatReturn1.copy (
         period    = return2Period,
         reference = ReturnReference(vatReturn1.vrn, return2Period)
       )
       val vrn3       = Vrn(StringUtils.rotateDigitsInString(vatReturn1.vrn.vrn).mkString)
-      val vatReturn3 = vatReturn1 copy (
+      val vatReturn3 = vatReturn1.copy (
         vrn       = vrn3,
         reference = ReturnReference(vrn3, vatReturn1.period)
       )
@@ -243,12 +243,12 @@ class VatReturnRepositorySpec
 
       val vatReturn1    = arbitrary[VatReturn].sample.value
       val return2Period = vatReturn1.period copy (year = vatReturn1.period.year + 1)
-      val vatReturn2    = vatReturn1 copy (
+      val vatReturn2    = vatReturn1.copy (
         period    = return2Period,
         reference = ReturnReference(vatReturn1.vrn, return2Period)
       )
       val vrn3       = Vrn(StringUtils.rotateDigitsInString(vatReturn1.vrn.vrn).mkString)
-      val vatReturn3 = vatReturn1 copy (
+      val vatReturn3 = vatReturn1.copy (
         vrn       = vrn3,
         reference = ReturnReference(vrn3, vatReturn1.period)
       )
