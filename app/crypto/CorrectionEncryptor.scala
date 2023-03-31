@@ -16,8 +16,7 @@
 
 package crypto
 
-import models._
-import models.corrections.{CorrectionPayload, CorrectionToCountry, EncryptedCorrectionPayload, EncryptedCorrectionToCountry, EncryptedPeriodWithCorrections, PeriodWithCorrections}
+import models.corrections._
 import uk.gov.hmrc.domain.Vrn
 
 import javax.inject.Inject

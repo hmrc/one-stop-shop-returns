@@ -1,10 +1,10 @@
 # microservice specific routes
 
-POST        /vat-returns                                            controllers.VatReturnController.post
-GET         /vat-returns                                            controllers.VatReturnController.list
-GET         /vat-returns/period/:period                                    controllers.VatReturnController.get(period: Period)
+POST        /vat-returns                                            controllers.VatReturnController.post()
+GET         /vat-returns                                            controllers.VatReturnController.list()
+GET         /vat-returns/period/:period                             controllers.VatReturnController.get(period: Period)
 
-POST        /vat-return-with-corrections                            controllers.VatReturnController.postWithCorrection
+POST        /vat-return-with-corrections                            controllers.VatReturnController.postWithCorrection()
 
 GET         /vat-returns/statuses/:commencementDate                 controllers.ReturnStatusController.listStatuses(commencementDate: LocalDate)
 GET         /vat-returns/current-returns/:vrn                       controllers.ReturnStatusController.getCurrentReturns(vrn: String)
@@ -16,11 +16,11 @@ GET         /financial-data/charge-history/:commencementDate        controllers.
 
 GET         /financial-data/outstanding-payments                    controllers.FinancialDataController.getOutstandingAmounts()
 
-GET         /corrections                                            controllers.CorrectionController.list
+GET         /corrections                                            controllers.CorrectionController.list()
 GET         /corrections/:period                                    controllers.CorrectionController.get(period: Period)
 GET         /corrections-for-period/:period                         controllers.CorrectionController.getByCorrectionPeriod(period: Period)
-POST        /save-for-later                                         controllers.SaveForLaterController.post
-GET         /save-for-later                                         controllers.SaveForLaterController.get
+POST        /save-for-later                                         controllers.SaveForLaterController.post()
+GET         /save-for-later                                         controllers.SaveForLaterController.get()
 GET         /save-for-later/delete/:period                          controllers.SaveForLaterController.delete(period:Period)
 
 GET         /financial-data/prepare/:vrn                            controllers.FinancialDataController.prepareFinancialData(vrn: String)

@@ -96,7 +96,7 @@ class CoreVatReturnConnectorSpec extends SpecBase with WireMockHelper {
           val connector = app.injector.instanceOf[CoreVatReturnConnector]
           whenReady(connector.submit(coreVatReturn), Timeout(Span(30, Seconds))) { exp =>
             exp.isLeft mustBe true
-            exp.left.get mustBe a[EisErrorResponse]
+            exp.left.toOption.get mustBe a[EisErrorResponse]
           }
 
         }
@@ -121,7 +121,7 @@ class CoreVatReturnConnectorSpec extends SpecBase with WireMockHelper {
           val connector = app.injector.instanceOf[CoreVatReturnConnector]
           val result = connector.submit(coreVatReturn).futureValue
 
-          val expectedResponse = EisErrorResponse(CoreErrorResponse(result.left.get.errorDetail.timestamp, result.left.get.errorDetail.transactionId, s"UNEXPECTED_404", errorResponseJson))
+          val expectedResponse = EisErrorResponse(CoreErrorResponse(result.left.toOption.get.errorDetail.timestamp, result.left.toOption.get.errorDetail.transactionId, s"UNEXPECTED_404", errorResponseJson))
 
           result mustBe Left(expectedResponse)
         }
@@ -143,7 +143,7 @@ class CoreVatReturnConnectorSpec extends SpecBase with WireMockHelper {
           val connector = app.injector.instanceOf[CoreVatReturnConnector]
           val result = connector.submit(coreVatReturn).futureValue
 
-          val expectedResponse = EisErrorResponse(CoreErrorResponse(result.left.get.errorDetail.timestamp, result.left.get.errorDetail.transactionId, "UNEXPECTED_404", "The response body was empty"))
+          val expectedResponse = EisErrorResponse(CoreErrorResponse(result.left.toOption.get.errorDetail.timestamp, result.left.toOption.get.errorDetail.transactionId, "UNEXPECTED_404", "The response body was empty"))
 
           result mustBe Left(expectedResponse)
         }

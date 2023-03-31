@@ -422,7 +422,7 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach with Pri
     "with fixed establishment" - {
       "must return a Some(CoreEuTraderVatId) and strip country code when registration contains a VatId and fixed establishment" in {
 
-        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
+        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]](Symbol("getEuTraderIdForCountry"))
 
         val expected = Some(CoreEuTraderVatId("123456789", "BE"))
 
@@ -433,7 +433,7 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach with Pri
 
       "must return a Some(CoreEuTraderVatId) and not strip country code when it's not there when registration contains a VatId and fixed establishment" in {
 
-        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
+        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]](Symbol("getEuTraderIdForCountry"))
 
         val expected = Some(CoreEuTraderVatId("123456789", "ES"))
 
@@ -444,7 +444,7 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach with Pri
 
       "must return a Some(CoreEuTraderVatId) and not strip country code for France when registration contains a VatId shorter than 13 characters and fixed establishment" in {
 
-        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
+        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]](Symbol("getEuTraderIdForCountry"))
 
         val expected = Some(CoreEuTraderVatId("FR123456789", "FR"))
 
@@ -460,7 +460,7 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach with Pri
 
       "must return a Some(CoreEuTraderVatId) and strip country code for France when registration contains a VatId of 13 chars and fixed establishment" in {
 
-        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
+        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]](Symbol("getEuTraderIdForCountry"))
 
         val expected = Some(CoreEuTraderVatId("FR123456789", "FR"))
 
@@ -476,7 +476,7 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach with Pri
 
       "must return a Some(CoreEuTraderVatId) and not strip country code for Netherlands when registration contains a VatId shorter than 14 characters and fixed establishment" in {
 
-        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
+        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]](Symbol("getEuTraderIdForCountry"))
 
         val expected = Some(CoreEuTraderVatId("NL1234567890", "NL"))
 
@@ -492,7 +492,7 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach with Pri
 
       "must return a Some(CoreEuTraderVatId) and strip country code for Netherlands when registration contains a VatId of 14 chars and fixed establishment" in {
 
-        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
+        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]](Symbol("getEuTraderIdForCountry"))
 
         val expected = Some(CoreEuTraderVatId("NL1234567890", "NL"))
 
@@ -507,7 +507,7 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach with Pri
       }
 
       "must return a Some(CoreEuTraderTaxId) when registration contains a TaxId" in {
-        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
+        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]](Symbol("getEuTraderIdForCountry"))
 
         val expected = Some(CoreEuTraderTaxId("PL123456789", "PL"))
 
@@ -520,7 +520,7 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach with Pri
     "without fixed establishment with send goods trade details" - {
       "must return a Some(CoreEuTraderVatId) and strip country code when registration contains a VatId and fixed establishment" in {
 
-        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
+        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]](Symbol("getEuTraderIdForCountry"))
 
         val expected = Some(CoreEuTraderVatId("123456789", "ES"))
 
@@ -535,7 +535,7 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach with Pri
 
       "must return a Some(CoreEuTraderVatId) and not strip country code when it's not there when registration contains a VatId and fixed establishment" in {
 
-        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
+        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]](Symbol("getEuTraderIdForCountry"))
 
         val expected = Some(CoreEuTraderVatId("123456789", "ES"))
 
@@ -550,7 +550,7 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach with Pri
 
       "must return a Some(CoreEuTraderVatId) and not strip country code for France when registration contains a VatId shorter than 13 characters and fixed establishment" in {
 
-        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
+        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]](Symbol("getEuTraderIdForCountry"))
 
         val expected = Some(CoreEuTraderVatId("FR123456789", "FR"))
 
@@ -566,7 +566,7 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach with Pri
 
       "must return a Some(CoreEuTraderVatId) and strip country code for France when registration contains a VatId of 13 chars and fixed establishment" in {
 
-        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
+        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]](Symbol("getEuTraderIdForCountry"))
 
         val expected = Some(CoreEuTraderVatId("FR123456789", "FR"))
 
@@ -582,7 +582,7 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach with Pri
 
       "must return a Some(CoreEuTraderVatId) and not strip country code for Netherlands when registration contains a VatId shorter than 14 characters and fixed establishment" in {
 
-        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
+        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]](Symbol("getEuTraderIdForCountry"))
 
         val expected = Some(CoreEuTraderVatId("NL1234567890", "NL"))
 
@@ -598,7 +598,7 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach with Pri
 
       "must return a Some(CoreEuTraderVatId) and strip country code for Netherlands when registration contains a VatId of 14 chars and fixed establishment" in {
 
-        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
+        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]](Symbol("getEuTraderIdForCountry"))
 
         val expected = Some(CoreEuTraderVatId("NL1234567890", "NL"))
 
@@ -613,7 +613,7 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach with Pri
       }
 
       "must return a Some(CoreEuTraderTaxId) when registration contains a TaxId" in {
-        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
+        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]](Symbol("getEuTraderIdForCountry"))
 
         val expected = Some(CoreEuTraderTaxId("PL123456789", "PL"))
 
@@ -632,7 +632,7 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach with Pri
     "with no fixed establishment and no trade details" - {
       "must return a None when registration contains a VatId" in {
 
-        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
+        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]](Symbol("getEuTraderIdForCountry"))
 
         val expected = None
 
@@ -649,7 +649,7 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach with Pri
       }
 
       "must return a None when registration contains a TaxId" in {
-        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
+        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]](Symbol("getEuTraderIdForCountry"))
 
         val expected = None
 
@@ -659,7 +659,7 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach with Pri
       }
 
       "must return a None when registration contains a VatId as a String" in {
-        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
+        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]](Symbol("getEuTraderIdForCountry"))
 
         val expected = None
 
@@ -669,7 +669,7 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach with Pri
       }
 
       "must return None when registration does not contains a VatId or TaxId" in {
-        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]]('getEuTraderIdForCountry)
+        val getEuTraderIdForCountry = PrivateMethod[Option[CoreEuTraderId]](Symbol("getEuTraderIdForCountry"))
 
         val expected = None
 

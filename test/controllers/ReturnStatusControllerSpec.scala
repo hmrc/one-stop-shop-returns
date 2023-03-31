@@ -80,7 +80,7 @@ class ReturnStatusControllerSpec
         Gen
           .nonEmptyListOf(arbitrary[VatReturn])
           .sample.value
-          .map(r => r copy(vrn = vrn, reference = ReturnReference(vrn, r.period))).head
+          .map(r => r.copy(vrn = vrn, reference = ReturnReference(vrn, r.period))).head
 
       when(mockVatReturnService.get(any())) thenReturn Future.successful(Seq(vatReturn.copy(period = period)))
       when(mockPeriodService.getReturnPeriods(any())) thenReturn Seq(period)
@@ -120,7 +120,7 @@ class ReturnStatusControllerSpec
         Gen
           .nonEmptyListOf(arbitrary[VatReturn])
           .sample.value
-          .map(r => r copy(vrn = vrn, reference = ReturnReference(vrn, r.period))).head
+          .map(r => r.copy(vrn = vrn, reference = ReturnReference(vrn, r.period))).head
 
       when(mockVatReturnService.get(any())) thenReturn Future.successful(Seq(vatReturn.copy(period = period)))
       when(mockPeriodService.getReturnPeriods(any())) thenReturn Seq(period, period2021Q4, period2022Q1)
@@ -203,7 +203,7 @@ class ReturnStatusControllerSpec
           Gen
             .nonEmptyListOf(arbitrary[VatReturn])
             .sample.value
-            .map(r => r copy(vrn = vrn, reference = ReturnReference(vrn, r.period))).head
+            .map(r => r.copy(vrn = vrn, reference = ReturnReference(vrn, r.period))).head
 
         when(mockVatReturnService.get(any())) thenReturn Future.successful(Seq(vatReturn.copy(period = period)))
         when(mockPeriodService.getReturnPeriods(any())) thenReturn Seq(period)
