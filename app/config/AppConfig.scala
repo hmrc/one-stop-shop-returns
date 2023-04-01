@@ -41,4 +41,6 @@ class AppConfig @Inject()(config: Configuration) {
   val ossEnrolmentEnabled: Boolean = config.get[Boolean]("features.oss-enrolment")
 
   val exclusionsEnabled: Boolean = config.get[Boolean]("features.exclusions.enabled")
+
+  val externalEntryTtlDays: Int = config.get[Int]("features.externalEntry.ttlInDays")
 }
