@@ -26,3 +26,4 @@ GET         /save-for-later/delete/:period                          controllers.
 GET         /financial-data/prepare/:vrn                            controllers.FinancialDataController.prepareFinancialData(vrn: String)
 
 POST        /external-entry/:page                                   controllers.external.ExternalEntryController.onExternal(page: String, period: Option[Period] ?= None, lang: Option[String] ?= None)
+GET         /external-entry                                         controllers.external.ExternalEntryController.getExternalEntry()
