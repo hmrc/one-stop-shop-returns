@@ -27,6 +27,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import utils.CorrectionUtils
 import utils.ObfuscationUtils.obfuscateVrn
 
+import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -54,7 +55,7 @@ class CoreVatReturnService @Inject()(
 
     Future.successful(CoreVatReturn(
       vatReturnReferenceNumber = vatReturn.reference.value,
-      version = vatReturn.lastUpdated,
+      version = vatReturn.lastUpdated.truncatedTo(ChronoUnit.MILLIS),
       traderId = CoreTraderId(
         vatNumber = vatReturn.vrn.vrn,
         issuedBy = "XI"
@@ -65,7 +66,7 @@ class CoreVatReturnService @Inject()(
       ),
       startDate = vatReturn.startDate.getOrElse(vatReturn.period.firstDay),
       endDate = vatReturn.endDate.getOrElse(vatReturn.period.lastDay),
-      submissionDateTime = vatReturn.submissionReceived,
+      submissionDateTime = vatReturn.submissionReceived.truncatedTo(ChronoUnit.MILLIS),
       totalAmountVatDueGBP = totalVatDue,
       msconSupplies = toCoreMsconSupplies(vatReturn.salesFromNi, vatReturn.salesFromEu, correctionPayload.corrections, amountsToCountries, registration)
     ))

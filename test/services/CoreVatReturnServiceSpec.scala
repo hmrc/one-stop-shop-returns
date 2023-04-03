@@ -15,6 +15,7 @@ import testutils.RegistrationData
 import uk.gov.hmrc.http.HeaderCarrier
 
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.math.BigDecimal.RoundingMode
@@ -125,12 +126,12 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach with Pri
 
       val expectedResultCoreVatReturn = CoreVatReturn(
         vatReturnReferenceNumber = returnReference.value,
-        version = vatReturn.lastUpdated,
+        version = vatReturn.lastUpdated.truncatedTo(ChronoUnit.MILLIS),
         traderId = CoreTraderId(vrn.vrn, "XI"),
         period = CorePeriod(period.year, period.quarter.toString.tail.toInt),
         startDate = period.firstDay,
         endDate = period.lastDay,
-        submissionDateTime = now,
+        submissionDateTime = now.truncatedTo(ChronoUnit.MILLIS),
         totalAmountVatDueGBP = expectedTotal,
         msconSupplies = List(
           CoreMsconSupply(
@@ -190,12 +191,12 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach with Pri
 
       val expectedResultCoreVatReturn2 = CoreVatReturn(
         vatReturnReferenceNumber = returnReference.value,
-        version = vatReturn.lastUpdated,
+        version = vatReturn.lastUpdated.truncatedTo(ChronoUnit.MILLIS),
         traderId = CoreTraderId(vrn.vrn, "XI"),
         period = CorePeriod(period.year, period.quarter.toString.tail.toInt),
         startDate = period.firstDay,
         endDate = period.lastDay,
-        submissionDateTime = now,
+        submissionDateTime = now.truncatedTo(ChronoUnit.MILLIS),
         totalAmountVatDueGBP = expectedTotal2,
         msconSupplies = List(
           CoreMsconSupply(
@@ -337,12 +338,12 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach with Pri
 
       val expectedResultCoreVatReturn = CoreVatReturn(
         vatReturnReferenceNumber = returnReference.value,
-        version = vatReturn.lastUpdated,
+        version = vatReturn.lastUpdated.truncatedTo(ChronoUnit.MILLIS),
         traderId = CoreTraderId(vrn.vrn, "XI"),
         period = CorePeriod(period.year, period.quarter.toString.tail.toInt),
         startDate = period.firstDay,
         endDate = period.lastDay,
-        submissionDateTime = now,
+        submissionDateTime = now.truncatedTo(ChronoUnit.MILLIS),
         totalAmountVatDueGBP = expectedTotal,
         msconSupplies = List(
           CoreMsconSupply(
