@@ -24,3 +24,5 @@ GET         /save-for-later                                         controllers.
 GET         /save-for-later/delete/:period                          controllers.SaveForLaterController.delete(period:Period)
 
 GET         /financial-data/prepare/:vrn                            controllers.FinancialDataController.prepareFinancialData(vrn: String)
+
+POST        /external-entry/:page                                   controllers.external.ExternalEntryController.onExternal(page: String, period: Option[Period] ?= None, lang: Option[String] ?= None)
