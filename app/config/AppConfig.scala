@@ -24,9 +24,10 @@ import javax.inject.{Inject, Singleton}
 @Singleton
 class AppConfig @Inject()(config: Configuration) {
 
+  val appName: String = config.get[String]("appName")
+
   val encryptionKey: String = config.get[String]("mongodb.encryption.key")
   val cacheTtl: Int = config.get[Int]("mongodb.timeToLiveInDays")
-
 
   val coreVatReturnsEnabled: Boolean = config.get[Boolean]("features.coreVatReturns")
   val historicCoreVatReturnsEnabled: Boolean = config.get[Boolean]("features.historicCoreVatReturns")
