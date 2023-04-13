@@ -20,7 +20,7 @@ import controllers.actions.AuthAction
 import logging.Logging
 import models.external.{ExternalEntryUrlResponse, ExternalRequest}
 import models.Period
-import models.audit.BtaExternalEntryAuditModel
+import models.audit.BTAExternalEntryAuditModel
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import services.external.ExternalEntryService
@@ -43,7 +43,7 @@ class ExternalEntryController @Inject()(
     implicit request =>
       externalEntryService.getExternalResponse(request.body, request.userId, page, period, lang) match {
         case Right(response) =>
-          auditService.audit(BtaExternalEntryAuditModel.build)
+          auditService.audit(BTAExternalEntryAuditModel.build(response.redirectUrl))
           Ok(Json.toJson(response))
         case Left(e) =>
           InternalServerError(e.message)

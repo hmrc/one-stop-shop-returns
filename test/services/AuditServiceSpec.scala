@@ -17,7 +17,7 @@
 package services
 
 import config.AppConfig
-import models.audit.BtaExternalEntryAuditModel
+import models.audit.BTAExternalEntryAuditModel
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, times, verify, when}
 import org.scalatest.BeforeAndAfterEach
@@ -48,7 +48,7 @@ class AuditServiceSpec extends AnyFreeSpec with MockitoSugar with ScalaFutures w
 
       val service = new AuditService(mockAppConfig, auditConnector)
 
-      service.audit(BtaExternalEntryAuditModel(
+      service.audit(BTAExternalEntryAuditModel(
         userId = "test",
         userAgent = "test",
         vrn = "vrn"

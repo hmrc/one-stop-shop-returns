@@ -19,10 +19,11 @@ package models.audit
 import controllers.actions.AuthorisedRequest
 import play.api.libs.json.{Json, JsValue}
 
-case class BtaExternalEntryAuditModel(
+case class BTAExternalEntryAuditModel(
                                        userId: String,
                                        userAgent: String,
-                                       vrn: String
+                                       vrn: String,
+                                       redirectUrl: String
                                      ) extends JsonAuditModel {
 
   override val auditType: String = "BTAExternalEntry"
@@ -31,16 +32,18 @@ case class BtaExternalEntryAuditModel(
   override val detail: JsValue = Json.obj(
     "userId" -> userId,
     "browserUserAgent" -> userAgent,
-    "vrn" -> vrn
+    "vrn" -> vrn,
+    "redirectUrl" -> redirectUrl,
   )
 }
 
-object BtaExternalEntryAuditModel {
+object BTAExternalEntryAuditModel {
 
-  def build()(implicit request: AuthorisedRequest[_]): BtaExternalEntryAuditModel =
-    BtaExternalEntryAuditModel(
+  def build(redirectUrl: String)(implicit request: AuthorisedRequest[_]): BTAExternalEntryAuditModel =
+    BTAExternalEntryAuditModel(
       userId = request.userId,
       userAgent = request.headers.get("user-agent").getOrElse(""),
-      vrn = request.vrn.vrn
+      vrn = request.vrn.vrn,
+      redirectUrl = redirectUrl
     )
 }
