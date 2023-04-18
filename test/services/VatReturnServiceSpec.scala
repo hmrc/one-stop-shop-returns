@@ -19,6 +19,7 @@ package services
 import base.SpecBase
 import config.AppConfig
 import connectors.CoreVatReturnConnector
+import controllers.actions.AuthorisedRequest
 import models.VatReturn
 import models.core.CoreErrorResponse.REGISTRATION_NOT_FOUND
 import models.core.{CoreErrorResponse, EisErrorResponse}
@@ -28,21 +29,25 @@ import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{times, verify, when}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
+import play.api.mvc.AnyContent
+import play.api.test.FakeRequest
 import repositories.VatReturnRepository
+import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.http.HeaderCarrier
 
 import java.time.Instant
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class VatReturnServiceSpec
-  extends SpecBase {
+class VatReturnServiceSpec extends SpecBase {
 
   private val coreVatReturnService = mock[CoreVatReturnService]
   private val coreVatReturnConnector = mock[CoreVatReturnConnector]
   private val appConfig = mock[AppConfig]
   private val vatReturn = arbitrary[VatReturn].sample.value
+  private val auditService = mock[AuditService]
   implicit private lazy val hc: HeaderCarrier = HeaderCarrier()
+  implicit private lazy val ar: AuthorisedRequest[AnyContent] = AuthorisedRequest(FakeRequest(), userAnswersId, Vrn("123456789"))
 
   ".createVatReturn" - {
 
@@ -54,7 +59,7 @@ class VatReturnServiceSpec
       when(mockRepository.insert(any())) thenReturn Future.successful(insertResult)
 
       val request = arbitrary[VatReturnRequest].sample.value
-      val service = new VatReturnService(mockRepository, coreVatReturnService, coreVatReturnConnector, appConfig, stubClock)
+      val service = new VatReturnService(mockRepository, coreVatReturnService, auditService, coreVatReturnConnector, appConfig, stubClock)
 
       val result = service.createVatReturn(request).futureValue
 
@@ -73,7 +78,7 @@ class VatReturnServiceSpec
       when(mockRepository.insert(any(), any())) thenReturn Future.successful(insertResult)
 
       val request = arbitrary[VatReturnWithCorrectionRequest].sample.value
-      val service = new VatReturnService(mockRepository, coreVatReturnService, coreVatReturnConnector, appConfig, stubClock)
+      val service = new VatReturnService(mockRepository, coreVatReturnService, auditService, coreVatReturnConnector, appConfig, stubClock)
 
       val result = service.createVatReturnWithCorrection(request).futureValue
 
@@ -91,7 +96,7 @@ class VatReturnServiceSpec
       when(coreVatReturnService.toCore(any(), any())(any())) thenReturn Future.successful(coreVatReturn)
 
       val request = arbitrary[VatReturnWithCorrectionRequest].sample.value
-      val service = new VatReturnService(mockRepository, coreVatReturnService, coreVatReturnConnector, appConfig, stubClock)
+      val service = new VatReturnService(mockRepository, coreVatReturnService, auditService, coreVatReturnConnector, appConfig, stubClock)
 
       val result = service.createVatReturnWithCorrection(request).futureValue
 
@@ -108,7 +113,7 @@ class VatReturnServiceSpec
       when(coreVatReturnService.toCore(any(), any())(any())) thenReturn Future.successful(coreVatReturn)
 
       val request = arbitrary[VatReturnWithCorrectionRequest].sample.value
-      val service = new VatReturnService(mockRepository, coreVatReturnService, coreVatReturnConnector, appConfig, stubClock)
+      val service = new VatReturnService(mockRepository, coreVatReturnService, auditService, coreVatReturnConnector, appConfig, stubClock)
 
       val result = service.createVatReturnWithCorrection(request).futureValue
       result mustBe Left(eisErrorResponse)

@@ -18,11 +18,13 @@ package services
 
 import config.AppConfig
 import connectors.CoreVatReturnConnector
+import controllers.actions.AuthorisedRequest
 import logging.Logging
 import models.core.EisErrorResponse
 import models.corrections.CorrectionPayload
 import models.requests.{VatReturnRequest, VatReturnWithCorrectionRequest}
 import models.{PaymentReference, Period, ReturnReference, VatReturn}
+import models.audit.{CoreVatReturnAuditModel, SubmissionResult}
 import repositories.VatReturnRepository
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.http.HeaderCarrier
@@ -34,29 +36,31 @@ import scala.concurrent.{ExecutionContext, Future}
 class VatReturnService @Inject()(
                                   repository: VatReturnRepository,
                                   coreVatReturnService: CoreVatReturnService,
+                                  auditService: AuditService,
                                   coreVatReturnConnector: CoreVatReturnConnector,
                                   appConfig: AppConfig,
                                   clock: Clock
                                 )
                                 (implicit ec: ExecutionContext) extends Logging {
 
-  def createVatReturn(request: VatReturnRequest)(implicit hc: HeaderCarrier): Future[Either[EisErrorResponse, Option[VatReturn]]] = {
+  def createVatReturn(vatReturnRequest: VatReturnRequest)
+                     (implicit hc: HeaderCarrier, request: AuthorisedRequest[_]): Future[Either[EisErrorResponse, Option[VatReturn]]] = {
     val vatReturn = VatReturn(
-      vrn = request.vrn,
-      period = request.period,
-      reference = ReturnReference(request.vrn, request.period),
-      paymentReference = PaymentReference(request.vrn, request.period),
-      startDate = request.startDate,
-      endDate = request.endDate,
-      salesFromNi = request.salesFromNi,
-      salesFromEu = request.salesFromEu,
+      vrn = vatReturnRequest.vrn,
+      period = vatReturnRequest.period,
+      reference = ReturnReference(vatReturnRequest.vrn, vatReturnRequest.period),
+      paymentReference = PaymentReference(vatReturnRequest.vrn, vatReturnRequest.period),
+      startDate = vatReturnRequest.startDate,
+      endDate = vatReturnRequest.endDate,
+      salesFromNi = vatReturnRequest.salesFromNi,
+      salesFromEu = vatReturnRequest.salesFromEu,
       submissionReceived = Instant.now(clock),
       lastUpdated = Instant.now(clock)
     )
 
     val emptyCorrectionPayload = CorrectionPayload(
-      request.vrn,
-      request.period,
+      vatReturnRequest.vrn,
+      vatReturnRequest.period,
       List.empty,
       submissionReceived = Instant.now(clock),
       lastUpdated = Instant.now(clock)
@@ -65,7 +69,8 @@ class VatReturnService @Inject()(
     sendToCoreIfEnabled(vatReturn, emptyCorrectionPayload, repository.insert(vatReturn))
   }
 
-  private def sendToCoreIfEnabled[A](vatReturn: VatReturn, correctionPayload: CorrectionPayload, block: => Future[A])(implicit hc: HeaderCarrier): Future[Either[EisErrorResponse, A]] = {
+  private def sendToCoreIfEnabled[A](vatReturn: VatReturn, correctionPayload: CorrectionPayload, block: => Future[A])
+                                    (implicit hc: HeaderCarrier, request: AuthorisedRequest[_]): Future[Either[EisErrorResponse, A]] = {
     if (appConfig.coreVatReturnsEnabled) {
 
       for {
@@ -73,11 +78,13 @@ class VatReturnService @Inject()(
         submissionResult <- coreVatReturnConnector.submit(coreVatReturn).flatMap {
           case Right(_) =>
             logger.info("Successful submission of vat return to core")
+            auditService.audit(CoreVatReturnAuditModel.build(coreVatReturn, SubmissionResult.Success, None))
             block.map(
               payload => Right(payload)
             )
           case Left(eisErrorResponse) =>
             logger.error(s"Error occurred while submitting to core $eisErrorResponse", eisErrorResponse.errorDetail.asException)
+            auditService.audit(CoreVatReturnAuditModel.build(coreVatReturn, SubmissionResult.Failure, Some(eisErrorResponse.errorDetail)))
             Future.successful(Left(eisErrorResponse))
         }
       } yield submissionResult
@@ -90,24 +97,25 @@ class VatReturnService @Inject()(
     }
   }
 
-  def createVatReturnWithCorrection(request: VatReturnWithCorrectionRequest)(implicit hc: HeaderCarrier): Future[Either[EisErrorResponse, Option[(VatReturn, CorrectionPayload)]]] = {
+  def createVatReturnWithCorrection(vatReturnWithCorrectionRequest: VatReturnWithCorrectionRequest)
+                                   (implicit hc: HeaderCarrier, request: AuthorisedRequest[_]): Future[Either[EisErrorResponse, Option[(VatReturn, CorrectionPayload)]]] = {
     val vatReturn = VatReturn(
-      vrn = request.vatReturnRequest.vrn,
-      period = request.vatReturnRequest.period,
-      reference = ReturnReference(request.vatReturnRequest.vrn, request.vatReturnRequest.period),
-      paymentReference = PaymentReference(request.vatReturnRequest.vrn, request.vatReturnRequest.period),
-      startDate = request.vatReturnRequest.startDate,
-      endDate = request.vatReturnRequest.endDate,
-      salesFromNi = request.vatReturnRequest.salesFromNi,
-      salesFromEu = request.vatReturnRequest.salesFromEu,
+      vrn = vatReturnWithCorrectionRequest.vatReturnRequest.vrn,
+      period = vatReturnWithCorrectionRequest.vatReturnRequest.period,
+      reference = ReturnReference(vatReturnWithCorrectionRequest.vatReturnRequest.vrn, vatReturnWithCorrectionRequest.vatReturnRequest.period),
+      paymentReference = PaymentReference(vatReturnWithCorrectionRequest.vatReturnRequest.vrn, vatReturnWithCorrectionRequest.vatReturnRequest.period),
+      startDate = vatReturnWithCorrectionRequest.vatReturnRequest.startDate,
+      endDate = vatReturnWithCorrectionRequest.vatReturnRequest.endDate,
+      salesFromNi = vatReturnWithCorrectionRequest.vatReturnRequest.salesFromNi,
+      salesFromEu = vatReturnWithCorrectionRequest.vatReturnRequest.salesFromEu,
       submissionReceived = Instant.now(clock),
       lastUpdated = Instant.now(clock)
     )
 
     val correctionPayload = CorrectionPayload(
-      request.correctionRequest.vrn,
-      request.correctionRequest.period,
-      request.correctionRequest.corrections,
+      vatReturnWithCorrectionRequest.correctionRequest.vrn,
+      vatReturnWithCorrectionRequest.correctionRequest.period,
+      vatReturnWithCorrectionRequest.correctionRequest.corrections,
       submissionReceived = Instant.now(clock),
       lastUpdated = Instant.now(clock)
     )

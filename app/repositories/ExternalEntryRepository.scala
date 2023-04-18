@@ -71,7 +71,7 @@ class ExternalEntryRepository @Inject()(
         replacement = externalEntry,
         options     = ReplaceOptions().upsert(true)
       )
-      .toFuture
+      .toFuture()
       .map(_ => externalEntry)
   }
 
@@ -79,12 +79,12 @@ class ExternalEntryRepository @Inject()(
     collection
       .find(
         byUserId(userId)
-      ).headOption
+      ).headOption()
 
   def clear(userId: String): Future[Boolean] =
     collection
       .deleteOne(byUserId(userId))
-      .toFuture
+      .toFuture()
       .map(_ => true)
 }
 

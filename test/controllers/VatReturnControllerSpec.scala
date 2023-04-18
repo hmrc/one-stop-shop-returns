@@ -49,7 +49,7 @@ class VatReturnControllerSpec
   ".post" - {
 
     val vatReturnRequest = arbitrary[VatReturnRequest].sample.value
-    val vatReturn        = arbitrary[VatReturn].sample.value
+    val vatReturn = arbitrary[VatReturn].sample.value
 
     lazy val request =
       FakeRequest(POST, routes.VatReturnController.post().url)
@@ -58,7 +58,7 @@ class VatReturnControllerSpec
     "must save a VAT return and respond with Created" in {
       val mockService = mock[VatReturnService]
 
-      when(mockService.createVatReturn (any())(any()))
+      when(mockService.createVatReturn(any())(any(), any()))
         .thenReturn(Future.successful(Right(Some(vatReturn))))
 
       val app =
@@ -72,14 +72,14 @@ class VatReturnControllerSpec
 
         status(result) mustEqual CREATED
         contentAsJson(result) mustBe Json.toJson(vatReturn)
-        verify(mockService, times(1)).createVatReturn(eqTo(vatReturnRequest))(any())
+        verify(mockService, times(1)).createVatReturn(eqTo(vatReturnRequest))(any(), any())
       }
     }
 
     "must respond with Conflict when trying to save a duplicate" in {
 
       val mockService = mock[VatReturnService]
-      when(mockService.createVatReturn(any())(any())).thenReturn(Future.successful(Right(None)))
+      when(mockService.createVatReturn(any())(any(), any())).thenReturn(Future.successful(Right(None)))
 
       val app =
         applicationBuilder
@@ -99,7 +99,7 @@ class VatReturnControllerSpec
       val eisErrorResponse = EisErrorResponse(coreErrorResponse)
 
       val mockService = mock[VatReturnService]
-      when(mockService.createVatReturn(any())(any())).thenReturn(Future.successful(Left(eisErrorResponse)))
+      when(mockService.createVatReturn(any())(any(), any())).thenReturn(Future.successful(Left(eisErrorResponse)))
 
       val app =
         applicationBuilder
@@ -119,7 +119,7 @@ class VatReturnControllerSpec
       val eisErrorResponse = EisErrorResponse(coreErrorResponse)
 
       val mockService = mock[VatReturnService]
-      when(mockService.createVatReturn(any())(any())).thenReturn(Future.successful(Left(eisErrorResponse)))
+      when(mockService.createVatReturn(any())(any(), any())).thenReturn(Future.successful(Left(eisErrorResponse)))
 
       val app =
         applicationBuilder
@@ -152,8 +152,8 @@ class VatReturnControllerSpec
   ".postWithCorrection" - {
 
     val vatReturnWithCorrectionRequest = arbitrary[VatReturnWithCorrectionRequest].sample.value
-    val vatReturn        = arbitrary[VatReturn].sample.value
-    val correctionPayload        = arbitrary[CorrectionPayload].sample.value
+    val vatReturn = arbitrary[VatReturn].sample.value
+    val correctionPayload = arbitrary[CorrectionPayload].sample.value
 
     lazy val request =
       FakeRequest(POST, routes.VatReturnController.postWithCorrection().url)
@@ -162,7 +162,7 @@ class VatReturnControllerSpec
     "must save a VAT return and respond with Created" in {
       val mockService = mock[VatReturnService]
 
-      when(mockService.createVatReturnWithCorrection(any())(any()))
+      when(mockService.createVatReturnWithCorrection(any())(any(), any()))
         .thenReturn(Future.successful(Right(Some((vatReturn, correctionPayload)))))
 
       val app =
@@ -176,14 +176,14 @@ class VatReturnControllerSpec
 
         status(result) mustEqual CREATED
         contentAsJson(result) mustBe Json.toJson((vatReturn, correctionPayload))
-        verify(mockService, times(1)).createVatReturnWithCorrection(eqTo(vatReturnWithCorrectionRequest))(any())
+        verify(mockService, times(1)).createVatReturnWithCorrection(eqTo(vatReturnWithCorrectionRequest))(any(), any())
       }
     }
 
     "must respond with Conflict when trying to save a duplicate" in {
 
       val mockService = mock[VatReturnService]
-      when(mockService.createVatReturnWithCorrection(any())(any())).thenReturn(Future.successful(Right(None)))
+      when(mockService.createVatReturnWithCorrection(any())(any(), any())).thenReturn(Future.successful(Right(None)))
 
       val app =
         applicationBuilder
@@ -203,7 +203,7 @@ class VatReturnControllerSpec
       val eisErrorResponse = EisErrorResponse(coreErrorResponse)
 
       val mockService = mock[VatReturnService]
-      when(mockService.createVatReturnWithCorrection(any())(any())).thenReturn(Future.successful(Left(eisErrorResponse)))
+      when(mockService.createVatReturnWithCorrection(any())(any(), any())).thenReturn(Future.successful(Left(eisErrorResponse)))
 
       val app =
         applicationBuilder
@@ -245,7 +245,7 @@ class VatReturnControllerSpec
         Gen
           .nonEmptyListOf(arbitrary[VatReturn])
           .sample.value
-          .map(r => r.copy (vrn = vrn, reference = ReturnReference(vrn, r.period)))
+          .map(r => r.copy(vrn = vrn, reference = ReturnReference(vrn, r.period)))
 
       when(mockService.get(any())) thenReturn Future.successful(returns)
 
@@ -305,7 +305,7 @@ class VatReturnControllerSpec
         Gen
           .nonEmptyListOf(arbitrary[VatReturn])
           .sample.value
-          .map(r => r.copy (vrn = vrn, reference = ReturnReference(vrn, r.period))).head
+          .map(r => r.copy(vrn = vrn, reference = ReturnReference(vrn, r.period))).head
 
       when(mockService.get(any(), any())) thenReturn Future.successful(Some(vatReturn))
 

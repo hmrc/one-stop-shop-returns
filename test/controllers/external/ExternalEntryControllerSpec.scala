@@ -6,7 +6,6 @@ import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{doNothing, times, verify, when}
 import play.api.http.Status.{BAD_REQUEST, OK}
 import play.api.inject
-import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.{JsNull, Json}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
