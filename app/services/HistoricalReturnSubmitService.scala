@@ -23,6 +23,7 @@ import models.core.{CorePeriod, CoreVatReturn, EisErrorResponse}
 import models.corrections.CorrectionPayload
 import models.{Period, VatReturn}
 import uk.gov.hmrc.domain.Vrn
+import uk.gov.hmrc.http.HeaderCarrier
 import utils.ObfuscationUtils.obfuscateVrn
 
 import java.time.{Clock, Instant}
@@ -129,6 +130,7 @@ class HistoricalReturnSubmitServiceImpl @Inject()(
       val coreReturns: Future[Seq[CoreVatReturn]] = vatReturnsAndCorrections.flatMap { returnsAndCorrections =>
 
         val convertedReturnsAndCorrections: Seq[Future[CoreVatReturn]] = returnsAndCorrections.map { singleReturnAndCorrection =>
+          implicit val emptyHc: HeaderCarrier = HeaderCarrier()
           registrationConnector.getRegistration(singleReturnAndCorrection._1.vrn).flatMap {
             case Some(r) =>
               coreVatReturnService.toCore(singleReturnAndCorrection._1, singleReturnAndCorrection._2, r)

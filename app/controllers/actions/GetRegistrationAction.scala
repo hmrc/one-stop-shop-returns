@@ -21,6 +21,8 @@ import logging.Logging
 import models.requests.RegistrationRequest
 import play.api.mvc.Results.{NotFound, Unauthorized}
 import play.api.mvc.{ActionRefiner, Result}
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -45,6 +47,7 @@ class GetRegistrationAction @Inject()(
   }
 
   private def getRegistrationFromRequest[A](request: AuthorisedRequest[A]) = {
+    implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
     registrationConnector.getRegistration(request.vrn) flatMap {
       case Some(registration) =>
         Future.successful(Right(RegistrationRequest(request.request, request.vrn, registration)))
