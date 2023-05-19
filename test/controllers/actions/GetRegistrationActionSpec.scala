@@ -4,6 +4,7 @@ import base.SpecBase
 import connectors.RegistrationConnector
 import models.requests.RegistrationRequest
 import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchersSugar.eqTo
 import org.mockito.Mockito.when
 import org.scalatest.EitherValues
 import org.scalatestplus.mockito.MockitoSugar
@@ -36,7 +37,7 @@ class GetRegistrationActionSpec extends SpecBase with MockitoSugar with EitherVa
 
           val request = FakeRequest()
           val connector = mock[RegistrationConnector]
-          when(connector.getRegistration(vrn)(any())) thenReturn Future.successful(Some(RegistrationData.registration))
+          when(connector.getRegistration(eqTo(vrn))(any())) thenReturn Future.successful(Some(RegistrationData.registration))
           val action = new Harness(Some(vrn.vrn), connector)
 
           val result = action.callRefine(AuthorisedRequest(request, userAnswersId, vrn)).futureValue
@@ -51,7 +52,7 @@ class GetRegistrationActionSpec extends SpecBase with MockitoSugar with EitherVa
 
           val request = FakeRequest()
           val connector = mock[RegistrationConnector]
-          when(connector.getRegistration(vrn)(any())) thenReturn Future.successful(Some(RegistrationData.registration))
+          when(connector.getRegistration(eqTo(vrn))(any())) thenReturn Future.successful(Some(RegistrationData.registration))
           val action = new Harness(None, connector)
 
           val result = action.callRefine(AuthorisedRequest(request, userAnswersId, vrn)).futureValue
@@ -64,7 +65,7 @@ class GetRegistrationActionSpec extends SpecBase with MockitoSugar with EitherVa
 
         val request = FakeRequest()
         val connector  = mock[RegistrationConnector]
-        when(connector.getRegistration(vrn)(any())) thenReturn Future.successful(Some(RegistrationData.registration))
+        when(connector.getRegistration(eqTo(vrn))(any())) thenReturn Future.successful(Some(RegistrationData.registration))
 
         val action = new Harness(Some(vrn.vrn), connector)
 
@@ -82,7 +83,7 @@ class GetRegistrationActionSpec extends SpecBase with MockitoSugar with EitherVa
 
           val request = FakeRequest()
           val connector = mock[RegistrationConnector]
-          when(connector.getRegistration(vrn)(any())) thenReturn Future.successful(None)
+          when(connector.getRegistration(eqTo(vrn))(any())) thenReturn Future.successful(None)
           val action = new Harness(Some(vrn.vrn), connector)
 
           val result = action.callRefine(AuthorisedRequest(request, userAnswersId, vrn)).futureValue
@@ -97,7 +98,7 @@ class GetRegistrationActionSpec extends SpecBase with MockitoSugar with EitherVa
 
           val request = FakeRequest()
           val connector = mock[RegistrationConnector]
-          when(connector.getRegistration(vrn)(any())) thenReturn Future.successful(None)
+          when(connector.getRegistration(eqTo(vrn))(any())) thenReturn Future.successful(None)
           val action = new Harness(None, connector)
 
           val result = action.callRefine(AuthorisedRequest(request, userAnswersId, vrn)).futureValue
