@@ -51,7 +51,7 @@ class HistoricalReturnSubmitServiceSpec extends SpecBase with BeforeAndAfterEach
         when(correctionService.getByPeriods(any())) thenReturn Future.successful(List(emptyCorrectionPayload))
         when(coreVatReturnService.toCore(any(), any(), any())) thenReturn Future.successful(coreVatReturn)
         when(coreVatReturnConnector.submit(any())) thenReturn Future.successful(Right(()))
-        when(registrationConnector.getRegistration(any())) thenReturn Future.successful(Some(RegistrationData.registration))
+        when(registrationConnector.getRegistration(any())(any())) thenReturn Future.successful(Some(RegistrationData.registration))
 
         service.transfer().futureValue mustBe Success(())
       }
@@ -68,7 +68,7 @@ class HistoricalReturnSubmitServiceSpec extends SpecBase with BeforeAndAfterEach
         when(coreVatReturnService.toCore(eqTo(completeVatReturn2), any(), any())) thenReturn Future.failed(genericException)
         when(coreVatReturnService.toCore(eqTo(completeVatReturn3), any(), any())) thenReturn Future.successful(coreVatReturn)
         when(coreVatReturnConnector.submit(any())) thenReturn Future.successful(Right(()))
-        when(registrationConnector.getRegistration(any())) thenReturn Future.successful(Some(RegistrationData.registration))
+        when(registrationConnector.getRegistration(any())(any())) thenReturn Future.successful(Some(RegistrationData.registration))
 
         service.transfer().futureValue mustBe Failure(genericException)
 
@@ -114,7 +114,7 @@ class HistoricalReturnSubmitServiceSpec extends SpecBase with BeforeAndAfterEach
 
         when(coreVatReturnConnector.submit(any())) thenReturn Future.successful(Right(()))
 
-        when(registrationConnector.getRegistration(any())) thenReturn Future.successful(Some(RegistrationData.registration))
+        when(registrationConnector.getRegistration(any())(any())) thenReturn Future.successful(Some(RegistrationData.registration))
 
         service.transfer().futureValue mustBe Success(())
 
@@ -163,7 +163,7 @@ class HistoricalReturnSubmitServiceSpec extends SpecBase with BeforeAndAfterEach
 
         when(coreVatReturnConnector.submit(any())) thenReturn Future.successful(Right(()))
 
-        when(registrationConnector.getRegistration(any())) thenReturn Future.successful(Some(RegistrationData.registration))
+        when(registrationConnector.getRegistration(any())(any())) thenReturn Future.successful(Some(RegistrationData.registration))
         when(appConfig.historicCoreVatReturnIndexesToInclude) thenReturn Seq.empty
         when(appConfig.historicCoreVatReturnIndexesToExclude) thenReturn Seq.empty
 
@@ -212,7 +212,7 @@ class HistoricalReturnSubmitServiceSpec extends SpecBase with BeforeAndAfterEach
 
         when(coreVatReturnConnector.submit(any())) thenReturn Future.successful(Right(()))
 
-        when(registrationConnector.getRegistration(any())) thenReturn Future.successful(Some(RegistrationData.registration))
+        when(registrationConnector.getRegistration(any())(any())) thenReturn Future.successful(Some(RegistrationData.registration))
         when(appConfig.historicCoreVatReturnIndexesToInclude) thenReturn Seq(0,2)
         when(appConfig.historicCoreVatReturnIndexesToExclude) thenReturn Seq.empty
 
@@ -261,7 +261,7 @@ class HistoricalReturnSubmitServiceSpec extends SpecBase with BeforeAndAfterEach
 
         when(coreVatReturnConnector.submit(any())) thenReturn Future.successful(Right(()))
 
-        when(registrationConnector.getRegistration(any())) thenReturn Future.successful(Some(RegistrationData.registration))
+        when(registrationConnector.getRegistration(any())(any())) thenReturn Future.successful(Some(RegistrationData.registration))
         when(appConfig.historicCoreVatReturnIndexesToInclude) thenReturn Seq.empty
         when(appConfig.historicCoreVatReturnIndexesToExclude) thenReturn Seq(0,1)
 
@@ -292,7 +292,7 @@ class HistoricalReturnSubmitServiceSpec extends SpecBase with BeforeAndAfterEach
         when(coreVatReturnService.toCore(eqTo(completeVatReturn3), any(), any())) thenReturn Future.successful(coreVatReturn)
         when(coreVatReturnConnector.submit(any())) thenReturn Future.successful(Right(()))
         when(coreVatReturnConnector.submit(eqTo(coreVatReturnFail))) thenReturn Future.successful(Left(coreErrorResponse))
-        when(registrationConnector.getRegistration(any())) thenReturn Future.successful(Some(RegistrationData.registration))
+        when(registrationConnector.getRegistration(any())(any())) thenReturn Future.successful(Some(RegistrationData.registration))
         when(appConfig.historicCoreVatReturnIndexesToInclude) thenReturn Seq.empty
         when(appConfig.historicCoreVatReturnIndexesToExclude) thenReturn Seq.empty
 

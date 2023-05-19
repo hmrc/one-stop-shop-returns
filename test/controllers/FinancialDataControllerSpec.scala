@@ -231,7 +231,7 @@ class FinancialDataControllerSpec
       when(mockFinancialDataService.getVatReturnWithFinancialData(any(), any())) thenReturn Future.successful(Seq(vatReturnWithFinancialData1, vatReturnWithFinancialData2))
       when(mockFinancialDataService.filterIfPaymentIsOutstanding(any())) thenReturn Seq(vatReturnWithFinancialData1, vatReturnWithFinancialData2)
       when(mockVatReturnSalesService.getTotalVatOnSalesAfterCorrection(any(), any())) thenReturn BigDecimal(0)
-      when(mockRegistrationConnector.getRegistration(any())) thenReturn Future.successful(Some(RegistrationData.registration))
+      when(mockRegistrationConnector.getRegistration(any())(any())) thenReturn Future.successful(Some(RegistrationData.registration))
       val app =
         applicationBuilder
           .overrides(bind[FinancialDataService].to(mockFinancialDataService))
@@ -265,7 +265,7 @@ class FinancialDataControllerSpec
       when(mockFinancialDataService.getVatReturnWithFinancialData(any(), any())) thenReturn Future.successful(Seq(vatReturnWithFinancialData))
       when(mockFinancialDataService.filterIfPaymentIsOutstanding(any())) thenReturn Seq(vatReturnWithFinancialData)
       when(mockVatReturnSalesService.getTotalVatOnSalesAfterCorrection(any(), any())) thenReturn BigDecimal(0)
-      when(mockRegistrationConnector.getRegistration(any())) thenReturn Future.successful(Some(RegistrationData.registration))
+      when(mockRegistrationConnector.getRegistration(any())(any())) thenReturn Future.successful(Some(RegistrationData.registration))
 
       val app =
         applicationBuilder
@@ -306,7 +306,7 @@ class FinancialDataControllerSpec
       when(mockFinancialDataService.getVatReturnWithFinancialData(any(), any())) thenReturn Future.successful(Seq(vatReturnWithFinancialData1, vatReturnWithFinancialData2))
       when(mockFinancialDataService.filterIfPaymentIsOutstanding(any())) thenReturn Seq(vatReturnWithFinancialData1, vatReturnWithFinancialData2)
       when(mockVatReturnSalesService.getTotalVatOnSalesAfterCorrection(any(), any())) thenReturn BigDecimal(0)
-      when(mockRegistrationConnector.getRegistration(any())) thenReturn Future.successful(Some(RegistrationData.registration))
+      when(mockRegistrationConnector.getRegistration(any())(any())) thenReturn Future.successful(Some(RegistrationData.registration))
 
       val app =
         applicationBuilder
@@ -327,7 +327,7 @@ class FinancialDataControllerSpec
 
     "must return Not Found if no registration is found for VRN" in {
 
-      when(mockRegistrationConnector.getRegistration(any())) thenReturn Future.successful(None)
+      when(mockRegistrationConnector.getRegistration(any())(any())) thenReturn Future.successful(None)
 
       val app =
         applicationBuilder
