@@ -416,7 +416,7 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach with Pri
       service.toCore(vatReturn, correctionPayload).futureValue mustBe expectedResultCoreVatReturn
     }
 
-    "convert from NiAsdfSADFFDSAl VatReturn and correctionPayload to CoreVatReturn" in {
+    "convert from VatReturn and correctionPayload to CoreVatReturn with a Nil return and a correction" in {
 
       val correctionPeriod1 = Period(2021, Quarter.Q1)
 
