@@ -21,7 +21,7 @@ import connectors.{CoreVatReturnConnector, RegistrationConnector}
 import logging.Logging
 import models.core.{CorePeriod, CoreVatReturn, EisErrorResponse}
 import models.corrections.CorrectionPayload
-import models.{Period, VatReturn}
+import models.{Period, ReturnReference, VatReturn}
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.ObfuscationUtils.obfuscateVrn
@@ -164,6 +164,14 @@ class HistoricalReturnSubmitServiceImpl @Inject()(
               } else false
           )
           .map(_._1)
+        )
+      } else if(appConfig.historicCoreVatReturnReferencesEnabled) {
+        val allowedReturnReferences = appConfig.historicCoreVatReturnReferences
+
+        coreReturns.map(_.filter { vatReturn =>
+          allowedReturnReferences.contains(vatReturn.vatReturnReferenceNumber)
+        }.sortBy(coreVatReturn =>
+          (coreVatReturn.period.year, coreVatReturn.period.quarter, coreVatReturn.submissionDateTime.getEpochSecond))
         )
       } else {
         coreReturns.map(_.sortBy(coreVatReturn =>

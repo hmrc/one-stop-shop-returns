@@ -416,6 +416,62 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach with Pri
       service.toCore(vatReturn, correctionPayload).futureValue mustBe expectedResultCoreVatReturn
     }
 
+    "convert from NiAsdfSADFFDSAl VatReturn and correctionPayload to CoreVatReturn" in {
+
+      val correctionPeriod1 = Period(2021, Quarter.Q1)
+
+      val correctionAmount1 = -(salesDetails1.vatOnSales.amount / 2).setScale(2, RoundingMode.HALF_UP)
+
+      val correctionPayload = CorrectionPayload(vrn, period, List(
+        PeriodWithCorrections(
+          correctionReturnPeriod = correctionPeriod1,
+          correctionsToCountry = List(
+            CorrectionToCountry(country1, correctionAmount1)
+          )
+        )
+      ), now, now)
+
+      val expectedTotal = correctionAmount1
+
+      val nilVatReturn = vatReturn.copy(salesFromNi = List.empty, salesFromEu = List.empty)
+
+      when(vatReturnSalesService.getTotalVatOnSalesAfterCorrection(nilVatReturn, Some(correctionPayload))).thenReturn(
+        expectedTotal
+      )
+
+      val expectedResultCoreVatReturn = CoreVatReturn(
+        vatReturnReferenceNumber = returnReference.value,
+        version = vatReturn.lastUpdated.truncatedTo(ChronoUnit.MILLIS),
+        traderId = CoreTraderId(vrn.vrn, "XI"),
+        period = CorePeriod(period.year, period.quarter.toString.tail.toInt),
+        startDate = period.firstDay,
+        endDate = period.lastDay,
+        submissionDateTime = now.truncatedTo(ChronoUnit.MILLIS),
+        totalAmountVatDueGBP = expectedTotal,
+        msconSupplies = List(
+          CoreMsconSupply(
+            msconCountryCode = country1.code,
+            balanceOfVatDueGBP = correctionAmount1,
+            grandTotalMsidGoodsGBP = 0,
+            grandTotalMsestGoodsGBP = 0,
+            correctionsTotalGBP = correctionAmount1,
+            msidSupplies = List.empty,
+            msestSupplies = List.empty,
+            corrections = List(
+              CoreCorrection(
+                period = CorePeriod(correctionPeriod1.year, correctionPeriod1.quarter.toString.tail.toInt),
+                totalVatAmountCorrectionGBP = correctionAmount1
+              )
+            )
+          )
+        )
+      )
+
+      when(registrationConnector.getRegistration()(any())) thenReturn Future.successful(Some(RegistrationData.registration))
+
+      service.toCore(nilVatReturn, correctionPayload).futureValue mustBe expectedResultCoreVatReturn
+    }
+
   }
 
   "CoreVatReturnService#getEuTraderIdForCountry" - {
