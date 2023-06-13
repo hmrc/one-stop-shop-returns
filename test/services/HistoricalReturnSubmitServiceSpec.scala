@@ -6,7 +6,7 @@ import connectors.{CoreVatReturnConnector, RegistrationConnector}
 import models.Quarter.{Q1, Q3, Q4}
 import models.core.{CoreErrorResponse, CorePeriod, EisErrorResponse}
 import models.corrections.CorrectionPayload
-import models.{Period, VatReturn}
+import models.{Period, ReturnReference, VatReturn}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchersSugar.eqTo
 import org.mockito.Mockito
@@ -77,7 +77,7 @@ class HistoricalReturnSubmitServiceSpec extends SpecBase with BeforeAndAfterEach
 
       def getCoreVatReturn(vatReturn: VatReturn) = {
         coreVatReturn.copy(
-          vatReturnReferenceNumber = vatReturn.vrn.value,
+          vatReturnReferenceNumber = ReturnReference(vatReturn.vrn, vatReturn.period).value,
           period = CorePeriod(vatReturn.period.year, vatReturn.period.quarter.toString.tail.toInt),
           submissionDateTime = vatReturn.submissionReceived
         )
@@ -104,7 +104,7 @@ class HistoricalReturnSubmitServiceSpec extends SpecBase with BeforeAndAfterEach
           )
 
         // retrieve vat returns out of order
-        when(vatReturnService.getByPeriods(any())) thenReturn Future.successful(List(completeVatReturn2,  completeVatReturn, completeVatReturn2a,  completeVatReturn3))
+        when(vatReturnService.getByPeriods(any())) thenReturn Future.successful(List(completeVatReturn2, completeVatReturn, completeVatReturn2a, completeVatReturn3))
         when(correctionService.getByPeriods(any())) thenReturn Future.successful(List(emptyCorrectionPayload2))
 
         when(coreVatReturnService.toCore(eqTo(completeVatReturn), any(), any())) thenReturn Future.successful(coreVatReturn1)
@@ -153,7 +153,7 @@ class HistoricalReturnSubmitServiceSpec extends SpecBase with BeforeAndAfterEach
         when(appConfig.historicCoreVatReturnIndexFilteringEnabled) thenReturn true
         when(appConfig.historicCoreVatReturnStartIdx) thenReturn 0
         when(appConfig.historicCoreVatReturnEndIdx) thenReturn 1
-        when(vatReturnService.getByPeriods(any())) thenReturn Future.successful(List(completeVatReturn2,  completeVatReturn, completeVatReturn2a,  completeVatReturn3))
+        when(vatReturnService.getByPeriods(any())) thenReturn Future.successful(List(completeVatReturn2, completeVatReturn, completeVatReturn2a, completeVatReturn3))
         when(correctionService.getByPeriods(any())) thenReturn Future.successful(List(emptyCorrectionPayload2))
 
         when(coreVatReturnService.toCore(eqTo(completeVatReturn), any(), any())) thenReturn Future.successful(coreVatReturn1)
@@ -202,7 +202,7 @@ class HistoricalReturnSubmitServiceSpec extends SpecBase with BeforeAndAfterEach
         when(appConfig.historicCoreVatReturnIndexFilteringEnabled) thenReturn true
         when(appConfig.historicCoreVatReturnStartIdx) thenReturn 0
         when(appConfig.historicCoreVatReturnEndIdx) thenReturn 3
-        when(vatReturnService.getByPeriods(any())) thenReturn Future.successful(List(completeVatReturn2,  completeVatReturn, completeVatReturn2a,  completeVatReturn3))
+        when(vatReturnService.getByPeriods(any())) thenReturn Future.successful(List(completeVatReturn2, completeVatReturn, completeVatReturn2a, completeVatReturn3))
         when(correctionService.getByPeriods(any())) thenReturn Future.successful(List(emptyCorrectionPayload2))
 
         when(coreVatReturnService.toCore(eqTo(completeVatReturn), any(), any())) thenReturn Future.successful(coreVatReturn1)
@@ -213,7 +213,7 @@ class HistoricalReturnSubmitServiceSpec extends SpecBase with BeforeAndAfterEach
         when(coreVatReturnConnector.submit(any())) thenReturn Future.successful(Right(()))
 
         when(registrationConnector.getRegistration(any())(any())) thenReturn Future.successful(Some(RegistrationData.registration))
-        when(appConfig.historicCoreVatReturnIndexesToInclude) thenReturn Seq(0,2)
+        when(appConfig.historicCoreVatReturnIndexesToInclude) thenReturn Seq(0, 2)
         when(appConfig.historicCoreVatReturnIndexesToExclude) thenReturn Seq.empty
 
         service.transfer().futureValue mustBe Success(())
@@ -251,7 +251,7 @@ class HistoricalReturnSubmitServiceSpec extends SpecBase with BeforeAndAfterEach
         when(appConfig.historicCoreVatReturnIndexFilteringEnabled) thenReturn true
         when(appConfig.historicCoreVatReturnStartIdx) thenReturn 0
         when(appConfig.historicCoreVatReturnEndIdx) thenReturn 3
-        when(vatReturnService.getByPeriods(any())) thenReturn Future.successful(List(completeVatReturn2,  completeVatReturn, completeVatReturn2a,  completeVatReturn3))
+        when(vatReturnService.getByPeriods(any())) thenReturn Future.successful(List(completeVatReturn2, completeVatReturn, completeVatReturn2a, completeVatReturn3))
         when(correctionService.getByPeriods(any())) thenReturn Future.successful(List(emptyCorrectionPayload2))
 
         when(coreVatReturnService.toCore(eqTo(completeVatReturn), any(), any())) thenReturn Future.successful(coreVatReturn1)
@@ -263,7 +263,7 @@ class HistoricalReturnSubmitServiceSpec extends SpecBase with BeforeAndAfterEach
 
         when(registrationConnector.getRegistration(any())(any())) thenReturn Future.successful(Some(RegistrationData.registration))
         when(appConfig.historicCoreVatReturnIndexesToInclude) thenReturn Seq.empty
-        when(appConfig.historicCoreVatReturnIndexesToExclude) thenReturn Seq(0,1)
+        when(appConfig.historicCoreVatReturnIndexesToExclude) thenReturn Seq(0, 1)
 
         service.transfer().futureValue mustBe Success(())
 
@@ -272,6 +272,55 @@ class HistoricalReturnSubmitServiceSpec extends SpecBase with BeforeAndAfterEach
         // submit vat returns in order
         val inOrder = Mockito.inOrder(coreVatReturnConnector)
         inOrder.verify(coreVatReturnConnector).submit(coreVatReturn2)
+        inOrder.verify(coreVatReturnConnector).submit(coreVatReturn3)
+
+      }
+
+      "submit vat returns with specific references when reference filtering is toggled on" in {
+
+        val completeVatReturn2 = completeVatReturn.copy(vrn = Vrn("987654321"), period = Period(2086, Q4), submissionReceived = completeVatReturn.submissionReceived.plus(java.time.Period.ofDays(1)), reference = ReturnReference(Vrn("987654321"), Period(2086, Q4)))
+        val completeVatReturn2a = completeVatReturn.copy(vrn = Vrn("987654322"), period = Period(2086, Q4), reference = ReturnReference(Vrn("987654322"), Period(2086, Q4)))
+        val completeVatReturn3 = completeVatReturn.copy(vrn = Vrn("987654322"), period = Period(2087, Q1), reference = ReturnReference(Vrn("987654322"), Period(2087, Q1)))
+
+        val coreVatReturn1 = getCoreVatReturn(completeVatReturn)
+        val coreVatReturn2 = getCoreVatReturn(completeVatReturn2)
+        val coreVatReturn2a = getCoreVatReturn(completeVatReturn2a)
+        val coreVatReturn3 = getCoreVatReturn(completeVatReturn3)
+
+        val emptyCorrectionPayload2: CorrectionPayload =
+          CorrectionPayload(
+            Vrn("063407423"),
+            Period("2086", "Q3").get,
+            List.empty,
+            Instant.ofEpochSecond(1630670836),
+            Instant.ofEpochSecond(1630670836)
+          )
+
+        // retrieve vat returns out of order
+        when(appConfig.historicCoreVatReturnIndexFilteringEnabled) thenReturn false
+        when(appConfig.historicCoreVatReturnReferencesEnabled) thenReturn true
+        when(appConfig.historicCoreVatReturnReferences) thenReturn Seq("XI/XI987654322/Q4.2086", "XI/XI987654322/Q1.2087")
+        when(vatReturnService.getByPeriods(any())) thenReturn Future.successful(List(completeVatReturn2, completeVatReturn, completeVatReturn2a, completeVatReturn3))
+        when(correctionService.getByPeriods(any())) thenReturn Future.successful(List(emptyCorrectionPayload2))
+
+        when(coreVatReturnService.toCore(eqTo(completeVatReturn), any(), any())) thenReturn Future.successful(coreVatReturn1)
+        when(coreVatReturnService.toCore(eqTo(completeVatReturn2), any(), any())) thenReturn Future.successful(coreVatReturn2)
+        when(coreVatReturnService.toCore(eqTo(completeVatReturn2a), any(), any())) thenReturn Future.successful(coreVatReturn2a)
+        when(coreVatReturnService.toCore(eqTo(completeVatReturn3), any(), any())) thenReturn Future.successful(coreVatReturn3)
+
+        when(coreVatReturnConnector.submit(any())) thenReturn Future.successful(Right(()))
+
+        when(registrationConnector.getRegistration(any())(any())) thenReturn Future.successful(Some(RegistrationData.registration))
+        when(appConfig.historicCoreVatReturnIndexesToInclude) thenReturn Seq.empty
+        when(appConfig.historicCoreVatReturnIndexesToExclude) thenReturn Seq.empty
+
+        service.transfer().futureValue mustBe Success(())
+
+        verify(coreVatReturnConnector, times(2)).submit(any())
+
+        // submit vat returns in order
+        val inOrder = Mockito.inOrder(coreVatReturnConnector)
+        inOrder.verify(coreVatReturnConnector).submit(coreVatReturn2a)
         inOrder.verify(coreVatReturnConnector).submit(coreVatReturn3)
 
       }
@@ -285,6 +334,7 @@ class HistoricalReturnSubmitServiceSpec extends SpecBase with BeforeAndAfterEach
 
         val coreErrorResponse = EisErrorResponse(CoreErrorResponse(Instant.now(), None, "ERROR", "Submission error"))
 
+        when(appConfig.historicCoreVatReturnReferencesEnabled) thenReturn false
         when(vatReturnService.getByPeriods(any())) thenReturn Future.successful(List(completeVatReturn, completeVatReturn2, completeVatReturn3))
         when(correctionService.getByPeriods(any())) thenReturn Future.successful(List(emptyCorrectionPayload))
         when(coreVatReturnService.toCore(eqTo(completeVatReturn), any(), any())) thenReturn Future.successful(coreVatReturn)

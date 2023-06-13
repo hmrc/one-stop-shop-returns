@@ -37,6 +37,8 @@ class AppConfig @Inject()(config: Configuration) {
   val historicCoreVatReturnEndIdx: Int = config.get[Int]("historicCoreVatReturns.endIdx")
   val historicCoreVatReturnIndexesToInclude : Seq[Int] = config.get[Seq[Int]]("historicCoreVatReturns.includeIndexes")
   val historicCoreVatReturnIndexesToExclude : Seq[Int] = config.get[Seq[Int]]("historicCoreVatReturns.excludeIndexes")
+  val historicCoreVatReturnReferencesEnabled: Boolean = config.get[Boolean]("historicCoreVatReturns.referenceFiltering.enabled")
+  val historicCoreVatReturnReferences: Seq[String] = config.get[Seq[String]]("historicCoreVatReturns.referenceFiltering.references")
 
   val ossEnrolment: String = config.get[String]("oss-enrolment")
   val ossEnrolmentEnabled: Boolean = config.get[Boolean]("features.oss-enrolment")
