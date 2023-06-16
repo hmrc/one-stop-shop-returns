@@ -158,24 +158,29 @@ class CoreVatReturnService @Inject()(
   }
 
   private def getEuTraderIdForCountry(country: Country, registration: Registration): Option[CoreEuTraderId] = {
-    val matchedRegistration = registration.euRegistrations.filter {
-      case euRegistration: EuVatRegistration => euRegistration.country == country
-      case euRegistrationWithFE: RegistrationWithFixedEstablishment => euRegistrationWithFE.country == country
-      case euRegistrationWithoutTaxId: RegistrationWithoutTaxId => euRegistrationWithoutTaxId.country == country
-      case euRegistrationSendingGoods: RegistrationWithoutFixedEstablishmentWithTradeDetails => euRegistrationSendingGoods.country == country
-      case euRegistrationWithoutFE: RegistrationWithoutFixedEstablishment => euRegistrationWithoutFE.country == country
-    }
 
-    matchedRegistration.headOption.flatMap {
-      case euRegistrationWithFE: RegistrationWithFixedEstablishment =>
-        val strippedTaxIdentifier = convertTaxIdentifierForTransfer(euRegistrationWithFE.taxIdentifier.value, euRegistrationWithFE.country.code)
-        extractFormattedTaxId(strippedTaxIdentifier, euRegistrationWithFE.taxIdentifier.identifierType, euRegistrationWithFE.country.code)
-      case euRegistrationWithoutFEWithTaxDetails: RegistrationWithoutFixedEstablishmentWithTradeDetails =>
-        val strippedTaxIdentifier = convertTaxIdentifierForTransfer(euRegistrationWithoutFEWithTaxDetails.taxIdentifier.value, euRegistrationWithoutFEWithTaxDetails.country.code)
-        extractFormattedTaxId(strippedTaxIdentifier, euRegistrationWithoutFEWithTaxDetails.taxIdentifier.identifierType, euRegistrationWithoutFEWithTaxDetails.country.code)
-      case _ =>
-        logger.info("not sending tax id for no fixed establishment")
-        None
+    if(registration.isOnlineMarketplace) {
+      None
+    } else {
+      val matchedRegistration = registration.euRegistrations.filter {
+        case euRegistration: EuVatRegistration => euRegistration.country == country
+        case euRegistrationWithFE: RegistrationWithFixedEstablishment => euRegistrationWithFE.country == country
+        case euRegistrationWithoutTaxId: RegistrationWithoutTaxId => euRegistrationWithoutTaxId.country == country
+        case euRegistrationSendingGoods: RegistrationWithoutFixedEstablishmentWithTradeDetails => euRegistrationSendingGoods.country == country
+        case euRegistrationWithoutFE: RegistrationWithoutFixedEstablishment => euRegistrationWithoutFE.country == country
+      }
+
+      matchedRegistration.headOption.flatMap {
+        case euRegistrationWithFE: RegistrationWithFixedEstablishment =>
+          val strippedTaxIdentifier = convertTaxIdentifierForTransfer(euRegistrationWithFE.taxIdentifier.value, euRegistrationWithFE.country.code)
+          extractFormattedTaxId(strippedTaxIdentifier, euRegistrationWithFE.taxIdentifier.identifierType, euRegistrationWithFE.country.code)
+        case euRegistrationWithoutFEWithTaxDetails: RegistrationWithoutFixedEstablishmentWithTradeDetails =>
+          val strippedTaxIdentifier = convertTaxIdentifierForTransfer(euRegistrationWithoutFEWithTaxDetails.taxIdentifier.value, euRegistrationWithoutFEWithTaxDetails.country.code)
+          extractFormattedTaxId(strippedTaxIdentifier, euRegistrationWithoutFEWithTaxDetails.taxIdentifier.identifierType, euRegistrationWithoutFEWithTaxDetails.country.code)
+        case _ =>
+          logger.info("not sending tax id for no fixed establishment")
+          None
+      }
     }
   }
 
