@@ -8,12 +8,12 @@ object AppDependencies {
   val compile = Seq(
     "uk.gov.hmrc"             %% "bootstrap-backend-play-28"  % "7.15.0",
     "uk.gov.hmrc"             %% "domain"                     % "8.1.0-play-28",
-    "uk.gov.hmrc.mongo"       %% "hmrc-mongo-play-28"         % "1.1.0"
+    "uk.gov.hmrc.mongo"       %% "hmrc-mongo-play-28"         % "1.3.0"
   )
 
   val test = Seq(
     "uk.gov.hmrc"             %% "bootstrap-test-play-28"     % "7.15.0",
-    "uk.gov.hmrc.mongo"       %% "hmrc-mongo-test-play-28"    % "1.1.0",
+    "uk.gov.hmrc.mongo"       %% "hmrc-mongo-test-play-28"    % "1.3.0",
     "org.scalatest"           %% "scalatest"                  % "3.2.12",
     "com.typesafe.play"       %% "play-test"                  % PlayVersion.current,
     "com.vladsch.flexmark"    %  "flexmark-all"               % "0.62.2",
