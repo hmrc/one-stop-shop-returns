@@ -118,7 +118,7 @@ case class CoreVatReturn(
                           submissionDateTime: Instant,
                           totalAmountVatDueGBP: BigDecimal,
                           msconSupplies: List[CoreMsconSupply],
-                          changeDate: Instant
+                          changeDate: Option[Instant]
                         )
 
 object CoreVatReturn {

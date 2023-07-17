@@ -112,7 +112,7 @@ class CoreVatReturnSpec extends SpecBase {
             totalVatAmountCorrectionGBP = BigDecimal(-20)
           ))
         )),
-        changeDate = Instant.now(stubClock)
+        changeDate = Some(Instant.now(stubClock))
       )
 
       result mustBe JsSuccess(Some(expectedModel))

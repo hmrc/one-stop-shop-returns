@@ -70,7 +70,7 @@ class CoreVatReturnService @Inject()(
       submissionDateTime = vatReturn.submissionReceived.truncatedTo(ChronoUnit.MILLIS),
       totalAmountVatDueGBP = totalVatDue,
       msconSupplies = toCoreMsconSupplies(vatReturn.salesFromNi, vatReturn.salesFromEu, correctionPayload.corrections, amountsToCountries, registration),
-      changeDate = vatReturn.lastUpdated.truncatedTo(ChronoUnit.MILLIS)
+      changeDate = Some(vatReturn.lastUpdated.truncatedTo(ChronoUnit.MILLIS))
     ))
   }
 
