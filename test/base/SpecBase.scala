@@ -17,7 +17,7 @@ import services.{FakeHistoricalReturnSubmitService, HistoricalReturnSubmitServic
 import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.domain.Vrn
 
-import java.time.{Clock, Instant, LocalDate, ZoneId}
+import java.time.{Clock, Instant, LocalDate, LocalDateTime, ZoneId}
 
 trait SpecBase
   extends AnyFreeSpec
@@ -145,7 +145,8 @@ trait SpecBase
         CorePeriod(2021, 2),
         BigDecimal(-10)
       ))
-    ))
+    )),
+    changeDate = Instant.now(stubClock)
   )
 
   protected def applicationBuilder: GuiceApplicationBuilder =

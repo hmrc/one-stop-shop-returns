@@ -7,14 +7,15 @@ import models.core._
 import models.corrections.{CorrectionPayload, CorrectionToCountry, PeriodWithCorrections}
 import models.domain.{EuTaxIdentifier, EuTaxIdentifierType, InternationalAddress, RegistrationWithFixedEstablishment, RegistrationWithoutFixedEstablishment, RegistrationWithoutFixedEstablishmentWithTradeDetails, TradeDetails}
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito
+import org.mockito.{InvocationOps, Mockito}
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
+import org.scalatest.time.Millis
 import org.scalatest.{BeforeAndAfterEach, PrivateMethodTester}
 import testutils.RegistrationData
 import uk.gov.hmrc.http.HeaderCarrier
 
-import java.time.Instant
+import java.time.{Instant, LocalDate, LocalDateTime}
 import java.time.temporal.ChronoUnit
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -186,7 +187,8 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach with Pri
             ),
             corrections = List.empty
           )
-        )
+        ),
+        changeDate = now.truncatedTo(ChronoUnit.MILLIS)
       )
 
       val expectedResultCoreVatReturn2 = CoreVatReturn(
@@ -265,7 +267,8 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach with Pri
             ),
             corrections = List.empty
           )
-        )
+        ),
+        changeDate = now.truncatedTo(ChronoUnit.MILLIS)
       )
 
       "successful when registration returns a registration" in {
@@ -408,7 +411,8 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach with Pri
               )
             )
           )
-        )
+        ),
+        changeDate = now.truncatedTo(ChronoUnit.MILLIS)
       )
 
       when(registrationConnector.getRegistration()(any())) thenReturn Future.successful(Some(RegistrationData.registration))
@@ -464,7 +468,8 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach with Pri
               )
             )
           )
-        )
+        ),
+        changeDate = now.truncatedTo(ChronoUnit.MILLIS)
       )
 
       when(registrationConnector.getRegistration()(any())) thenReturn Future.successful(Some(RegistrationData.registration))
