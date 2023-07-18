@@ -1,16 +1,16 @@
 package models.core
 
 import base.SpecBase
-import play.api.libs.json.{Json, JsSuccess}
+import play.api.libs.json.{JsSuccess, Json}
 
-import java.time.{Instant, LocalDate}
+import java.time.{Instant, LocalDate, LocalDateTime}
 
 class CoreVatReturnSpec extends SpecBase {
 
   "CoreVatReturn" - {
     "json format correctly" in {
       val testJson =
-        """{
+        s"""{
           |  "vatReturnReferenceNumber": "XI/XI195940512/Q1.2023",
           |  "version": "2021-07-01T09:21:29.922Z",
           |  "traderId": {
@@ -65,7 +65,8 @@ class CoreVatReturnSpec extends SpecBase {
           |        }
           |      ]
           |    }
-          |  ]
+          |  ],
+          |  "changeDate" : "${Instant.now(stubClock)}"
           |}""".stripMargin
 
       val result = Json.parse(testJson).validateOpt[CoreVatReturn]
@@ -110,7 +111,8 @@ class CoreVatReturnSpec extends SpecBase {
             ),
             totalVatAmountCorrectionGBP = BigDecimal(-20)
           ))
-        ))
+        )),
+        changeDate = Some(Instant.now(stubClock))
       )
 
       result mustBe JsSuccess(Some(expectedModel))

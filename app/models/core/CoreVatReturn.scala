@@ -18,7 +18,7 @@ package models.core
 
 import play.api.libs.json.{Json, OFormat, Reads, Writes}
 
-import java.time.{Instant, LocalDate}
+import java.time.{Instant, LocalDate, LocalDateTime}
 import java.util.UUID
 
 case class CoreTraderId(vatNumber: String, issuedBy: String)
@@ -117,7 +117,8 @@ case class CoreVatReturn(
                           endDate: LocalDate,
                           submissionDateTime: Instant,
                           totalAmountVatDueGBP: BigDecimal,
-                          msconSupplies: List[CoreMsconSupply]
+                          msconSupplies: List[CoreMsconSupply],
+                          changeDate: Option[Instant]
                         )
 
 object CoreVatReturn {
