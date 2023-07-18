@@ -146,7 +146,7 @@ trait SpecBase
         BigDecimal(-10)
       ))
     )),
-    changeDate = Some(Instant.now(stubClock))
+    changeDate = Some(LocalDateTime.now(stubClock))
   )
 
   protected def applicationBuilder: GuiceApplicationBuilder =

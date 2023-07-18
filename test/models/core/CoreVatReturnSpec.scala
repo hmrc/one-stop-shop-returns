@@ -66,7 +66,7 @@ class CoreVatReturnSpec extends SpecBase {
           |      ]
           |    }
           |  ],
-          |  "changeDate" : "${Instant.now(stubClock)}"
+          |  "changeDate" : "${LocalDateTime.now(stubClock)}"
           |}""".stripMargin
 
       val result = Json.parse(testJson).validateOpt[CoreVatReturn]
@@ -112,7 +112,7 @@ class CoreVatReturnSpec extends SpecBase {
             totalVatAmountCorrectionGBP = BigDecimal(-20)
           ))
         )),
-        changeDate = Some(Instant.now(stubClock))
+        changeDate = Some(LocalDateTime.now(stubClock))
       )
 
       result mustBe JsSuccess(Some(expectedModel))

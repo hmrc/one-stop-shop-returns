@@ -36,7 +36,8 @@ case class Registration(
                                isOnlineMarketplace: Boolean,
                                niPresence: Option[NiPresence],
                                dateOfFirstSale: Option[LocalDate],
-                               excludedTrader: Option[ExcludedTrader]
+                               excludedTrader: Option[ExcludedTrader],
+                               adminUse: AdminUse
                              )
 
 object Registration {
