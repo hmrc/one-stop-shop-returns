@@ -22,7 +22,7 @@ import models.Country
 import org.scalatest.EitherValues
 import uk.gov.hmrc.domain.Vrn
 
-import java.time.LocalDate
+import java.time.{LocalDate, LocalDateTime}
 
 object RegistrationData extends Generators with EitherValues {
 
@@ -109,7 +109,8 @@ object RegistrationData extends Generators with EitherValues {
       isOnlineMarketplace = false,
       niPresence = Some(PrincipalPlaceOfBusinessInNi),
       dateOfFirstSale = Some(LocalDate.now()),
-      None
+      None,
+      adminUse = AdminUse(Some(LocalDateTime.now()))
     )
 
   private def createUkAddress(): UkAddress =

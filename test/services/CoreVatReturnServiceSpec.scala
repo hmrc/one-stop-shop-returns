@@ -13,6 +13,7 @@ import org.scalacheck.Arbitrary.arbitrary
 import org.scalatest.time.Millis
 import org.scalatest.{BeforeAndAfterEach, PrivateMethodTester}
 import testutils.RegistrationData
+import testutils.RegistrationData.registration
 import uk.gov.hmrc.http.HeaderCarrier
 
 import java.time.{Instant, LocalDate, LocalDateTime}
@@ -114,7 +115,8 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach with Pri
         )
       ),
       submissionReceived = now,
-      lastUpdated = now
+      lastUpdated = now,
+
     )
 
     "convert from VatReturn to CoreVatReturn" - {
@@ -188,7 +190,7 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach with Pri
             corrections = List.empty
           )
         ),
-        changeDate = Some(now.truncatedTo(ChronoUnit.MILLIS))
+        changeDate = registration.adminUse.changeDate
       )
 
       val expectedResultCoreVatReturn2 = CoreVatReturn(
@@ -268,7 +270,7 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach with Pri
             corrections = List.empty
           )
         ),
-        changeDate = Some(now.truncatedTo(ChronoUnit.MILLIS))
+        changeDate = registration.adminUse.changeDate
       )
 
       "successful when registration returns a registration" in {
@@ -412,7 +414,7 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach with Pri
             )
           )
         ),
-        changeDate = Some(now.truncatedTo(ChronoUnit.MILLIS))
+        changeDate = registration.adminUse.changeDate
       )
 
       when(registrationConnector.getRegistration()(any())) thenReturn Future.successful(Some(RegistrationData.registration))
@@ -469,7 +471,7 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach with Pri
             )
           )
         ),
-        changeDate = Some(now.truncatedTo(ChronoUnit.MILLIS))
+        changeDate = registration.adminUse.changeDate
       )
 
       when(registrationConnector.getRegistration()(any())) thenReturn Future.successful(Some(RegistrationData.registration))
