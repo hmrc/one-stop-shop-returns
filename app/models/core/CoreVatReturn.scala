@@ -16,9 +16,11 @@
 
 package models.core
 
-import play.api.libs.json.{Json, OFormat, Reads, Writes}
+import play.api.libs.json.{__, Json, JsString, OFormat, Reads, Writes}
+import utils.Formatters.etmpDateTimeFormatter
 
 import java.time.{Instant, LocalDate, LocalDateTime}
+import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 case class CoreTraderId(vatNumber: String, issuedBy: String)
@@ -122,6 +124,9 @@ case class CoreVatReturn(
                         )
 
 object CoreVatReturn {
+  implicit val localDateTimeWrites: Writes[LocalDateTime] = Writes[LocalDateTime] { t =>
+    JsString(t.format(etmpDateTimeFormatter))
+  }
   implicit val format: OFormat[CoreVatReturn] = Json.format[CoreVatReturn]
 
 }

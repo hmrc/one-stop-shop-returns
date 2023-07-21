@@ -26,4 +26,6 @@ object Formatters {
     .withLocale(Locale.UK)
     .withZone(ZoneId.of("GMT"))
 
+  val etmpDateTimeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+
 }
