@@ -16,10 +16,10 @@
 
 package models.core
 
-import play.api.libs.json.{__, Json, JsString, OFormat, Reads, Writes}
+import play.api.libs.json.{JsString, Json, OFormat, Reads, Writes, __}
 import utils.Formatters.etmpDateTimeFormatter
 
-import java.time.{Instant, LocalDate, LocalDateTime}
+import java.time.{Instant, LocalDate, LocalDateTime, ZoneId, ZoneOffset}
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 
@@ -125,7 +125,7 @@ case class CoreVatReturn(
 
 object CoreVatReturn {
   implicit val localDateTimeWrites: Writes[LocalDateTime] = Writes[LocalDateTime] { t =>
-    JsString(t.format(etmpDateTimeFormatter))
+    JsString(t.atZone(ZoneId.systemDefault()).withZoneSameInstant(ZoneId.of("Z")).format(etmpDateTimeFormatter))
   }
   implicit val format: OFormat[CoreVatReturn] = Json.format[CoreVatReturn]
 

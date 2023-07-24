@@ -122,7 +122,7 @@ class CoreVatReturnSpec extends SpecBase {
     }
 
     "test json format correctly" in {
-      val changeDateTimeFormatted = LocalDateTime.now(nonStartOfDayStubClock).format(etmpDateTimeFormatter)
+      val changeDateTimeFormatted = LocalDateTime.now(nonStartOfDayStubClock).atZone(ZoneId.systemDefault()).withZoneSameInstant(ZoneId.of("Z")).format(etmpDateTimeFormatter)
 
       val expectedJson =
         s"""{
