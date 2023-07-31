@@ -95,7 +95,7 @@ class ReturnStatusController @Inject()(
             periods.maxBy(_.lastDay.toEpochDay)
           )
         } else {
-          if(commencementLocalDate.isBefore(runningPeriod.firstDay)) {
+          if(commencementLocalDate.isAfter(runningPeriod.lastDay)) {
             periodService.getRunningPeriod(commencementLocalDate)
           } else {
             runningPeriod
