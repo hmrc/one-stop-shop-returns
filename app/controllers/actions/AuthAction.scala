@@ -17,6 +17,7 @@
 package controllers.actions
 
 import config.AppConfig
+import logging.Logging
 import play.api.mvc.Results.Unauthorized
 import play.api.mvc._
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
@@ -36,7 +37,7 @@ class AuthActionImpl @Inject()(
                                 val parser: BodyParsers.Default,
                                 config: AppConfig
                               )(implicit val executionContext: ExecutionContext)
-  extends AuthAction with AuthorisedFunctions {
+  extends AuthAction with AuthorisedFunctions with Logging {
 
   override def invokeBlock[A](request: Request[A], block: AuthorisedRequest[A] => Future[Result]): Future[Result] = {
 
@@ -47,13 +48,17 @@ class AuthActionImpl @Inject()(
       case Some(internalId) ~ enrolments =>
         (findVrnFromEnrolments(enrolments), hasOssEnrolment(enrolments)) match {
           case (Some(vrn), true) => block(AuthorisedRequest(request, internalId, vrn))
-          case _      => throw InsufficientEnrolments("Insufficient enrolments")
+          case _ =>
+            logger.warn(s"Insufficient enrolments")
+            throw InsufficientEnrolments("Insufficient enrolments")
         }
 
       case _ =>
+        logger.warn(s"Unable to retrieve authorisation data")
         throw new UnauthorizedException("Unable to retrieve authorisation data")
     } recover {
       case _: AuthorisationException =>
+        logger.warn(s"Unauthorised given")
         Unauthorized
     }
   }
@@ -70,6 +75,10 @@ class AuthActionImpl @Inject()(
       }
 
   private def hasOssEnrolment(enrolments: Enrolments): Boolean = {
-    !config.ossEnrolmentEnabled ||  enrolments.enrolments.exists(_.key == config.ossEnrolment)
+    val ossEnrolmentCheck = !config.ossEnrolmentEnabled || enrolments.enrolments.exists(_.key == config.ossEnrolment)
+    if(!ossEnrolmentCheck) {
+      logger.info("Didn't have OSS enrolment")
+    }
+    ossEnrolmentCheck
   }
 }
