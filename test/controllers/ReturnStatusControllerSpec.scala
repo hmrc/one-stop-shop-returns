@@ -192,6 +192,38 @@ class ReturnStatusControllerSpec
         }
       }
 
+      "with no returns in progress, due or overdue if there are no returns due yet and commencement date is in the future" in {
+
+        val mockVatReturnService = mock[VatReturnService]
+        val mockPeriodService = mock[PeriodService]
+        val mockS4LaterRepository = mock[SaveForLaterRepository]
+        val mockRegConnector = mock[RegistrationConnector]
+
+        when(mockVatReturnService.get(any())) thenReturn Future.successful(Seq.empty)
+        when(mockPeriodService.getReturnPeriods(any())) thenReturn Seq.empty
+        when(mockPeriodService.getAllPeriods) thenReturn Seq(period)
+        when(mockPeriodService.getNextPeriod(any())) thenReturn period0
+        when(mockS4LaterRepository.get(any())) thenReturn Future.successful(Seq.empty)
+        when(mockRegConnector.getRegistration(any())(any())) thenReturn Future.successful(Some(RegistrationData.registration))
+        when(mockPeriodService.getRunningPeriod(any())) thenReturn period0
+
+        val app =
+          applicationBuilder
+            .overrides(bind[VatReturnService].toInstance(mockVatReturnService))
+            .overrides(bind[PeriodService].toInstance(mockPeriodService))
+            .overrides(bind[SaveForLaterRepository].toInstance(mockS4LaterRepository))
+            .overrides(bind[RegistrationConnector].toInstance(mockRegConnector))
+            .overrides(bind[Clock].toInstance(stubClock))
+            .build()
+
+        running(app) {
+          val result = route(app, request).value
+
+          status(result) mustEqual OK
+          contentAsJson(result) mustEqual Json.toJson(CurrentReturns(Seq(Return.fromPeriod(period0, Next, false, true)), false, false))
+        }
+      }
+
       "with no returns in progress, due or overdue if all returns are complete" in {
 
         val mockVatReturnService = mock[VatReturnService]
