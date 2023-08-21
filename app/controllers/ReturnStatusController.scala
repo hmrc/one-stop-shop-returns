@@ -95,7 +95,11 @@ class ReturnStatusController @Inject()(
             periods.maxBy(_.lastDay.toEpochDay)
           )
         } else {
-          runningPeriod
+          if(commencementLocalDate.isAfter(runningPeriod.lastDay)) {
+            periodService.getRunningPeriod(commencementLocalDate)
+          } else {
+            runningPeriod
+          }
         }
       }
       returns <- vatReturnService.get(vrn)
