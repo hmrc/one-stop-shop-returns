@@ -42,7 +42,6 @@ class ExclusionServiceSpec extends SpecBase with BeforeAndAfterEach {
   private val vatReturnService = mock[VatReturnService]
   private val exclusionService = new ExclusionService(vatReturnService)
 
-  private val exclusionCode = Gen.oneOf("02", "04", "1", "3", "5", "6").sample.value.toInt
   private val exclusionReason = Gen.oneOf("01", "02", "03", "04", "05", "06", "-01").sample.value.toInt
   private val exclusionPeriod = Period(2022, Q3)
 
@@ -57,7 +56,7 @@ class ExclusionServiceSpec extends SpecBase with BeforeAndAfterEach {
       when(mockRegistrationRequest.registration) thenReturn mockRegistration
 
       when(mockRegistration.excludedTrader) thenReturn
-        Some(ExcludedTrader(Vrn("123456789"), exclusionCode, exclusionReason, exclusionPeriod))
+        Some(ExcludedTrader(Vrn("123456789"), exclusionReason, exclusionPeriod))
 
       when(vatReturnService.get(any(), any())) thenReturn Future.successful(Some(completeVatReturn))
 
@@ -68,7 +67,7 @@ class ExclusionServiceSpec extends SpecBase with BeforeAndAfterEach {
       when(mockRegistrationRequest.registration) thenReturn mockRegistration
 
       when(mockRegistration.excludedTrader) thenReturn
-        Some(ExcludedTrader(Vrn("123456789"), exclusionCode, exclusionReason, exclusionPeriod))
+        Some(ExcludedTrader(Vrn("123456789"), exclusionReason, exclusionPeriod))
 
       when(vatReturnService.get(any(),any())) thenReturn Future.successful(None)
 
