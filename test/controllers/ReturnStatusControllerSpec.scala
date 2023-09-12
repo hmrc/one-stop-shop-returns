@@ -51,11 +51,9 @@ class ReturnStatusControllerSpec
 
   private val authorisedVrn = Vrn("123456789")
   private val notAuthorisedVrn = arbitraryVrn.arbitrary.retryUntil(_ != authorisedVrn).sample.value
-  private val exclusionSource = Gen.oneOf("TRADER", "HMRC").sample.value
   private val exclusionReason = Gen.oneOf(1, 2, 3, 4, 5, 6, -1).sample.value
   private val excludedTrader: ExcludedTrader = ExcludedTrader(
     RegistrationData.registration.vrn,
-    exclusionSource,
     exclusionReason,
     period
   )

@@ -22,11 +22,9 @@ import uk.gov.hmrc.domain.Vrn
 
 case class ExcludedTrader(
                            vrn: Vrn,
-                           exclusionSource: String,
                            exclusionReason: Int,
                            effectivePeriod: Period
                          )
-
 object ExcludedTrader {
 
   implicit val format: OFormat[ExcludedTrader] = Json.format[ExcludedTrader]
