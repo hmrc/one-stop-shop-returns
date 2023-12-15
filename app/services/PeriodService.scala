@@ -16,7 +16,7 @@
 
 package services
 
-import models.{Period, PeriodYear}
+import models.{Period, PeriodYear, StandardPeriod}
 import models.Quarter._
 
 import java.time.{Clock, LocalDate, Month}
@@ -31,12 +31,12 @@ class PeriodService @Inject()(clock: Clock) {
     getReturnPeriods(commencementDate).map(PeriodYear.fromPeriod).distinct
 
   def getAllPeriods: Seq[Period] = {
-    val firstPeriod = Period(2021, Q3)
+    val firstPeriod = StandardPeriod(2021, Q3)
     getPeriodsUntilDate(firstPeriod, LocalDate.now(clock))
   }
 
   private def getPeriodsUntilDate(currentPeriod: Period, endDate: LocalDate): Seq[Period] = {
-    if(currentPeriod.lastDay.isBefore(endDate)) {
+    if (currentPeriod.lastDay.isBefore(endDate)) {
       Seq(currentPeriod) ++ getPeriodsUntilDate(getNextPeriod(currentPeriod), endDate)
     } else {
       Seq.empty
@@ -46,22 +46,22 @@ class PeriodService @Inject()(clock: Clock) {
   def getNextPeriod(currentPeriod: Period): Period = {
     currentPeriod.quarter match {
       case Q4 =>
-        Period(currentPeriod.year + 1, Q1)
+        StandardPeriod(currentPeriod.year + 1, Q1)
       case Q3 =>
-        Period(currentPeriod.year, Q4)
+        StandardPeriod(currentPeriod.year, Q4)
       case Q2 =>
-        Period(currentPeriod.year, Q3)
+        StandardPeriod(currentPeriod.year, Q3)
       case Q1 =>
-        Period(currentPeriod.year, Q2)
+        StandardPeriod(currentPeriod.year, Q2)
     }
   }
 
   def getRunningPeriod(localDate: LocalDate): Period = {
     localDate.getMonth match {
-      case Month.JANUARY | Month.FEBRUARY | Month.MARCH=> Period(localDate.getYear, Q1)
-      case Month.APRIL | Month.MAY | Month.JUNE=> Period(localDate.getYear, Q2)
-      case Month.JULY | Month.AUGUST | Month.SEPTEMBER=> Period(localDate.getYear, Q3)
-      case Month.OCTOBER | Month.NOVEMBER | Month.DECEMBER=> Period(localDate.getYear, Q4)
+      case Month.JANUARY | Month.FEBRUARY | Month.MARCH => StandardPeriod(localDate.getYear, Q1)
+      case Month.APRIL | Month.MAY | Month.JUNE => StandardPeriod(localDate.getYear, Q2)
+      case Month.JULY | Month.AUGUST | Month.SEPTEMBER => StandardPeriod(localDate.getYear, Q3)
+      case Month.OCTOBER | Month.NOVEMBER | Month.DECEMBER => StandardPeriod(localDate.getYear, Q4)
     }
   }
 }

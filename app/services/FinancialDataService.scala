@@ -20,7 +20,7 @@ import connectors.FinancialDataConnector
 import logging.Logging
 import models.des.DesException
 import models.financialdata._
-import models.{Period, Quarter}
+import models.{Period, Quarter, StandardPeriod}
 import uk.gov.hmrc.domain.Vrn
 
 import java.time.LocalDate
@@ -147,7 +147,7 @@ class FinancialDataService @Inject()(
                     .map {
                       case (Some(periodStart), transactions: Seq[FinancialTransaction]) =>
                         PeriodWithOutstandingAmount(
-                          Period(periodStart.getYear, Quarter.quarterFromStartMonth(periodStart.getMonth)),
+                          StandardPeriod(periodStart.getYear, Quarter.quarterFromStartMonth(periodStart.getMonth)),
                           transactions.map(_.outstandingAmount.getOrElse(BigDecimal(0))).sum
                         )
                       case (None, _) => throw DesException("An error occurred while getting financial Data - periodStart was None")
