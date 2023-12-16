@@ -73,7 +73,7 @@ class ReturnStatusControllerSpec
       val mockVatReturnService = mock[VatReturnService]
       val mockPeriodService = mock[PeriodService]
 
-      val nextPeriod = Period(2021, Q4)
+      val nextPeriod = StandardPeriod(2021, Q4)
       val vatReturn =
         Gen
           .nonEmptyListOf(arbitrary[VatReturn])
@@ -111,8 +111,8 @@ class ReturnStatusControllerSpec
       val mockVatReturnService = mock[VatReturnService]
       val mockPeriodService = mock[PeriodService]
 
-      val period2021Q4 = Period(2021, Q4)
-      val period2022Q1 = Period(2022, Q1)
+      val period2021Q4 = StandardPeriod(2021, Q4)
+      val period2022Q1 = StandardPeriod(2022, Q1)
       val nextPeriod = period2021Q4
       val vatReturn =
         Gen
@@ -148,11 +148,11 @@ class ReturnStatusControllerSpec
 
   ".getCurrentReturns()" - {
     val stubClock: Clock = Clock.fixed(LocalDate.of(2022, 10, 1).atStartOfDay(ZoneId.systemDefault).toInstant, ZoneId.systemDefault)
-    val period = Period(2021, Q2)
-    val period0 = Period(2021, Q3)
-    val period1 = Period(2022, Q1)
-    val period2 = Period(2022, Q2)
-    val period3 = Period(2022, Q3)
+    val period = StandardPeriod(2021, Q2)
+    val period0 = StandardPeriod(2021, Q3)
+    val period1 = StandardPeriod(2022, Q1)
+    val period2 = StandardPeriod(2022, Q2)
+    val period3 = StandardPeriod(2022, Q3)
     val periods = Seq(period, period0, period1, period2, period3)
 
     lazy val request = FakeRequest(GET, routes.ReturnStatusController.getCurrentReturns(vrn.vrn).url)
@@ -261,7 +261,7 @@ class ReturnStatusControllerSpec
       }
 
       "with a return due but not in progress if there's one return due but no saved answers" in {
-        val period = Period(2022, Q3)
+        val period = StandardPeriod(2022, Q3)
         val mockVatReturnService = mock[VatReturnService]
         val mockPeriodService = mock[PeriodService]
         val mockS4LaterRepository = mock[SaveForLaterRepository]
@@ -370,7 +370,7 @@ class ReturnStatusControllerSpec
       }
 
       "with a return due and in progress if there's one return due and saved answers" in {
-        val period = Period(2022, Q3)
+        val period = StandardPeriod(2022, Q3)
         val mockVatReturnService = mock[VatReturnService]
         val mockPeriodService = mock[PeriodService]
         val mockS4LaterRepository = mock[SaveForLaterRepository]
@@ -408,8 +408,8 @@ class ReturnStatusControllerSpec
       }
 
       "with an excluded trader's final return due but not in progress and no saved answers" in {
-        val periodQ2 = Period(2022, Q2)
-        val periodQ3 = Period(2022, Q3)
+        val periodQ2 = StandardPeriod(2022, Q2)
+        val periodQ3 = StandardPeriod(2022, Q3)
         val mockVatReturnService = mock[VatReturnService]
         val mockPeriodService = mock[PeriodService]
         val mockS4LaterRepository = mock[SaveForLaterRepository]
@@ -447,8 +447,8 @@ class ReturnStatusControllerSpec
       }
 
       "with an excluded trader's final return completed and can't start any more returns" in {
-        val periodQ2 = Period(2022, Q2)
-        val periodQ3 = Period(2022, Q3)
+        val periodQ2 = StandardPeriod(2022, Q2)
+        val periodQ3 = StandardPeriod(2022, Q3)
         val mockVatReturnService = mock[VatReturnService]
         val mockPeriodService = mock[PeriodService]
         val mockS4LaterRepository = mock[SaveForLaterRepository]

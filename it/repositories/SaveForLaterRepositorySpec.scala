@@ -3,7 +3,7 @@ package repositories
 import config.AppConfig
 import crypto.{SavedUserAnswersEncryptor, SecureGCMCipher}
 import generators.Generators
-import models.{EncryptedSavedUserAnswers, Period, SavedUserAnswers}
+import models.{EncryptedSavedUserAnswers, Period, SavedUserAnswers, StandardPeriod}
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalatest.OptionValues
@@ -52,7 +52,7 @@ class SaveForLaterRepositorySpec
 
       val answers    = arbitrary[SavedUserAnswers].sample.value
       val answers1    = answers copy (lastUpdated = Instant.now(stubClock).truncatedTo(ChronoUnit.MILLIS))
-      val answers2Period = answers1.period copy (year = answers1.period.year + 1)
+      val answers2Period = answers1.period.asInstanceOf[StandardPeriod] copy (year = answers1.period.year + 1)
       val answers2    = answers1.copy (
         period      = answers2Period,
         lastUpdated = Instant.now(stubClock).truncatedTo(ChronoUnit.MILLIS)
@@ -112,7 +112,7 @@ class SaveForLaterRepositorySpec
 
       val answers    = arbitrary[SavedUserAnswers].sample.value
       val answers1 = answers.copy(lastUpdated = Instant.now(stubClock).truncatedTo(ChronoUnit.MILLIS))
-      val answers2Period = answers1.period copy (year = answers1.period.year + 1)
+      val answers2Period = answers1.period.asInstanceOf[StandardPeriod] copy (year = answers1.period.year + 1)
       val answers2    = answers1.copy (
         period      = answers2Period,
         lastUpdated = Instant.now(stubClock).truncatedTo(ChronoUnit.MILLIS)

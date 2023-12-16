@@ -102,7 +102,7 @@ class CorrectionControllerSpec
   }
 
   ".get(period)" - {
-    val period = Period(2021, Q3)
+    val period = StandardPeriod(2021, Q3)
 
     lazy val request = FakeRequest(GET, routes.CorrectionController.get(period).url)
 
@@ -162,7 +162,7 @@ class CorrectionControllerSpec
   }
 
   ".getByCorrectionPeriod(period)" - {
-    val period = Period(2021, Q3)
+    val period = StandardPeriod(2021, Q3)
 
     lazy val request = FakeRequest(GET, routes.CorrectionController.getByCorrectionPeriod(period).url)
 

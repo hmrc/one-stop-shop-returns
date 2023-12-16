@@ -294,7 +294,7 @@ class VatReturnControllerSpec
   }
 
   ".get(period)" - {
-    val period = Period(2021, Q3)
+    val period = StandardPeriod(2021, Q3)
 
     lazy val request = FakeRequest(GET, routes.VatReturnController.get(period).url)
 

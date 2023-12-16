@@ -39,7 +39,7 @@ class FinancialDataServiceSpec extends SpecBase
   val correctionPayload: CorrectionPayload =
     CorrectionPayload(
       vatReturn.vrn,
-      Period(2021, Q4),
+      StandardPeriod(2021, Q4),
       List(PeriodWithCorrections(
         period,
         List(Arbitrary.arbitrary[CorrectionToCountry].sample.value)
@@ -153,7 +153,7 @@ class FinancialDataServiceSpec extends SpecBase
     "return a charge" - {
 
       "when there has been no payments" in {
-        val period = Period(2021, Q3)
+        val period = StandardPeriod(2021, Q3)
 
         val financialTransactions = Seq(
           FinancialTransaction(
@@ -187,7 +187,7 @@ class FinancialDataServiceSpec extends SpecBase
       }
 
       "when there has been a payment and a single transaction" in {
-        val period = Period(2021, Q3)
+        val period = StandardPeriod(2021, Q3)
 
         val items = Seq(
           Item(
@@ -231,7 +231,7 @@ class FinancialDataServiceSpec extends SpecBase
       }
 
       "when there has been two transactions and two payments" in {
-        val period = Period(2021, Q3)
+        val period = StandardPeriod(2021, Q3)
         val items = Seq(
           Item(
             amount = Some(BigDecimal(500)),
@@ -298,7 +298,7 @@ class FinancialDataServiceSpec extends SpecBase
     "not return a charge" - {
 
       "when there is no financial data" in {
-        val period = Period(2021, Q3)
+        val period = StandardPeriod(2021, Q3)
         val queryParameters = FinancialDataQueryParameters(fromDate = Some(period.firstDay), toDate = Some(period.lastDay))
 
         when(periodService.getPeriodYears(any())) thenReturn Seq(periodYear2021)
@@ -316,7 +316,7 @@ class FinancialDataServiceSpec extends SpecBase
 
       "when there has been no payments for 1 period" in {
 
-        val period = Period(2021, Q3)
+        val period = StandardPeriod(2021, Q3)
         val vatReturn = arbitrary[VatReturn].sample.value.copy(period = period)
 
         val financialTransactions = Seq(
@@ -351,8 +351,8 @@ class FinancialDataServiceSpec extends SpecBase
 
       "when there has been no payments for 2 periods with different years" in {
 
-        val period = Period(2021, Q4)
-        val period2 = Period(2022, Q1)
+        val period = StandardPeriod(2021, Q4)
+        val period2 = StandardPeriod(2022, Q1)
         val vatReturn = arbitrary[VatReturn].sample.value.copy(period = period)
 
         val financialTransactions = Seq(
@@ -399,7 +399,7 @@ class FinancialDataServiceSpec extends SpecBase
     "return empty" - {
 
       "when there are no transactions found" in {
-        val period = Period(2021, Q3)
+        val period = StandardPeriod(2021, Q3)
         val vatReturn = arbitrary[VatReturn].sample.value.copy(period = period)
 
         val financialTransactions = Seq.empty
@@ -420,7 +420,7 @@ class FinancialDataServiceSpec extends SpecBase
     }
 
     "return DES exception when no tax period from exists" in {
-      val period = Period(2021, Q3)
+      val period = StandardPeriod(2021, Q3)
       val vatReturn = arbitrary[VatReturn].sample.value.copy(period = period)
 
       val financialTransactions = Seq(
@@ -591,8 +591,8 @@ class FinancialDataServiceSpec extends SpecBase
 
     "must return multiple VatReturnWithFinancialDatas when there is multiple vatReturns in the same period year and charges" in {
       val commencementDate = LocalDate.now()
-      val period = Period(2021, Q3)
-      val period2 = Period(2021, Q4)
+      val period = StandardPeriod(2021, Q3)
+      val period2 = StandardPeriod(2021, Q4)
 
       val financialTransaction =
         FinancialTransaction(
@@ -656,8 +656,8 @@ class FinancialDataServiceSpec extends SpecBase
 
     "must return multiple VatReturnWithFinancialDatas when there is multiple vatReturns in the different period years and charges" in {
       val commencementDate = LocalDate.now()
-      val period = Period(2021, Q4)
-      val period2 = Period(2022, Q1)
+      val period = StandardPeriod(2021, Q4)
+      val period2 = StandardPeriod(2022, Q1)
 
       val financialTransaction =
         FinancialTransaction(
@@ -761,13 +761,13 @@ class FinancialDataServiceSpec extends SpecBase
   ".filterIfPaymentIsOutstanding" - {
 
     val fullyPaidCharge = Charge(
-      period = Period(2021, Q3),
+      period = StandardPeriod(2021, Q3),
       originalAmount = BigDecimal(1000),
       outstandingAmount = BigDecimal(0),
       clearedAmount = BigDecimal(1000)
     )
     val notPaidCharge = Charge(
-      period = Period(2021, Q3),
+      period = StandardPeriod(2021, Q3),
       originalAmount = BigDecimal(1000),
       outstandingAmount = BigDecimal(1000),
       clearedAmount = BigDecimal(0)

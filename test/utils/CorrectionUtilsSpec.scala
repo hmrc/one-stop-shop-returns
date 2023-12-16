@@ -17,7 +17,7 @@
 package utils
 
 import base.SpecBase
-import models.{Country, CountryAmounts, Period, SalesDetails, SalesToCountry, VatOnSales, VatRate, VatRateType}
+import models.{Country, CountryAmounts, Period, SalesDetails, SalesToCountry, StandardPeriod, VatOnSales, VatRate, VatRateType}
 import models.VatOnSalesChoice.Standard
 import models.corrections.{CorrectionPayload, CorrectionToCountry, PeriodWithCorrections}
 import models.Quarter.{Q3, Q4}
@@ -39,12 +39,12 @@ class CorrectionUtilsSpec extends SpecBase {
         period = completeVatReturn.period,
         corrections = List(
           PeriodWithCorrections(
-            correctionReturnPeriod = Period(2021, Q3),
+            correctionReturnPeriod = StandardPeriod(2021, Q3),
             correctionsToCountry = List(
               CorrectionToCountry(country1, BigDecimal(10))
             )),
           PeriodWithCorrections(
-            correctionReturnPeriod = Period(2021, Q4),
+            correctionReturnPeriod = StandardPeriod(2021, Q4),
             correctionsToCountry = List(
               CorrectionToCountry(country1, BigDecimal(10))
             ))
@@ -75,13 +75,13 @@ class CorrectionUtilsSpec extends SpecBase {
         period = arbitrary[Period].sample.value,
         corrections = List(
           PeriodWithCorrections(
-            correctionReturnPeriod = Period(2021, Q3),
+            correctionReturnPeriod = StandardPeriod(2021, Q3),
             correctionsToCountry = List(
               CorrectionToCountry(country1, BigDecimal(10)),
               CorrectionToCountry(country2, BigDecimal(-10))
             )),
           PeriodWithCorrections(
-            correctionReturnPeriod = Period(2021, Q4),
+            correctionReturnPeriod = StandardPeriod(2021, Q4),
             correctionsToCountry = List(
               CorrectionToCountry(country1, BigDecimal(-10)),
               CorrectionToCountry(country2, BigDecimal(10))
@@ -118,13 +118,13 @@ class CorrectionUtilsSpec extends SpecBase {
         period = arbitrary[Period].sample.value,
         corrections = List(
           PeriodWithCorrections(
-            correctionReturnPeriod = Period(2021, Q3),
+            correctionReturnPeriod = StandardPeriod(2021, Q3),
             correctionsToCountry = List(
               CorrectionToCountry(country1, BigDecimal(52.44)),
               CorrectionToCountry(country2, BigDecimal(-589.24))
             )),
           PeriodWithCorrections(
-            correctionReturnPeriod = Period(2021, Q4),
+            correctionReturnPeriod = StandardPeriod(2021, Q4),
             correctionsToCountry = List(
               CorrectionToCountry(country1, BigDecimal(-10)),
             ))

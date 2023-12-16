@@ -3,7 +3,7 @@ package repositories
 import config.AppConfig
 import crypto.{CorrectionEncryptor, CountryEncryptor, ReturnEncryptor, SecureGCMCipher}
 import generators.Generators
-import models.{EncryptedVatReturn, Period, ReturnReference, VatReturn}
+import models.{EncryptedVatReturn, Period, ReturnReference, StandardPeriod, VatReturn}
 import models.corrections.CorrectionPayload
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
@@ -53,7 +53,7 @@ class VatReturnRepositorySpec
     "must insert returns for the same VRN but different periods" in {
 
       val vatReturn1    = arbitrary[VatReturn].sample.value
-      val return2Period = vatReturn1.period copy (year = vatReturn1.period.year + 1)
+      val return2Period = vatReturn1.period.asInstanceOf[StandardPeriod] copy (year = vatReturn1.period.year + 1)
       val vatReturn2    = vatReturn1.copy (
         period    = return2Period,
         reference = ReturnReference(vatReturn1.vrn, return2Period)
@@ -113,8 +113,8 @@ class VatReturnRepositorySpec
 
       val vatReturn1    = arbitrary[VatReturn].sample.value
       val correction1    = arbitrary[CorrectionPayload].sample.value.copy(period = vatReturn1.period)
-      val return2Period = vatReturn1.period copy (year = vatReturn1.period.year + 1)
-      val correction2Period = correction1.period copy (year = correction1.period.year + 1)
+      val return2Period = vatReturn1.period.asInstanceOf[StandardPeriod] copy (year = vatReturn1.period.year + 1)
+      val correction2Period = correction1.period.asInstanceOf[StandardPeriod] copy (year = correction1.period.year + 1)
       val vatReturn2    = vatReturn1.copy (
         period    = return2Period,
         reference = ReturnReference(vatReturn1.vrn, return2Period)
@@ -190,7 +190,7 @@ class VatReturnRepositorySpec
     "must return all records" in {
 
       val vatReturn1    = arbitrary[VatReturn].sample.value
-      val return2Period = vatReturn1.period copy (year = vatReturn1.period.year + 1)
+      val return2Period = vatReturn1.period.asInstanceOf[StandardPeriod] copy (year = vatReturn1.period.year + 1)
       val vatReturn2    = vatReturn1.copy (
         period    = return2Period,
         reference = ReturnReference(vatReturn1.vrn, return2Period)
@@ -216,7 +216,7 @@ class VatReturnRepositorySpec
     "must return all records for the given VRN" in {
 
       val vatReturn1    = arbitrary[VatReturn].sample.value
-      val return2Period = vatReturn1.period copy (year = vatReturn1.period.year + 1)
+      val return2Period = vatReturn1.period.asInstanceOf[StandardPeriod] copy (year = vatReturn1.period.year + 1)
       val vatReturn2    = vatReturn1.copy (
         period    = return2Period,
         reference = ReturnReference(vatReturn1.vrn, return2Period)
@@ -242,7 +242,7 @@ class VatReturnRepositorySpec
     "must return all records for the given periods" in {
 
       val vatReturn1    = arbitrary[VatReturn].sample.value
-      val return2Period = vatReturn1.period copy (year = vatReturn1.period.year + 1)
+      val return2Period = vatReturn1.period.asInstanceOf[StandardPeriod] copy (year = vatReturn1.period.year + 1)
       val vatReturn2    = vatReturn1.copy (
         period    = return2Period,
         reference = ReturnReference(vatReturn1.vrn, return2Period)

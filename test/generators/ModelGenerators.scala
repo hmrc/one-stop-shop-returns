@@ -36,7 +36,7 @@ trait ModelGenerators {
       for {
         year <- Gen.choose(2022, 2099)
         quarter <- arbitrary[Quarter]
-      } yield Period(year, quarter)
+      } yield StandardPeriod(year, quarter)
     }
 
   implicit val arbitraryVrn: Arbitrary[Vrn] =

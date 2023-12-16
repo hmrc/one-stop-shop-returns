@@ -4,7 +4,7 @@ import config.AppConfig
 import crypto.{CorrectionEncryptor, CountryEncryptor, SecureGCMCipher}
 import generators.Generators
 import models.corrections.{CorrectionPayload, CorrectionToCountry, EncryptedCorrectionPayload, PeriodWithCorrections}
-import models.{Country, Period}
+import models.{Country, Period, StandardPeriod}
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalatest.OptionValues
@@ -48,7 +48,7 @@ class CorrectionRepositorySpec
     "must return all records for the given VRN" in {
 
       val correctionPayload1 = arbitrary[CorrectionPayload].sample.value
-      val correctionPayload2Period = correctionPayload1.period copy (year = correctionPayload1.period.year + 1)
+      val correctionPayload2Period = correctionPayload1.period.asInstanceOf[StandardPeriod] copy (year = correctionPayload1.period.year + 1)
       val correctionPayload2 = correctionPayload1.copy(
         period = correctionPayload2Period
       )
@@ -80,8 +80,8 @@ class CorrectionRepositorySpec
     "must return all records for the given periods" in {
 
       val correctionPayload1 = arbitrary[CorrectionPayload].sample.value
-      val correctionPayload2Period = correctionPayload1.period copy (year = correctionPayload1.period.year + 1)
-      val correctionPayload3Period = correctionPayload1.period copy (year = correctionPayload1.period.year + 2)
+      val correctionPayload2Period = correctionPayload1.period.asInstanceOf[StandardPeriod] copy (year = correctionPayload1.period.year + 1)
+      val correctionPayload3Period = correctionPayload1.period.asInstanceOf[StandardPeriod] copy (year = correctionPayload1.period.year + 2)
       val correctionPayload2 = correctionPayload1.copy(
         period = correctionPayload2Period
       )
@@ -115,7 +115,7 @@ class CorrectionRepositorySpec
     "must return all records" in {
 
       val correctionPayload1 = arbitrary[CorrectionPayload].sample.value
-      val correctionPayload2Period = correctionPayload1.period copy (year = correctionPayload1.period.year + 1)
+      val correctionPayload2Period = correctionPayload1.period.asInstanceOf[StandardPeriod] copy (year = correctionPayload1.period.year + 1)
       val correctionPayload2 = correctionPayload1.copy(
         period = correctionPayload2Period
       )
