@@ -53,12 +53,6 @@ class CoreVatReturnService @Inject()(
     val totalVatDue = vatReturnSalesService.getTotalVatOnSalesAfterCorrection(vatReturn, Some(correctionPayload))
     val amountsToCountries = CorrectionUtils.groupByCountryAndSum(correctionPayload, vatReturn)
 
-    println("")
-    println("")
-    println(s"submitted vat return ${vatReturn}")
-    println("")
-    println("")
-
     Future.successful(CoreVatReturn(
       vatReturnReferenceNumber = vatReturn.reference.value,
       version = vatReturn.lastUpdated.truncatedTo(ChronoUnit.MILLIS),
