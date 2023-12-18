@@ -6,7 +6,7 @@ import connectors.{CoreVatReturnConnector, RegistrationConnector}
 import models.Quarter.{Q1, Q3, Q4}
 import models.core.{CoreErrorResponse, CorePeriod, EisErrorResponse}
 import models.corrections.CorrectionPayload
-import models.{Period, ReturnReference, VatReturn}
+import models.{Period, ReturnReference, StandardPeriod, VatReturn}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchersSugar.eqTo
 import org.mockito.Mockito
@@ -33,7 +33,7 @@ class HistoricalReturnSubmitServiceSpec extends SpecBase with BeforeAndAfterEach
     Mockito.reset(coreVatReturnService, coreVatReturnConnector)
   }
 
-  val historicalPeriods = Seq(Period(2021, Q3), Period(2021, Q4))
+  val historicalPeriods = Seq(StandardPeriod(2021, Q3), StandardPeriod(2021, Q4))
   "HistoricalReturnSubmitService#transfer" - {
 
     "when core vat return feature is enabled" - {
@@ -85,9 +85,9 @@ class HistoricalReturnSubmitServiceSpec extends SpecBase with BeforeAndAfterEach
 
       "submit vat returns in order" in {
 
-        val completeVatReturn2 = completeVatReturn.copy(vrn = Vrn("987654321"), period = Period(2086, Q4), submissionReceived = completeVatReturn.submissionReceived.plus(java.time.Period.ofDays(1)))
-        val completeVatReturn2a = completeVatReturn.copy(vrn = Vrn("987654322"), period = Period(2086, Q4))
-        val completeVatReturn3 = completeVatReturn.copy(vrn = Vrn("987654322"), period = Period(2087, Q1))
+        val completeVatReturn2 = completeVatReturn.copy(vrn = Vrn("987654321"), period = StandardPeriod(2086, Q4), submissionReceived = completeVatReturn.submissionReceived.plus(java.time.Period.ofDays(1)))
+        val completeVatReturn2a = completeVatReturn.copy(vrn = Vrn("987654322"), period = StandardPeriod(2086, Q4))
+        val completeVatReturn3 = completeVatReturn.copy(vrn = Vrn("987654322"), period = StandardPeriod(2087, Q1))
 
         val coreVatReturn1 = getCoreVatReturn(completeVatReturn)
         val coreVatReturn2 = getCoreVatReturn(completeVatReturn2)
@@ -131,9 +131,9 @@ class HistoricalReturnSubmitServiceSpec extends SpecBase with BeforeAndAfterEach
 
       "submit vat returns with indexes in given range when index filtering is toggled on and start and end indexes are provided" in {
 
-        val completeVatReturn2 = completeVatReturn.copy(vrn = Vrn("987654321"), period = Period(2086, Q4), submissionReceived = completeVatReturn.submissionReceived.plus(java.time.Period.ofDays(1)))
-        val completeVatReturn2a = completeVatReturn.copy(vrn = Vrn("987654322"), period = Period(2086, Q4))
-        val completeVatReturn3 = completeVatReturn.copy(vrn = Vrn("987654322"), period = Period(2087, Q1))
+        val completeVatReturn2 = completeVatReturn.copy(vrn = Vrn("987654321"), period = StandardPeriod(2086, Q4), submissionReceived = completeVatReturn.submissionReceived.plus(java.time.Period.ofDays(1)))
+        val completeVatReturn2a = completeVatReturn.copy(vrn = Vrn("987654322"), period = StandardPeriod(2086, Q4))
+        val completeVatReturn3 = completeVatReturn.copy(vrn = Vrn("987654322"), period = StandardPeriod(2087, Q1))
 
         val coreVatReturn1 = getCoreVatReturn(completeVatReturn)
         val coreVatReturn2 = getCoreVatReturn(completeVatReturn2)
@@ -180,9 +180,9 @@ class HistoricalReturnSubmitServiceSpec extends SpecBase with BeforeAndAfterEach
 
       "submit vat returns with specific indexes when index filtering is toggled on and a list of indexes to include is provided" in {
 
-        val completeVatReturn2 = completeVatReturn.copy(vrn = Vrn("987654321"), period = Period(2086, Q4), submissionReceived = completeVatReturn.submissionReceived.plus(java.time.Period.ofDays(1)))
-        val completeVatReturn2a = completeVatReturn.copy(vrn = Vrn("987654322"), period = Period(2086, Q4))
-        val completeVatReturn3 = completeVatReturn.copy(vrn = Vrn("987654322"), period = Period(2087, Q1))
+        val completeVatReturn2 = completeVatReturn.copy(vrn = Vrn("987654321"), period = StandardPeriod(2086, Q4), submissionReceived = completeVatReturn.submissionReceived.plus(java.time.Period.ofDays(1)))
+        val completeVatReturn2a = completeVatReturn.copy(vrn = Vrn("987654322"), period = StandardPeriod(2086, Q4))
+        val completeVatReturn3 = completeVatReturn.copy(vrn = Vrn("987654322"), period = StandardPeriod(2087, Q1))
 
         val coreVatReturn1 = getCoreVatReturn(completeVatReturn)
         val coreVatReturn2 = getCoreVatReturn(completeVatReturn2)
@@ -229,9 +229,9 @@ class HistoricalReturnSubmitServiceSpec extends SpecBase with BeforeAndAfterEach
 
       "submit vat returns with specific indexes when index filtering is toggled on and a list of indexes to exclude is provided" in {
 
-        val completeVatReturn2 = completeVatReturn.copy(vrn = Vrn("987654321"), period = Period(2086, Q4), submissionReceived = completeVatReturn.submissionReceived.plus(java.time.Period.ofDays(1)))
-        val completeVatReturn2a = completeVatReturn.copy(vrn = Vrn("987654322"), period = Period(2086, Q4))
-        val completeVatReturn3 = completeVatReturn.copy(vrn = Vrn("987654322"), period = Period(2087, Q1))
+        val completeVatReturn2 = completeVatReturn.copy(vrn = Vrn("987654321"), period = StandardPeriod(2086, Q4), submissionReceived = completeVatReturn.submissionReceived.plus(java.time.Period.ofDays(1)))
+        val completeVatReturn2a = completeVatReturn.copy(vrn = Vrn("987654322"), period = StandardPeriod(2086, Q4))
+        val completeVatReturn3 = completeVatReturn.copy(vrn = Vrn("987654322"), period = StandardPeriod(2087, Q1))
 
         val coreVatReturn1 = getCoreVatReturn(completeVatReturn)
         val coreVatReturn2 = getCoreVatReturn(completeVatReturn2)
@@ -278,9 +278,9 @@ class HistoricalReturnSubmitServiceSpec extends SpecBase with BeforeAndAfterEach
 
       "submit vat returns with specific references when reference filtering is toggled on" in {
 
-        val completeVatReturn2 = completeVatReturn.copy(vrn = Vrn("987654321"), period = Period(2086, Q4), submissionReceived = completeVatReturn.submissionReceived.plus(java.time.Period.ofDays(1)), reference = ReturnReference(Vrn("987654321"), Period(2086, Q4)))
-        val completeVatReturn2a = completeVatReturn.copy(vrn = Vrn("987654322"), period = Period(2086, Q4), reference = ReturnReference(Vrn("987654322"), Period(2086, Q4)))
-        val completeVatReturn3 = completeVatReturn.copy(vrn = Vrn("987654322"), period = Period(2087, Q1), reference = ReturnReference(Vrn("987654322"), Period(2087, Q1)))
+        val completeVatReturn2 = completeVatReturn.copy(vrn = Vrn("987654321"), period = StandardPeriod(2086, Q4), submissionReceived = completeVatReturn.submissionReceived.plus(java.time.Period.ofDays(1)), reference = ReturnReference(Vrn("987654321"), StandardPeriod(2086, Q4)))
+        val completeVatReturn2a = completeVatReturn.copy(vrn = Vrn("987654322"), period = StandardPeriod(2086, Q4), reference = ReturnReference(Vrn("987654322"), StandardPeriod(2086, Q4)))
+        val completeVatReturn3 = completeVatReturn.copy(vrn = Vrn("987654322"), period = StandardPeriod(2087, Q1), reference = ReturnReference(Vrn("987654322"), StandardPeriod(2087, Q1)))
 
         val coreVatReturn1 = getCoreVatReturn(completeVatReturn)
         val coreVatReturn2 = getCoreVatReturn(completeVatReturn2)

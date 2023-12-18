@@ -22,7 +22,7 @@ import generators.Generators
 import models._
 import models.Quarter.{Q3, Q4}
 import models.des.DesException
-import models.financialdata.{Charge, CurrentPayments, Payment, PeriodWithOutstandingAmount, VatReturnWithFinancialData}
+import models.financialdata._
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito
 import org.mockito.Mockito.when
@@ -61,7 +61,7 @@ class FinancialDataControllerSpec
 
   ".getCharge(period)" - {
 
-    val period = Period(2021, Q3)
+    val period = StandardPeriod(2021, Q3)
     val charge = Charge(period, 1000, 500, 500)
 
     lazy val request =
@@ -126,7 +126,7 @@ class FinancialDataControllerSpec
 
   ".getOutstandingAmounts" - {
 
-    val period = Period(2021, Q3)
+    val period = StandardPeriod(2021, Q3)
     val outstandingPayment = PeriodWithOutstandingAmount(period, BigDecimal(1000.50))
 
     lazy val request =
@@ -174,7 +174,7 @@ class FinancialDataControllerSpec
 
   ".getVatReturnWithFinancialData(commencementDate)" - {
 
-    val period = Period(2021, Q3)
+    val period = StandardPeriod(2021, Q3)
     val vatReturn = arbitrary[VatReturn].sample.value
     val charge = Charge(period, 1000, 500, 500)
     val vatOwed = 1000
@@ -215,8 +215,8 @@ class FinancialDataControllerSpec
       val stubClock = Clock.fixed(
         Instant.from(LocalDate.of(2022, 1, 1)
           .atStartOfDay(ZoneId.systemDefault())), ZoneId.systemDefault())
-      val periodDue = Period(2021, Q4)
-      val periodOverdue = Period(2021, Q3)
+      val periodDue = StandardPeriod(2021, Q4)
+      val periodOverdue = StandardPeriod(2021, Q3)
       val charge1 = Charge(periodDue, 1000, 1000, 0)
       val charge2 = Charge(periodOverdue, 1000, 500, 500)
 
@@ -254,7 +254,7 @@ class FinancialDataControllerSpec
       val stubClock = Clock.fixed(
         Instant.from(LocalDate.of(2022, 1, 1)
           .atStartOfDay(ZoneId.systemDefault())), ZoneId.systemDefault())
-      val periodDue = Period(2021, Q4)
+      val periodDue = StandardPeriod(2021, Q4)
       val charge1 = Charge(periodDue, 1000, 1000, 0)
 
       val vatReturnWithFinancialData = VatReturnWithFinancialData(
@@ -289,8 +289,8 @@ class FinancialDataControllerSpec
       val stubClock = Clock.fixed(
         Instant.from(LocalDate.of(2022, 4, 1)
           .atStartOfDay(ZoneId.systemDefault())), ZoneId.systemDefault())
-      val periodOverdue1 = Period(2021, Q3)
-      val periodOverdue2 = Period(2021, Q4)
+      val periodOverdue1 = StandardPeriod(2021, Q3)
+      val periodOverdue2 = StandardPeriod(2021, Q4)
       val charge1 = Charge(periodOverdue1, 1000, 1000, 0)
       val charge2 = Charge(periodOverdue2, 1000, 1000, 0)
 

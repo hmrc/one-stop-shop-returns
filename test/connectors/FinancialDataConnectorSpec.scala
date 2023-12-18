@@ -4,8 +4,8 @@ import base.SpecBase
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.matching.EqualToPattern
 import models.financialdata.{FinancialData, FinancialDataQueryParameters, FinancialTransaction, Item}
-import models.Period
 import models.Quarter.Q3
+import models.StandardPeriod
 import models.des.{DesErrorResponse, UnexpectedResponseStatus}
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
 import org.scalatest.time.{Seconds, Span}
@@ -38,7 +38,7 @@ class FinancialDataConnectorSpec extends SpecBase with WireMockHelper {
         val app = application
 
         val zonedNow = ZonedDateTime.now()
-        val period = Period(2021, Q3)
+        val period = StandardPeriod(2021, Q3)
 
         val responseJson =
           s"""{

@@ -5,18 +5,17 @@ import connectors.RegistrationConnector
 import models._
 import models.core._
 import models.corrections.{CorrectionPayload, CorrectionToCountry, PeriodWithCorrections}
-import models.domain.{EuTaxIdentifier, EuTaxIdentifierType, InternationalAddress, RegistrationWithFixedEstablishment, RegistrationWithoutFixedEstablishment, RegistrationWithoutFixedEstablishmentWithTradeDetails, TradeDetails}
+import models.domain.{EuTaxIdentifier, EuTaxIdentifierType, _}
 import org.mockito.ArgumentMatchers.any
-import org.mockito.{InvocationOps, Mockito}
+import org.mockito.Mockito
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
-import org.scalatest.time.Millis
 import org.scalatest.{BeforeAndAfterEach, PrivateMethodTester}
 import testutils.RegistrationData
 import testutils.RegistrationData.registration
 import uk.gov.hmrc.http.HeaderCarrier
 
-import java.time.{Instant, LocalDate, LocalDateTime}
+import java.time.Instant
 import java.time.temporal.ChronoUnit
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -310,8 +309,8 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach with Pri
 
     "convert from VatReturn and correctionPayload to CoreVatReturn" in {
 
-      val correctionPeriod1 = Period(2021, Quarter.Q1)
-      val correctionPeriod2 = Period(2021, Quarter.Q2)
+      val correctionPeriod1 = StandardPeriod(2021, Quarter.Q1)
+      val correctionPeriod2 = StandardPeriod(2021, Quarter.Q2)
 
       val correctionAmount1 = -(salesDetails1.vatOnSales.amount / 2).setScale(2, RoundingMode.HALF_UP)
       val correctionAmount2 = BigDecimal(500)
@@ -424,7 +423,7 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach with Pri
 
     "convert from VatReturn and correctionPayload to CoreVatReturn with a Nil return and a correction" in {
 
-      val correctionPeriod1 = Period(2021, Quarter.Q1)
+      val correctionPeriod1 = StandardPeriod(2021, Quarter.Q1)
 
       val correctionAmount1 = -(salesDetails1.vatOnSales.amount / 2).setScale(2, RoundingMode.HALF_UP)
 

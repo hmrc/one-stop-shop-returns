@@ -61,7 +61,7 @@ class PaymentReferenceSpec extends AnyFreeSpec with Matchers with ScalaCheckProp
         for {
           year    <- Gen.choose(2021, 2099)
           quarter <- arbitrary[Quarter]
-        } yield Period(year, quarter)
+        } yield StandardPeriod(year, quarter)
       }
 
     forAll(arbitrary[Period], arbitrary[Vrn]) {

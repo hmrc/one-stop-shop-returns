@@ -27,7 +27,6 @@ import uk.gov.hmrc.http.HeaderCarrier
 import utils.CorrectionUtils
 import utils.ObfuscationUtils.obfuscateVrn
 
-import java.time.{LocalDate, LocalDateTime, ZoneId}
 import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}

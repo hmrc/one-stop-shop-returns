@@ -2,7 +2,7 @@ package base
 
 import controllers.actions.{AuthAction, FakeAuthAction}
 import generators.Generators
-import models.{Country, EuTaxIdentifier, EuTaxIdentifierType, PaymentReference, Period, Quarter, ReturnReference, SalesDetails, SalesFromEuCountry, SalesToCountry, VatOnSales, VatRate, VatRateType, VatReturn}
+import models.{Country, EuTaxIdentifier, EuTaxIdentifierType, PaymentReference, Period, Quarter, ReturnReference, SalesDetails, SalesFromEuCountry, SalesToCountry, StandardPeriod, VatOnSales, VatRate, VatRateType, VatReturn}
 import models.VatOnSalesChoice.Standard
 import models.core.{CoreCorrection, CoreMsconSupply, CoreMsestSupply, CorePeriod, CoreSupply, CoreTraderId, CoreVatReturn}
 import models.corrections.CorrectionPayload
@@ -30,7 +30,7 @@ trait SpecBase
     with Generators {
 
   protected val vrn: Vrn = Vrn("123456789")
-  def period: Period = Period(2021, Quarter.Q3)
+  def period: Period = StandardPeriod(2021, Quarter.Q3)
 
   val userAnswersId: String        = "12345-credId"
   val testCredentials: Credentials = Credentials(userAnswersId, "GGW")

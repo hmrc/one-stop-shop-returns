@@ -17,8 +17,8 @@
 package services.exclusions
 
 import base.SpecBase
-import models.Period
 import models.Quarter.Q3
+import models.StandardPeriod
 import models.domain.Registration
 import models.exclusions.ExcludedTrader
 import models.requests.RegistrationRequest
@@ -43,7 +43,7 @@ class ExclusionServiceSpec extends SpecBase with BeforeAndAfterEach {
   private val exclusionService = new ExclusionService(vatReturnService)
 
   private val exclusionReason = Gen.oneOf("01", "02", "03", "04", "05", "06", "-01").sample.value.toInt
-  private val exclusionPeriod = Period(2022, Q3)
+  private val exclusionPeriod = StandardPeriod(2022, Q3)
 
   override def beforeEach(): Unit = {
     Mockito.reset(mockRegistrationRequest)
