@@ -18,7 +18,7 @@ package controllers
 
 import controllers.actions.AuthAction
 import models.requests.{VatReturnRequest, VatReturnWithCorrectionRequest}
-import models.{PartialReturnPeriod, Period, StandardPeriod}
+import models.Period
 import models.core.CoreErrorResponse
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
@@ -37,19 +37,6 @@ class VatReturnController @Inject()(
 
   def post(): Action[VatReturnRequest] = auth(parse.json[VatReturnRequest]).async {
     implicit request =>
-
-      println()
-      println()
-      println()
-      println(s"Period received was ${request.body.period}")
-      request.body.period match {
-        case a: StandardPeriod => println(s"a $a")
-        case b: PartialReturnPeriod => println(s"b $b")
-      }
-      println()
-      println()
-      println()
-
       vatReturnService.createVatReturn(request.body).map {
         case Right(Some(vatReturn)) => Created(Json.toJson(vatReturn))
         case Right(None) => Conflict
