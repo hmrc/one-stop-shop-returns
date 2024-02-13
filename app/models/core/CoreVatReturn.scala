@@ -16,11 +16,10 @@
 
 package models.core
 
-import play.api.libs.json.{JsString, Json, OFormat, Reads, Writes, __}
+import play.api.libs.json._
 import utils.Formatters.etmpDateTimeFormatter
 
-import java.time.{Instant, LocalDate, LocalDateTime, ZoneId, ZoneOffset}
-import java.time.format.DateTimeFormatter
+import java.time.{Instant, LocalDate, LocalDateTime, ZoneId}
 import java.util.UUID
 
 case class CoreTraderId(vatNumber: String, issuedBy: String)
