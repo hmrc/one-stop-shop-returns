@@ -21,7 +21,7 @@ import connectors.{CoreVatReturnConnector, RegistrationConnector}
 import logging.Logging
 import models.core.{CorePeriod, CoreVatReturn, EisErrorResponse}
 import models.corrections.CorrectionPayload
-import models.{Period, ReturnReference, VatReturn}
+import models.{Period, VatReturn}
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.ObfuscationUtils.obfuscateVrn
