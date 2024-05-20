@@ -18,6 +18,7 @@ package generators
 
 import models._
 import models.corrections.{CorrectionPayload, CorrectionToCountry, PeriodWithCorrections}
+import models.exclusions.{ExcludedTrader, ExclusionReason}
 import models.financialdata.Charge
 import models.requests.{CorrectionRequest, SaveForLaterRequest, VatReturnRequest, VatReturnWithCorrectionRequest}
 import org.scalacheck.{Arbitrary, Gen}
@@ -218,5 +219,18 @@ trait ModelGenerators {
         ))
         now = Instant.now
       } yield SaveForLaterRequest(vrn, period, data)
+    }
+
+  implicit lazy val arbitraryExcludedTrader: Arbitrary[ExcludedTrader] =
+    Arbitrary {
+      for {
+        vrn <- arbitraryVrn.arbitrary
+        exclusionReason <- Gen.oneOf(ExclusionReason.values)
+        effectivePeriod <- arbitraryPeriod.arbitrary
+      } yield ExcludedTrader(
+        vrn = vrn,
+        exclusionReason = exclusionReason,
+        effectivePeriod = effectivePeriod
+      )
     }
 }

@@ -16,8 +16,8 @@
 
 package models.exclusions
 
-import models.{Enumerable, Period, Quarter, StandardPeriod, WithName}
 import models.exclusions.ExcludedTrader.getPeriod
+import models._
 import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.domain.Vrn
 
@@ -32,7 +32,7 @@ case class ExcludedTrader(
                          ) {
 
   val finalReturnPeriod: Period = {
-    if(exclusionReason == ExclusionReason.TransferringMSID) {
+    if (exclusionReason == ExclusionReason.TransferringMSID) {
       getPeriod(effectiveDate)
     } else {
       getPeriod(effectiveDate).getPreviousPeriod
@@ -58,7 +58,9 @@ object ExcludedTrader {
 }
 
 sealed trait ExclusionSource
+
 object HMRC extends ExclusionSource
+
 object TRADER extends ExclusionSource
 
 sealed trait ExclusionReason {
@@ -68,7 +70,7 @@ sealed trait ExclusionReason {
 
 object ExclusionReason extends Enumerable.Implicits {
 
-  case object Reversal extends WithName("-1")  with ExclusionReason {
+  case object Reversal extends WithName("-1") with ExclusionReason {
     val exclusionSource: ExclusionSource = HMRC
     val numberValue: Int = -1
   }
