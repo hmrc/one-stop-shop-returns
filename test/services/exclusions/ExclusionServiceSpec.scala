@@ -20,7 +20,7 @@ import base.SpecBase
 import models.Quarter.Q3
 import models.StandardPeriod
 import models.domain.Registration
-import models.exclusions.ExcludedTrader
+import models.exclusions.{ExcludedTrader, ExclusionReason}
 import models.requests.RegistrationRequest
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito
@@ -42,7 +42,7 @@ class ExclusionServiceSpec extends SpecBase with BeforeAndAfterEach {
   private val vatReturnService = mock[VatReturnService]
   private val exclusionService = new ExclusionService(vatReturnService)
 
-  private val exclusionReason = Gen.oneOf("01", "02", "03", "04", "05", "06", "-01").sample.value.toInt
+  private val exclusionReason = Gen.oneOf(ExclusionReason.values).sample.value
   private val exclusionPeriod = StandardPeriod(2022, Q3)
 
   override def beforeEach(): Unit = {
@@ -56,7 +56,7 @@ class ExclusionServiceSpec extends SpecBase with BeforeAndAfterEach {
       when(mockRegistrationRequest.registration) thenReturn mockRegistration
 
       when(mockRegistration.excludedTrader) thenReturn
-        Some(ExcludedTrader(Vrn("123456789"), exclusionReason, exclusionPeriod))
+        Some(ExcludedTrader(Vrn("123456789"), exclusionReason, exclusionPeriod.firstDay))
 
       when(vatReturnService.get(any(), any())) thenReturn Future.successful(Some(completeVatReturn))
 
@@ -67,7 +67,7 @@ class ExclusionServiceSpec extends SpecBase with BeforeAndAfterEach {
       when(mockRegistrationRequest.registration) thenReturn mockRegistration
 
       when(mockRegistration.excludedTrader) thenReturn
-        Some(ExcludedTrader(Vrn("123456789"), exclusionReason, exclusionPeriod))
+        Some(ExcludedTrader(Vrn("123456789"), exclusionReason, exclusionPeriod.firstDay))
 
       when(vatReturnService.get(any(),any())) thenReturn Future.successful(None)
 

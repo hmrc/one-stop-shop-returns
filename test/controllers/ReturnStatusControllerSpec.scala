@@ -23,7 +23,7 @@ import generators.Generators
 import models.Quarter.{Q1, Q2, Q3, Q4}
 import models.SubmissionStatus.{Due, Next, Overdue}
 import models._
-import models.exclusions.ExcludedTrader
+import models.exclusions.{ExcludedTrader, ExclusionReason}
 import models.yourAccount._
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
@@ -51,11 +51,11 @@ class ReturnStatusControllerSpec
 
   private val authorisedVrn = Vrn("123456789")
   private val notAuthorisedVrn = arbitraryVrn.arbitrary.retryUntil(_ != authorisedVrn).sample.value
-  private val exclusionReason = Gen.oneOf(1, 2, 3, 4, 5, 6, -1).sample.value
+  private val exclusionReason = Gen.oneOf(ExclusionReason.values).sample.value
   private val excludedTrader: ExcludedTrader = ExcludedTrader(
     RegistrationData.registration.vrn,
     exclusionReason,
-    period
+    period.firstDay
   )
 
   ".listStatus(commencementDate)" - {
@@ -421,7 +421,7 @@ class ReturnStatusControllerSpec
         when(mockPeriodService.getNextPeriod(any())) thenReturn periodQ3
         when(mockS4LaterRepository.get(any())) thenReturn Future.successful(Seq.empty)
         when(mockRegConnector.getRegistration(any())(any())) thenReturn
-          Future.successful(Some(RegistrationData.registration.copy(excludedTrader = Some(excludedTrader.copy(effectivePeriod = periodQ2)))))
+          Future.successful(Some(RegistrationData.registration.copy(excludedTrader = Some(excludedTrader.copy(effectiveDate = periodQ2.firstDay)))))
 
         val app =
           applicationBuilder
@@ -461,7 +461,7 @@ class ReturnStatusControllerSpec
         when(mockPeriodService.getNextPeriod(any())) thenReturn periodQ3
         when(mockS4LaterRepository.get(any())) thenReturn Future.successful(Seq.empty)
         when(mockRegConnector.getRegistration(any())(any())) thenReturn
-          Future.successful(Some(RegistrationData.registration.copy(excludedTrader = Some(excludedTrader.copy(effectivePeriod = periodQ2)))))
+          Future.successful(Some(RegistrationData.registration.copy(excludedTrader = Some(excludedTrader.copy(effectiveDate = periodQ2.firstDay)))))
 
         val app =
           applicationBuilder

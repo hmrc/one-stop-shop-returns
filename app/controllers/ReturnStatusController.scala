@@ -129,7 +129,7 @@ class ReturnStatusController @Inject()(
 
   private def isPeriodExcluded(period: Period, excludedTrader: Option[ExcludedTrader]): Boolean = {
     excludedTrader match {
-      case Some(excluded) if period.lastDay.isAfter(periodService.getNextPeriod(excluded.effectivePeriod).firstDay) =>
+      case Some(excluded) if period.lastDay.isAfter(periodService.getNextPeriod(excluded.finalReturnPeriod).firstDay) =>
         true
       case _ => false
     }

@@ -29,8 +29,8 @@ class ExclusionService @Inject()(vatReturnService: VatReturnService) extends Log
 
   def hasSubmittedFinalReturn()(implicit ec: ExecutionContext, request: RegistrationRequest[AnyContent]): Future[Boolean] = {
     request.registration.excludedTrader match {
-      case Some(ExcludedTrader(_, _, effectivePeriod)) =>
-        vatReturnService.get(request.vrn, effectivePeriod).map {
+      case Some(excludedTrader: ExcludedTrader) =>
+        vatReturnService.get(request.vrn, excludedTrader.finalReturnPeriod).map {
           case Some(_) => true
           case _ => false
         }
