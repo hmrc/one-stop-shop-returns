@@ -50,6 +50,19 @@ trait Period {
     }
   }
 
+  def getPreviousPeriod: Period = {
+    quarter match {
+      case Q4 =>
+        StandardPeriod(year, Q3)
+      case Q3 =>
+        StandardPeriod(year, Q2)
+      case Q2 =>
+        StandardPeriod(year, Q1)
+      case Q1 =>
+        StandardPeriod(year - 1, Q4)
+    }
+  }
+
 }
 
 case class StandardPeriod(year: Int, quarter: Quarter) extends Period {
@@ -72,7 +85,7 @@ object Period {
 
   def apply(yearString: String, quarterString: String): Try[Period] =
     for {
-      year    <- Try(yearString.toInt)
+      year <- Try(yearString.toInt)
       quarter <- Quarter.fromString(quarterString)
     } yield StandardPeriod(year, quarter)
 
@@ -103,7 +116,7 @@ object Period {
     override def bind(key: String, value: String): Either[String, Period] =
       fromString(value) match {
         case Some(period) => Right(period)
-        case None         => Left("Invalid period")
+        case None => Left("Invalid period")
       }
 
     override def unbind(key: String, value: Period): String =

@@ -35,7 +35,7 @@ case class ExcludedTrader(
     if(exclusionReason == ExclusionReason.TransferringMSID) {
       getPeriod(effectiveDate)
     } else {
-      getPeriod(effectiveDate).getNextPeriod
+      getPeriod(effectiveDate).getPreviousPeriod
     }
   }
 }
