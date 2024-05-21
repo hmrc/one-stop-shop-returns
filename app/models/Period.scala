@@ -16,6 +16,7 @@
 
 package models
 
+import models.Quarter._
 import play.api.libs.json._
 import play.api.mvc.{PathBindable, QueryStringBindable}
 
@@ -34,6 +35,32 @@ trait Period {
 
   def isOverdue(clock: Clock): Boolean = {
     paymentDeadline.isBefore(LocalDate.now(clock))
+  }
+
+  def getNextPeriod: Period = {
+    quarter match {
+      case Q4 =>
+        StandardPeriod(year + 1, Q1)
+      case Q3 =>
+        StandardPeriod(year, Q4)
+      case Q2 =>
+        StandardPeriod(year, Q3)
+      case Q1 =>
+        StandardPeriod(year, Q2)
+    }
+  }
+
+  def getPreviousPeriod: Period = {
+    quarter match {
+      case Q4 =>
+        StandardPeriod(year, Q3)
+      case Q3 =>
+        StandardPeriod(year, Q2)
+      case Q2 =>
+        StandardPeriod(year, Q1)
+      case Q1 =>
+        StandardPeriod(year - 1, Q4)
+    }
   }
 
 }
@@ -58,7 +85,7 @@ object Period {
 
   def apply(yearString: String, quarterString: String): Try[Period] =
     for {
-      year    <- Try(yearString.toInt)
+      year <- Try(yearString.toInt)
       quarter <- Quarter.fromString(quarterString)
     } yield StandardPeriod(year, quarter)
 
@@ -89,7 +116,7 @@ object Period {
     override def bind(key: String, value: String): Either[String, Period] =
       fromString(value) match {
         case Some(period) => Right(period)
-        case None         => Left("Invalid period")
+        case None => Left("Invalid period")
       }
 
     override def unbind(key: String, value: Period): String =
