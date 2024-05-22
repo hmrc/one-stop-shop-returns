@@ -17,9 +17,12 @@
 package models.exclusions
 
 import base.SpecBase
-import play.api.libs.json.{JsSuccess, Json}
+import org.scalacheck.Arbitrary.arbitrary
+import org.scalacheck.Gen
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+import play.api.libs.json.{JsError, JsString, JsSuccess, Json}
 
-class ExcludedTraderSpec extends SpecBase {
+class ExcludedTraderSpec extends SpecBase with ScalaCheckPropertyChecks {
 
   private val excludedTrader: ExcludedTrader = arbitraryExcludedTrader.arbitrary.sample.value
 
@@ -30,17 +33,52 @@ class ExcludedTraderSpec extends SpecBase {
       val json = Json.obj(
         "vrn" -> excludedTrader.vrn,
         "exclusionReason" -> excludedTrader.exclusionReason,
-        "effectivePeriod" -> excludedTrader.effectivePeriod
+        "effectiveDate" -> excludedTrader.effectiveDate
       )
 
       val expectedResult = ExcludedTrader(
         vrn = excludedTrader.vrn,
         exclusionReason = excludedTrader.exclusionReason,
-        effectivePeriod = excludedTrader.effectivePeriod
+        effectiveDate = excludedTrader.effectiveDate
       )
 
       Json.toJson(expectedResult) mustBe json
       json.validate[ExcludedTrader] mustBe JsSuccess(expectedResult)
     }
   }
+
+  "ExclusionReason" - {
+
+    "must deserialise valid values" in {
+
+      val gen = Gen.oneOf(ExclusionReason.values)
+
+      forAll(gen) { exclusionReason =>
+
+        JsString(exclusionReason.toString)
+          .validate[ExclusionReason].asOpt.value mustBe exclusionReason
+      }
+    }
+
+    "must fail to deserialise invalid values" in {
+
+      val gen = arbitrary[String].suchThat(!ExclusionReason.values.map(_.toString).contains(_))
+
+      forAll(gen) { invalidValue =>
+
+        JsString(invalidValue).validate[ExclusionReason] mustBe JsError("error.invalid")
+      }
+    }
+
+    "must serialise" in {
+
+      val gen = Gen.oneOf(ExclusionReason.values)
+
+      forAll(gen) { exclusionReason =>
+
+        Json.toJson(exclusionReason) mustBe JsString(exclusionReason.toString)
+      }
+    }
+  }
 }
+

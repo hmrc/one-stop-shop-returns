@@ -16,14 +16,12 @@
 
 package models.exclusions
 
-import models.exclusions.ExcludedTrader.getPeriod
+import models.Period.getPeriod
 import models._
 import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.domain.Vrn
 
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import scala.util.{Failure, Success}
 
 case class ExcludedTrader(
                            vrn: Vrn,
@@ -42,19 +40,7 @@ case class ExcludedTrader(
 
 object ExcludedTrader {
 
-  private def getPeriod(date: LocalDate): Period = {
-    val quarter = Quarter.fromString(date.format(DateTimeFormatter.ofPattern("QQQ")))
-
-    quarter match {
-      case Success(value) =>
-        StandardPeriod(date.getYear, value)
-      case Failure(exception) =>
-        throw exception
-    }
-  }
-
   implicit val format: OFormat[ExcludedTrader] = Json.format[ExcludedTrader]
-
 }
 
 sealed trait ExclusionSource
