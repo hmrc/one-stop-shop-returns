@@ -14,18 +14,13 @@
  * limitations under the License.
  */
 
-package models.financialdata
+package utils
 
-import play.api.libs.json.{Format, Json}
+import java.time.{Clock, LocalDate}
 
-case class CurrentPayments(
-                            duePayments: Seq[Payment],
-                            overduePayments: Seq[Payment],
-                            excludedPayments: Seq[Payment],
-                            totalAmountOwed: BigDecimal,
-                            totalAmountOverdue: BigDecimal
-                          )
-
-object CurrentPayments {
-  implicit val formatCurrentPayments: Format[CurrentPayments] = Json.format[CurrentPayments]
+object ReturnUtils {
+  def isThreeYearsOld(dueDate: LocalDate, clock: Clock): Boolean = {
+    val threeYearsAgo = LocalDate.now(clock).minusYears(3)
+    dueDate.isBefore(threeYearsAgo) || dueDate.isEqual(threeYearsAgo)
+  }
 }

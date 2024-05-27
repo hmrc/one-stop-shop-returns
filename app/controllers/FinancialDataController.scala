@@ -18,7 +18,7 @@ package controllers
 
 import controllers.actions.AuthenticatedControllerComponents
 import models.Period
-import models.financialdata.{CurrentPayments, Payment}
+import models.financialdata.{CurrentPayments, Payment, PaymentStatus}
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent}
 import services.FinancialDataService
@@ -70,25 +70,32 @@ class FinancialDataController @Inject()(
 
         val filteredPeriodsWithOutstandingAmounts = service
           .filterIfPaymentIsOutstanding(vatReturnsWithFinancialData)
+
         val duePeriodsWithOutstandingAmounts =
           filteredPeriodsWithOutstandingAmounts.filterNot(_.vatReturn.period.isOverdue(clock))
+
         val overduePeriodsWithOutstandingAmounts =
           filteredPeriodsWithOutstandingAmounts.filter(_.vatReturn.period.isOverdue(clock))
 
         val duePayments = duePeriodsWithOutstandingAmounts.map(
           duePeriods =>
-            Payment.fromVatReturnWithFinancialData(duePeriods)
+            Payment.fromVatReturnWithFinancialData(duePeriods, request.registration.excludedTrader, clock)
         )
 
         val overduePayments = overduePeriodsWithOutstandingAmounts.map(
           overdue =>
-            Payment.fromVatReturnWithFinancialData(overdue)
+            Payment.fromVatReturnWithFinancialData(overdue, request.registration.excludedTrader, clock)
         )
+
+        val excludedPayments = overduePayments.filter(_.paymentStatus == PaymentStatus.Excluded)
+        val overduePaymentsNotExcluded = overduePayments.filterNot(_.paymentStatus == PaymentStatus.Excluded)
 
         val totalAmountOverdue = overduePayments.map(_.amountOwed).sum
         val totalAmountOwed = duePayments.map(_.amountOwed).sum + totalAmountOverdue
 
-        Ok(Json.toJson(CurrentPayments(duePayments, overduePayments, totalAmountOwed, totalAmountOverdue)))
+        Ok(Json.toJson(CurrentPayments(
+          duePayments, overduePaymentsNotExcluded, excludedPayments, totalAmountOwed, totalAmountOverdue,
+        )))
       }
 
   }
