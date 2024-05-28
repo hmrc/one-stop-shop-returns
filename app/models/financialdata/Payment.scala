@@ -17,9 +17,9 @@
 package models.financialdata
 
 import models.Period
+import models.Period.isThreeYearsOld
 import models.exclusions.ExcludedTrader
 import play.api.libs.json.{Format, Json}
-import utils.ReturnUtils.isThreeYearsOld
 
 import java.time.{Clock, LocalDate}
 

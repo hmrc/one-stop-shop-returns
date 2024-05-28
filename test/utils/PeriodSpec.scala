@@ -1,10 +1,11 @@
 package utils
 
 import base.SpecBase
+import models.Period.isThreeYearsOld
 
 import java.time.LocalDate
 
-class ReturnUtilsSpec extends SpecBase {
+class PeriodSpec extends SpecBase {
 
   val year: Int = 2024
 
@@ -14,13 +15,13 @@ class ReturnUtilsSpec extends SpecBase {
 
         val dueDate: LocalDate = LocalDate.now().minusYears(3)
 
-        ReturnUtils.isThreeYearsOld(dueDate, stubClock) mustBe true
+        isThreeYearsOld(dueDate, stubClock) mustBe true
       }
 
       "when there is a DueDate more than three years old" in {
         val dueDate = LocalDate.now().minusYears(3).minusDays(1)
 
-        ReturnUtils.isThreeYearsOld(dueDate, stubClock) mustBe true
+        isThreeYearsOld(dueDate, stubClock) mustBe true
       }
     }
 
@@ -28,7 +29,7 @@ class ReturnUtilsSpec extends SpecBase {
       "when the DueDate is not three year old" in {
         val dueDate = LocalDate.now()
 
-        ReturnUtils.isThreeYearsOld(dueDate, stubClock) mustBe false
+        isThreeYearsOld(dueDate, stubClock) mustBe false
       }
     }
   }

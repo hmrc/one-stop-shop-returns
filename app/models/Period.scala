@@ -20,10 +20,9 @@ import models.Quarter._
 import play.api.libs.json._
 import play.api.mvc.{PathBindable, QueryStringBindable}
 
-import java.time.format.DateTimeFormatter
 import java.time.{Clock, LocalDate}
+import scala.util.Try
 import scala.util.matching.Regex
-import scala.util.{Failure, Success, Try}
 
 trait Period {
   val year: Int
@@ -140,14 +139,8 @@ object Period {
     }
   }
 
-  def getPeriod(date: LocalDate): Period = {
-    val quarter = Quarter.fromString(date.format(DateTimeFormatter.ofPattern("QQQ")))
-
-    quarter match {
-      case Success(value) =>
-        StandardPeriod(date.getYear, value)
-      case Failure(exception) =>
-        throw exception
-    }
+  def isThreeYearsOld(dueDate: LocalDate, clock: Clock): Boolean = {
+    val threeYearsAgo = LocalDate.now(clock).minusYears(3)
+    dueDate.isBefore(threeYearsAgo) || dueDate.isEqual(threeYearsAgo)
   }
 }
