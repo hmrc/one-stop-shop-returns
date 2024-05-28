@@ -441,7 +441,8 @@ class ReturnStatusControllerSpec
               Return.fromPeriod(periodQ2, Overdue, false, true)
             ),
             excluded = true,
-            finalReturnsCompleted = false
+            finalReturnsCompleted = false,
+            Seq(Return.fromPeriod(periodQ3, Excluded, inProgress = false, isOldest = true))
           ))
         }
       }
@@ -479,7 +480,8 @@ class ReturnStatusControllerSpec
           contentAsJson(result) mustEqual Json.toJson(CurrentReturns(
             Seq.empty,
             excluded = true,
-            finalReturnsCompleted = true
+            finalReturnsCompleted = true,
+            Seq(Return.fromPeriod(periodQ3, Excluded, inProgress = false, isOldest = true))
           ))
         }
       }
