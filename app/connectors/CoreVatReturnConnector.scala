@@ -21,22 +21,25 @@ import connectors.CoreVatReturnHttpParser._
 import logging.Logging
 import models.core.{CoreErrorResponse, CoreVatReturn, EisErrorResponse}
 import play.api.http.HeaderNames.AUTHORIZATION
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpException}
+import play.api.libs.json.Json
+import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpException, StringContextOps}
 
+import java.net.URL
 import java.time.Instant
 import java.util.UUID
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class CoreVatReturnConnector @Inject()(
-                                        httpClient: HttpClient,
+                                        httpClientV2: HttpClientV2,
                                         ifConfig: IfConfig
                                       )(implicit ec: ExecutionContext) extends Logging {
 
   private implicit val emptyHc: HeaderCarrier = HeaderCarrier()
   private def headers(correlationId: String): Seq[(String, String)] = ifConfig.ifHeaders(correlationId)
 
-  private def url = s"${ifConfig.baseUrl}"
+  private val url: URL = url"${ifConfig.baseUrl}"
 
   def submit(coreVatReturn: CoreVatReturn): Future[CoreVatReturnResponse] = {
     val correlationId = UUID.randomUUID().toString
@@ -48,11 +51,7 @@ class CoreVatReturnConnector @Inject()(
 
     logger.info(s"Sending request to core with headers $headersWithoutAuth")
 
-    httpClient.POST[CoreVatReturn, CoreVatReturnResponse](
-      url,
-      coreVatReturn,
-      headers = headersWithCorrelationId
-    ).recover {
+    httpClientV2.post(url).withBody(Json.toJson(coreVatReturn)).setHeader(headersWithCorrelationId: _*).execute[CoreVatReturnResponse].recover {
       case e: HttpException =>
         logger.error(s"Unexpected error response from core $url, received status ${e.responseCode}, body of response was: ${e.message}")
         Left(
