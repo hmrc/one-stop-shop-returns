@@ -23,7 +23,7 @@ import models.core.{CoreErrorResponse, CoreVatReturn, EisErrorResponse}
 import play.api.http.HeaderNames.AUTHORIZATION
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.client.HttpClientV2
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpException, StringContextOps}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpException, StringContextOps}
 
 import java.net.URL
 import java.time.Instant
