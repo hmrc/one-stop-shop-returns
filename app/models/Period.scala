@@ -22,8 +22,8 @@ import play.api.mvc.{PathBindable, QueryStringBindable}
 
 import java.time.format.DateTimeFormatter
 import java.time.{Clock, LocalDate}
-import scala.util.{Failure, Success, Try}
 import scala.util.matching.Regex
+import scala.util.{Failure, Success, Try}
 
 trait Period {
   val year: Int

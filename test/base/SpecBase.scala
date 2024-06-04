@@ -2,14 +2,14 @@ package base
 
 import controllers.actions.{AuthAction, FakeAuthAction}
 import generators.Generators
-import models.{Country, EuTaxIdentifier, EuTaxIdentifierType, PaymentReference, Period, Quarter, ReturnReference, SalesDetails, SalesFromEuCountry, SalesToCountry, StandardPeriod, VatOnSales, VatRate, VatRateType, VatReturn}
 import models.VatOnSalesChoice.Standard
-import models.core.{CoreCorrection, CoreMsconSupply, CoreMsestSupply, CorePeriod, CoreSupply, CoreTraderId, CoreVatReturn}
+import models.core._
 import models.corrections.CorrectionPayload
-import org.scalatest.{OptionValues, TryValues}
+import models._
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import org.scalatest.{OptionValues, TryValues}
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
@@ -34,6 +34,8 @@ trait SpecBase
 
   val userAnswersId: String        = "12345-credId"
   val testCredentials: Credentials = Credentials(userAnswersId, "GGW")
+
+  val commencementDate: LocalDate = LocalDate.of(2021, 7, 1)
 
   val completeVatReturn: VatReturn =
     VatReturn(
