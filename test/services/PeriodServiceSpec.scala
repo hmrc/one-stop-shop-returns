@@ -16,24 +16,14 @@
 
 package services
 
-import generators.Generators
-import models.{PeriodYear, StandardPeriod}
+import base.SpecBase
 import models.Quarter._
-import org.scalatest.OptionValues
-import org.scalatest.freespec.AnyFreeSpec
-import org.scalatest.matchers.must.Matchers
-import org.scalatestplus.mockito.MockitoSugar
+import models.{PeriodYear, StandardPeriod}
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 import java.time.{Clock, Instant, LocalDate, ZoneId}
 
-class PeriodServiceSpec
-  extends AnyFreeSpec
-    with Matchers
-    with MockitoSugar
-    with ScalaCheckPropertyChecks
-    with Generators
-    with OptionValues {
+class PeriodServiceSpec extends SpecBase with ScalaCheckPropertyChecks {
 
   ".getAvailablePeriods" - {
 
@@ -122,7 +112,7 @@ class PeriodServiceSpec
 
       val expectedPeriods = Seq(StandardPeriod(2021, Q3))
 
-      service.getAllPeriods must contain theSameElementsAs expectedPeriods
+      service.getAllPeriods(commencementDate) must contain theSameElementsAs expectedPeriods
     }
 
     "when today is 11th January" in {
@@ -134,7 +124,7 @@ class PeriodServiceSpec
 
       val expectedPeriods = Seq(StandardPeriod(2021, Q3), StandardPeriod(2021, Q4))
 
-      service.getAllPeriods must contain theSameElementsAs expectedPeriods
+      service.getAllPeriods(LocalDate.of(2021, 7, 1)) must contain theSameElementsAs expectedPeriods
     }
   }
   ".getNextPeriod" - {

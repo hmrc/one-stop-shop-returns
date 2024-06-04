@@ -35,6 +35,8 @@ trait SpecBase
   val userAnswersId: String        = "12345-credId"
   val testCredentials: Credentials = Credentials(userAnswersId, "GGW")
 
+  val commencementDate: LocalDate = LocalDate.of(2021, 7, 1)
+
   val completeVatReturn: VatReturn =
     VatReturn(
       Vrn("063407423"),
