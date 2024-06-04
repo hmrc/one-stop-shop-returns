@@ -15,35 +15,38 @@
  */
 
 package connectors
+
 import config.DesConfig
 import connectors.FinancialDataHttpParser._
 import logging.Logging
 import models.des.UnexpectedResponseStatus
 import models.financialdata.FinancialDataQueryParameters
 import uk.gov.hmrc.domain.Vrn
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpException}
+import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http.{HeaderCarrier, HttpException, StringContextOps}
 
+import java.net.URL
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-class FinancialDataConnector @Inject() (
-                                         http:      HttpClient,
-                                         desConfig: DesConfig
-                                       )(implicit ec: ExecutionContext) extends Logging {
+class FinancialDataConnector @Inject()(
+                                        httpClientV2: HttpClientV2,
+                                        desConfig: DesConfig
+                                      )(implicit ec: ExecutionContext) extends Logging {
 
   private implicit val emptyHc: HeaderCarrier = HeaderCarrier()
   private val headers: Seq[(String, String)] = desConfig.desHeaders
 
-  private def financialDataUrl(vrn: Vrn) =
-    s"${desConfig.baseUrl}enterprise/financial-data/${vrn.name.toUpperCase()}/${vrn.value}/${desConfig.regimeType}"
+  private def financialDataUrl(vrn: Vrn): URL =
+    url"${desConfig.baseUrl}enterprise/financial-data/${vrn.name.toUpperCase}/${vrn.value}/${desConfig.regimeType}"
 
   def getFinancialData(vrn: Vrn, queryParameters: FinancialDataQueryParameters): Future[FinancialDataResponse] = {
-    val url = financialDataUrl(vrn)
-    http.GET[FinancialDataResponse](
-      url,
-      queryParameters.toSeqQueryParams,
-      headers = headers
-    ).recover {
+    val url: URL = financialDataUrl(vrn)
+
+    httpClientV2.get(url).transform(_
+      .withQueryStringParameters(queryParameters.toSeqQueryParams: _*)
+      .withHttpHeaders(headers: _*)
+    ).execute[FinancialDataResponse].recover {
       case e: HttpException =>
         logger.error(s"Unexpected error response getting financial data from $url, received status ${e.responseCode}, body of response was: ${e.message}")
         Left(
