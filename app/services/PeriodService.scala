@@ -17,8 +17,8 @@
 package services
 
 import models.Period.getPeriod
-import models.{Period, PeriodYear, StandardPeriod}
 import models.Quarter._
+import models.{Period, PeriodYear, StandardPeriod}
 
 import java.time.{Clock, LocalDate, Month}
 import javax.inject.Inject
