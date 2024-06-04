@@ -18,6 +18,7 @@ package generators
 
 import models._
 import models.corrections.{CorrectionPayload, CorrectionToCountry, PeriodWithCorrections}
+import models.exclusions.{ExcludedTrader, ExclusionReason}
 import models.financialdata.Charge
 import models.requests.{CorrectionRequest, SaveForLaterRequest, VatReturnRequest, VatReturnWithCorrectionRequest}
 import org.scalacheck.{Arbitrary, Gen}
@@ -25,7 +26,7 @@ import org.scalacheck.Arbitrary.arbitrary
 import play.api.libs.json.{JsObject, Json}
 import uk.gov.hmrc.domain.Vrn
 
-import java.time.Instant
+import java.time.{Instant, LocalDate}
 import scala.math.BigDecimal.RoundingMode
 
 trait ModelGenerators {
@@ -218,5 +219,23 @@ trait ModelGenerators {
         ))
         now = Instant.now
       } yield SaveForLaterRequest(vrn, period, data)
+    }
+
+  implicit lazy val arbitraryDate: Arbitrary[LocalDate] =
+    Arbitrary {
+      datesBetween(LocalDate.of(2021, 7, 1), LocalDate.of(2023, 12, 31))
+    }
+
+  implicit lazy val arbitraryExcludedTrader: Arbitrary[ExcludedTrader] =
+    Arbitrary {
+      for {
+        vrn <- arbitraryVrn.arbitrary
+        exclusionReason <- Gen.oneOf(ExclusionReason.values)
+        effectiveDate <- arbitraryDate.arbitrary
+      } yield ExcludedTrader(
+        vrn = vrn,
+        exclusionReason = exclusionReason,
+        effectiveDate = effectiveDate
+      )
     }
 }

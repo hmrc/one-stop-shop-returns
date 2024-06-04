@@ -16,24 +16,22 @@
 
 package models
 
-import generators.Generators
+import base.SpecBase
+import models.Period.getPeriod
 import models.Quarter._
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatest.EitherValues
-import org.scalatest.freespec.AnyFreeSpec
-import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.mvc.PathBindable
 
 import java.time.LocalDate
 import java.time.Month._
+import java.time.format.DateTimeFormatter
 
 class StandardPeriodSpec
-  extends AnyFreeSpec
-    with Matchers
+  extends SpecBase
     with ScalaCheckPropertyChecks
-    with Generators
     with EitherValues {
 
   private val pathBindable = implicitly[PathBindable[Period]]
@@ -130,6 +128,19 @@ class StandardPeriodSpec
           val period = StandardPeriod(year, Q4)
           period.lastDay mustEqual LocalDate.of(year, DECEMBER, 31)
       }
+    }
+  }
+
+  ".getPeriod" - {
+
+    "must return the correct period when given a LocalDate" in {
+
+      val date: LocalDate = LocalDate.now(stubClock)
+      val quarter: Quarter = Quarter.fromString(date.format(DateTimeFormatter.ofPattern("QQQ"))).get
+
+      val expectedResult: Period = StandardPeriod(date.getYear, quarter)
+
+      getPeriod(date) mustBe expectedResult
     }
   }
 }

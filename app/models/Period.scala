@@ -20,8 +20,9 @@ import models.Quarter._
 import play.api.libs.json._
 import play.api.mvc.{PathBindable, QueryStringBindable}
 
+import java.time.format.DateTimeFormatter
 import java.time.{Clock, LocalDate}
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 import scala.util.matching.Regex
 
 trait Period {
@@ -136,6 +137,17 @@ object Period {
 
     override def unbind(key: String, value: Period): String = {
       s"$key=${value.toString}"
+    }
+  }
+
+  def getPeriod(date: LocalDate): Period = {
+    val quarter = Quarter.fromString(date.format(DateTimeFormatter.ofPattern("QQQ")))
+
+    quarter match {
+      case Success(value) =>
+        StandardPeriod(date.getYear, value)
+      case Failure(exception) =>
+        throw exception
     }
   }
 }

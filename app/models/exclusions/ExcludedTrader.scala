@@ -16,14 +16,12 @@
 
 package models.exclusions
 
-import models.{Enumerable, Period, Quarter, StandardPeriod, WithName}
-import models.exclusions.ExcludedTrader.getPeriod
+import models.Period.getPeriod
+import models._
 import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.domain.Vrn
 
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import scala.util.{Failure, Success}
 
 case class ExcludedTrader(
                            vrn: Vrn,
@@ -32,7 +30,7 @@ case class ExcludedTrader(
                          ) {
 
   val finalReturnPeriod: Period = {
-    if(exclusionReason == ExclusionReason.TransferringMSID) {
+    if (exclusionReason == ExclusionReason.TransferringMSID) {
       getPeriod(effectiveDate)
     } else {
       getPeriod(effectiveDate).getPreviousPeriod
@@ -42,23 +40,13 @@ case class ExcludedTrader(
 
 object ExcludedTrader {
 
-  private def getPeriod(date: LocalDate): Period = {
-    val quarter = Quarter.fromString(date.format(DateTimeFormatter.ofPattern("QQQ")))
-
-    quarter match {
-      case Success(value) =>
-        StandardPeriod(date.getYear, value)
-      case Failure(exception) =>
-        throw exception
-    }
-  }
-
   implicit val format: OFormat[ExcludedTrader] = Json.format[ExcludedTrader]
-
 }
 
 sealed trait ExclusionSource
+
 object HMRC extends ExclusionSource
+
 object TRADER extends ExclusionSource
 
 sealed trait ExclusionReason {
@@ -68,7 +56,7 @@ sealed trait ExclusionReason {
 
 object ExclusionReason extends Enumerable.Implicits {
 
-  case object Reversal extends WithName("-1")  with ExclusionReason {
+  case object Reversal extends WithName("-1") with ExclusionReason {
     val exclusionSource: ExclusionSource = HMRC
     val numberValue: Int = -1
   }
