@@ -120,10 +120,10 @@ class ReturnStatusController @Inject()(
       val returnPeriods = returns.map(_.period)
       val currentPeriods = periods.map {
         period =>
-          if (isPeriodExcluded(period, excludedTrader)) {
-            PeriodWithStatus(period, SubmissionStatus.Excluded)
-          } else if (returnPeriods.contains(period)) {
+          if (returnPeriods.contains(period) ) {
             PeriodWithStatus(period, SubmissionStatus.Complete)
+          } else if (isPeriodExcluded(period, excludedTrader)) {
+            PeriodWithStatus(period, SubmissionStatus.Excluded)
           } else {
             if (LocalDate.now(clock).isAfter(period.paymentDeadline)) {
               PeriodWithStatus(period, SubmissionStatus.Overdue)
