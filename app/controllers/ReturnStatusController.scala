@@ -17,6 +17,7 @@
 package controllers
 
 import controllers.actions.AuthenticatedControllerComponents
+import models.Period.isThreeYearsOld
 import models.SubmissionStatus.{Complete, Excluded}
 import models.exclusions.ExcludedTrader
 import models.yourAccount._
@@ -62,21 +63,33 @@ class ReturnStatusController @Inject()(
         val answers = savedAnswers.sortBy(_.lastUpdated).lastOption
 
         val incompletePeriods = availablePeriodsWithStatus.filterNot(pws => Seq(Complete, Excluded).contains(pws.status))
+        val excludedReturnsPeriods = availablePeriodsWithStatus.filter(_.status == Excluded)
 
         val isExcluded = request.registration.excludedTrader.isDefined
 
         val periodInProgress = answers.map(answer => answer.period)
         val oldestPeriod = incompletePeriods.sortBy(_.period).headOption
-        val returns = incompletePeriods.sortBy(_.period).map(
-          periodWithStatus => Return.fromPeriod(
-            periodWithStatus.period,
-            periodWithStatus.status,
-            periodInProgress.contains(periodWithStatus.period),
-            oldestPeriod.contains(periodWithStatus)
-          )
-        )
+        val oldestExcludedPeriod = excludedReturnsPeriods.sortBy(_.period).headOption
 
-        Ok(Json.toJson(CurrentReturns(returns, isExcluded, finalReturnsCompleted)))
+        def periodsWithStatusToReturns(periods: Seq[PeriodWithStatus]) = {
+          periods.sortBy(_.period).map(
+            periodWithStatus => Return.fromPeriod(
+              periodWithStatus.period,
+              periodWithStatus.status,
+              periodInProgress.contains(periodWithStatus.period),
+              if (periodWithStatus.status == Excluded) {
+                oldestExcludedPeriod.contains(periodWithStatus)
+              } else {
+                oldestPeriod.contains(periodWithStatus)
+              }
+            )
+          )
+        }
+
+        val returns = periodsWithStatusToReturns(incompletePeriods)
+        val excludedReturns = periodsWithStatusToReturns(excludedReturnsPeriods)
+
+        Ok(Json.toJson(CurrentReturns(returns, isExcluded, finalReturnsCompleted, excludedReturns)))
       }
   }
 
@@ -107,10 +120,10 @@ class ReturnStatusController @Inject()(
       val returnPeriods = returns.map(_.period)
       val currentPeriods = periods.map {
         period =>
-          if (isPeriodExcluded(period, excludedTrader)) {
-            PeriodWithStatus(period, SubmissionStatus.Excluded)
-          } else if (returnPeriods.contains(period)) {
+          if (returnPeriods.contains(period) ) {
             PeriodWithStatus(period, SubmissionStatus.Complete)
+          } else if (isPeriodExcluded(period, excludedTrader)) {
+            PeriodWithStatus(period, SubmissionStatus.Excluded)
           } else {
             if (LocalDate.now(clock).isAfter(period.paymentDeadline)) {
               PeriodWithStatus(period, SubmissionStatus.Overdue)
@@ -129,11 +142,11 @@ class ReturnStatusController @Inject()(
 
   private def isPeriodExcluded(period: Period, excludedTrader: Option[ExcludedTrader]): Boolean = {
     excludedTrader match {
-      case Some(excluded) if period.lastDay.isAfter(periodService.getNextPeriod(excluded.finalReturnPeriod).firstDay) =>
+      case Some(excluded) if isThreeYearsOld(period.paymentDeadline, clock) ||
+        period.lastDay.isAfter(periodService.getNextPeriod(excluded.finalReturnPeriod).firstDay) =>
         true
       case _ => false
     }
   }
-
 }
 

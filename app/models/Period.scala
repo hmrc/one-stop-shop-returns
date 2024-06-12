@@ -22,8 +22,8 @@ import play.api.mvc.{PathBindable, QueryStringBindable}
 
 import java.time.format.DateTimeFormatter
 import java.time.{Clock, LocalDate}
-import scala.util.matching.Regex
 import scala.util.{Failure, Success, Try}
+import scala.util.matching.Regex
 
 trait Period {
   val year: Int
@@ -149,5 +149,10 @@ object Period {
       case Failure(exception) =>
         throw exception
     }
+  }
+
+  def isThreeYearsOld(dueDate: LocalDate, clock: Clock): Boolean = {
+    val threeYearsAgo = LocalDate.now(clock).minusYears(3)
+    dueDate.isBefore(threeYearsAgo) || dueDate.isEqual(threeYearsAgo)
   }
 }

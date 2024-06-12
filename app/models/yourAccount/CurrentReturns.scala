@@ -21,7 +21,8 @@ import play.api.libs.json.{Json, OFormat}
 case class CurrentReturns(
                            returns: Seq[Return],
                            excluded: Boolean,
-                           finalReturnsCompleted: Boolean
+                           finalReturnsCompleted: Boolean,
+                           excludedReturns: Seq[Return] = Seq.empty
                          )
 
 

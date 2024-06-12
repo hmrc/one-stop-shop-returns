@@ -167,8 +167,10 @@ class FinancialDataService @Inject()(
                                   ): Seq[VatReturnWithFinancialData] = {
     vatReturnsWithFinancialData.filter {
       vatReturnWithFinancialData =>
+
         val hasChargeWithOutstanding =
           vatReturnWithFinancialData.charge.exists(_.outstandingAmount > 0)
+
         val expectingCharge =
           vatReturnWithFinancialData.charge.isEmpty &&
             vatReturnSalesService.getTotalVatOnSalesAfterCorrection(

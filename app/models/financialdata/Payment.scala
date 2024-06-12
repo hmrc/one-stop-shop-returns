@@ -17,26 +17,48 @@
 package models.financialdata
 
 import models.Period
+import models.Period.isThreeYearsOld
+import models.exclusions.ExcludedTrader
 import play.api.libs.json.{Format, Json}
 
-import java.time.LocalDate
+import java.time.{Clock, LocalDate}
 
 case class Payment(period: Period,
                    amountOwed: BigDecimal,
                    dateDue: LocalDate,
-                   paymentStatus: PaymentStatus
-                  )
+                   paymentStatus: PaymentStatus)
 
 object Payment {
   implicit val formatPayment: Format[Payment] = Json.format[Payment]
 
-  def fromVatReturnWithFinancialData(vatReturnWithFinancialData: VatReturnWithFinancialData): Payment = {
-    val paymentStatus = vatReturnWithFinancialData.charge
-      .map(paymentCharge => if (paymentCharge.outstandingAmount == paymentCharge.originalAmount) PaymentStatus.Unpaid else PaymentStatus.Partial)
-      .getOrElse(PaymentStatus.Unknown)
+  private def isPeriodExcluded(maybeExclusion: Option[ExcludedTrader], period: Period, clock: Clock) = {
+    maybeExclusion match {
+      case Some(_) if isThreeYearsOld(period.paymentDeadline, clock) => true
+      case _ => false
+    }
+  }
 
+  def fromVatReturnWithFinancialData(vatReturnWithFinancialData: VatReturnWithFinancialData,
+                                     maybeExclusion: Option[ExcludedTrader],
+                                     clock: Clock): Payment = {
 
-    Payment(vatReturnWithFinancialData.vatReturn.period,
+    val period = vatReturnWithFinancialData.vatReturn.period
+
+    val paymentStatus: PaymentStatus =
+      vatReturnWithFinancialData.charge
+        .fold(PaymentStatus.Unknown: PaymentStatus) { paymentCharge =>
+
+          if(isPeriodExcluded(maybeExclusion, period, clock)) {
+            PaymentStatus.Excluded
+          } else if(paymentCharge.outstandingAmount == paymentCharge.originalAmount) {
+              PaymentStatus.Unpaid
+            } else {
+            PaymentStatus.Partial
+          }
+        }
+
+    Payment(
+      vatReturnWithFinancialData.vatReturn.period,
       vatReturnWithFinancialData.vatOwed,
       vatReturnWithFinancialData.vatReturn.period.paymentDeadline,
       paymentStatus
