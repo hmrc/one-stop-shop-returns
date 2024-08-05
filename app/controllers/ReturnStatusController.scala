@@ -62,7 +62,7 @@ class ReturnStatusController @Inject()(
       } yield {
         val answers = savedAnswers.sortBy(_.lastUpdated).lastOption
 
-        val incompletePeriods = availablePeriodsWithStatus.filterNot(pws => Seq(Complete, Excluded).contains(pws.status))
+        val incompletePeriods = availablePeriodsWithStatus.filterNot(pws => Seq(Complete, Excluded, Expired).contains(pws.status))
         val excludedReturnsPeriods = availablePeriodsWithStatus.filter(period => Seq(Excluded, Expired).contains(period.status))
 
         val isExcluded = request.registration.excludedTrader.isDefined
