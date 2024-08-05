@@ -18,7 +18,7 @@ package controllers
 
 import controllers.actions.AuthenticatedControllerComponents
 import models.Period.isThreeYearsOld
-import models.SubmissionStatus.{Complete, Excluded}
+import models.SubmissionStatus.{Complete, Excluded, Expired}
 import models.exclusions.ExcludedTrader
 import models.yourAccount._
 import models.{Period, PeriodWithStatus, SubmissionStatus}
@@ -63,7 +63,7 @@ class ReturnStatusController @Inject()(
         val answers = savedAnswers.sortBy(_.lastUpdated).lastOption
 
         val incompletePeriods = availablePeriodsWithStatus.filterNot(pws => Seq(Complete, Excluded).contains(pws.status))
-        val excludedReturnsPeriods = availablePeriodsWithStatus.filter(_.status == Excluded)
+        val excludedReturnsPeriods = availablePeriodsWithStatus.filter(period => Seq(Excluded, Expired).contains(period.status))
 
         val isExcluded = request.registration.excludedTrader.isDefined
 
@@ -77,7 +77,7 @@ class ReturnStatusController @Inject()(
               periodWithStatus.period,
               periodWithStatus.status,
               periodInProgress.contains(periodWithStatus.period),
-              if (periodWithStatus.status == Excluded) {
+              if (Seq(Excluded, Expired).contains(periodWithStatus.status)) {
                 oldestExcludedPeriod.contains(periodWithStatus)
               } else {
                 oldestPeriod.contains(periodWithStatus)
