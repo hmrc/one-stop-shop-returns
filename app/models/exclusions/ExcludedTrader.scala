@@ -36,6 +36,9 @@ case class ExcludedTrader(
       getPeriod(effectiveDate).getPreviousPeriod
     }
   }
+
+  val isExcludedNotReversed: Boolean =
+    exclusionReason != ExclusionReason.Reversal
 }
 
 object ExcludedTrader {
