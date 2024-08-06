@@ -21,7 +21,7 @@ import connectors.RegistrationConnector
 import controllers.actions.FakeFailingAuthConnector
 import generators.Generators
 import models.Quarter.{Q1, Q2, Q3, Q4}
-import models.SubmissionStatus.{Due, Excluded, Next, Overdue}
+import models.SubmissionStatus.{Due, Excluded, Expired, Next, Overdue}
 import models._
 import models.exclusions.{ExcludedTrader, ExclusionReason}
 import models.yourAccount._
@@ -524,7 +524,7 @@ class ReturnStatusControllerSpec
             excluded = true,
             finalReturnsCompleted = false,
             excludedReturns = Seq(
-              Return.fromPeriod(oldPeriod, Excluded, inProgress = false, isOldest = true),
+              Return.fromPeriod(oldPeriod, Expired, inProgress = false, isOldest = true),
               Return.fromPeriod(periodQ3, Excluded, inProgress = false, isOldest = false)
             )
           ))

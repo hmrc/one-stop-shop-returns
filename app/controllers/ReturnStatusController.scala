@@ -18,7 +18,7 @@ package controllers
 
 import controllers.actions.AuthenticatedControllerComponents
 import models.Period.isThreeYearsOld
-import models.SubmissionStatus.{Complete, Excluded}
+import models.SubmissionStatus.{Complete, Excluded, Expired}
 import models.exclusions.ExcludedTrader
 import models.yourAccount._
 import models.{Period, PeriodWithStatus, SubmissionStatus}
@@ -62,8 +62,8 @@ class ReturnStatusController @Inject()(
       } yield {
         val answers = savedAnswers.sortBy(_.lastUpdated).lastOption
 
-        val incompletePeriods = availablePeriodsWithStatus.filterNot(pws => Seq(Complete, Excluded).contains(pws.status))
-        val excludedReturnsPeriods = availablePeriodsWithStatus.filter(_.status == Excluded)
+        val incompletePeriods = availablePeriodsWithStatus.filterNot(pws => Seq(Complete, Excluded, Expired).contains(pws.status))
+        val excludedReturnsPeriods = availablePeriodsWithStatus.filter(period => Seq(Excluded, Expired).contains(period.status))
 
         val isExcluded = request.registration.excludedTrader.isDefined
 
@@ -77,7 +77,7 @@ class ReturnStatusController @Inject()(
               periodWithStatus.period,
               periodWithStatus.status,
               periodInProgress.contains(periodWithStatus.period),
-              if (periodWithStatus.status == Excluded) {
+              if (Seq(Excluded, Expired).contains(periodWithStatus.status)) {
                 oldestExcludedPeriod.contains(periodWithStatus)
               } else {
                 oldestPeriod.contains(periodWithStatus)
@@ -108,7 +108,7 @@ class ReturnStatusController @Inject()(
             periods.maxBy(_.lastDay.toEpochDay)
           )
         } else {
-          if(commencementLocalDate.isAfter(runningPeriod.lastDay)) {
+          if (commencementLocalDate.isAfter(runningPeriod.lastDay)) {
             periodService.getRunningPeriod(commencementLocalDate)
           } else {
             runningPeriod
@@ -120,10 +120,12 @@ class ReturnStatusController @Inject()(
       val returnPeriods = returns.map(_.period)
       val currentPeriods = periods.map {
         period =>
-          if (returnPeriods.contains(period) ) {
+          if (returnPeriods.contains(period)) {
             PeriodWithStatus(period, SubmissionStatus.Complete)
           } else if (isPeriodExcluded(period, excludedTrader)) {
             PeriodWithStatus(period, SubmissionStatus.Excluded)
+          } else if (isPeriodExpired(period, excludedTrader)) {
+            PeriodWithStatus(period, SubmissionStatus.Expired)
           } else {
             if (LocalDate.now(clock).isAfter(period.paymentDeadline)) {
               PeriodWithStatus(period, SubmissionStatus.Overdue)
@@ -142,8 +144,15 @@ class ReturnStatusController @Inject()(
 
   private def isPeriodExcluded(period: Period, excludedTrader: Option[ExcludedTrader]): Boolean = {
     excludedTrader match {
-      case Some(excluded) if isThreeYearsOld(period.paymentDeadline, clock) ||
-        period.lastDay.isAfter(periodService.getNextPeriod(excluded.finalReturnPeriod).firstDay) =>
+      case Some(excluded) if excluded.isExcludedNotReversed && period.lastDay.isAfter(periodService.getNextPeriod(excluded.finalReturnPeriod).firstDay) =>
+        true
+      case _ => false
+    }
+  }
+
+  private def isPeriodExpired(period: Period, excludedTrader: Option[ExcludedTrader]): Boolean = {
+    excludedTrader match {
+      case Some(excluded) if excluded.isExcludedNotReversed && isThreeYearsOld(period.paymentDeadline, clock) =>
         true
       case _ => false
     }
