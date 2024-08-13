@@ -65,7 +65,7 @@ class ReturnStatusController @Inject()(
         val incompletePeriods = availablePeriodsWithStatus.filterNot(pws => Seq(Complete, Excluded, Expired).contains(pws.status))
         val excludedReturnsPeriods = availablePeriodsWithStatus.filter(period => Seq(Excluded, Expired).contains(period.status))
 
-        val isExcluded = request.registration.excludedTrader.isDefined
+        val isExcluded = request.registration.excludedTrader.exists(_.isExcludedNotReversed)
 
         val periodInProgress = answers.map(answer => answer.period)
         val oldestPeriod = incompletePeriods.sortBy(_.period).headOption
