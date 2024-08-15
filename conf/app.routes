@@ -12,8 +12,6 @@ GET         /vat-returns/current-returns/:vrn                       controllers.
 GET         /financial-data/get/:commencementDate                   controllers.FinancialDataController.get(commencementDate: LocalDate)
 GET         /financial-data/charge/:period                          controllers.FinancialDataController.getCharge(period: Period)
 
-GET         /financial-data/charge-history/:commencementDate        controllers.FinancialDataController.getVatReturnWithFinancialData(commencementDate: LocalDate)
-
 GET         /financial-data/outstanding-payments                    controllers.FinancialDataController.getOutstandingAmounts()
 
 GET         /corrections                                            controllers.CorrectionController.list()
