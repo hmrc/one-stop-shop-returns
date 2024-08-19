@@ -46,9 +46,15 @@ object Payment {
 
     val paymentStatus: PaymentStatus =
       vatReturnWithFinancialData.charge
-        .fold(PaymentStatus.Unknown: PaymentStatus) { paymentCharge =>
+        .fold {
+          if(maybeExclusion.exists(_.isExcludedNotReversed) && isPeriodExcluded(maybeExclusion, period, clock)) {
+            PaymentStatus.Excluded
+          } else {
+            PaymentStatus.Unknown
+          }
+        } { paymentCharge =>
 
-          if(isPeriodExcluded(maybeExclusion, period, clock)) {
+          if(maybeExclusion.exists(_.isExcludedNotReversed) && isPeriodExcluded(maybeExclusion, period, clock)) {
             PaymentStatus.Excluded
           } else if(paymentCharge.outstandingAmount == paymentCharge.originalAmount) {
               PaymentStatus.Unpaid

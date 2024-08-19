@@ -55,13 +55,6 @@ class FinancialDataController @Inject()(
       }
   }
 
-  def getVatReturnWithFinancialData(commencementDate: LocalDate): Action[AnyContent] = cc.auth.async {
-    implicit request =>
-      service.getVatReturnWithFinancialData(request.vrn, commencementDate).map {
-        data => Ok(Json.toJson(data))
-      }
-  }
-
   def prepareFinancialData(vrn: String): Action[AnyContent] = cc.authAndGetRegistration(vrn).async {
     implicit request =>
       for {

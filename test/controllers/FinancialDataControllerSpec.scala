@@ -174,39 +174,6 @@ class FinancialDataControllerSpec
 
   }
 
-  ".getVatReturnWithFinancialData(commencementDate)" - {
-
-    val period = StandardPeriod(2021, Q3)
-    val vatReturn = arbitrary[VatReturn].sample.value
-    val charge = Charge(period, 1000, 500, 500)
-    val vatOwed = 1000
-    val commencementDate = LocalDate.now()
-
-    val vatReturnWithFinancialData = VatReturnWithFinancialData(vatReturn, Some(charge), vatOwed, None)
-
-    lazy val request =
-      FakeRequest(GET, routes.FinancialDataController.getVatReturnWithFinancialData(commencementDate).url)
-
-    "return a basic vat return with financial data" in {
-      val financialDataService = mock[FinancialDataService]
-
-      val app =
-        applicationBuilder
-          .overrides(bind[FinancialDataService].to(financialDataService))
-          .build()
-
-      when(financialDataService.getVatReturnWithFinancialData(any(), any())) thenReturn Future.successful(Seq(vatReturnWithFinancialData))
-
-      running(app) {
-
-        val result = route(app, request).value
-
-        status(result) mustEqual OK
-        contentAsJson(result) mustBe Json.toJson(Seq(vatReturnWithFinancialData))
-      }
-    }
-  }
-
   ".prepareFinancialData" - {
 
     lazy val request =
