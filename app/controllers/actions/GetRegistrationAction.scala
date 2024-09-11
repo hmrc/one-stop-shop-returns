@@ -52,6 +52,7 @@ class GetRegistrationAction @Inject()(
       case Some(registration) =>
         Future.successful(Right(RegistrationRequest(request.request, request.vrn, registration)))
       case None =>
+        logger.error(s"User had enrolment, but no registration found for VRN ${request.vrn}")
         Future.successful(Left(NotFound("Not found registration")))
     }
   }
