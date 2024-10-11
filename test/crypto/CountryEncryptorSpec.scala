@@ -8,7 +8,7 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 class CountryEncryptorSpec extends SpecBase with ScalaCheckPropertyChecks with Generators {
 
-  private val cipher    = new SecureGCMCipher
+  private val cipher    = new AesGCMCrypto
   private val encryptor = new CountryEncryptor(cipher)
   private val secretKey = "VqmXp7yigDFxbCUdDdNZVIvbW6RgPNJsliv6swQNCL8="
 

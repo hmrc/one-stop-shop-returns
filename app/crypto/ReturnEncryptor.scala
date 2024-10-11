@@ -23,7 +23,7 @@ import javax.inject.Inject
 
 class ReturnEncryptor @Inject()(
                                  countryEncryptor: CountryEncryptor,
-                                 crypto: SecureGCMCipher
+                                 crypto: AesGCMCrypto
                                ) {
 
   import countryEncryptor._
