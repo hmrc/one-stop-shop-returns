@@ -1,7 +1,7 @@
 package repositories
 
 import config.AppConfig
-import crypto.{SavedUserAnswersEncryptor, SecureGCMCipher}
+import crypto.{AesGCMCrypto, SavedUserAnswersEncryptor}
 import generators.Generators
 import models.{EncryptedSavedUserAnswers, Period, SavedUserAnswers, StandardPeriod}
 import org.mockito.Mockito.when
@@ -29,7 +29,7 @@ class SaveForLaterRepositorySpec
     with OptionValues
     with Generators {
 
-  private val cipher    = new SecureGCMCipher
+  private val cipher    = new AesGCMCrypto
   private val encryptor = new SavedUserAnswersEncryptor(cipher)
   private val appConfig = mock[AppConfig]
   private val secretKey = "VqmXp7yigDFxbCUdDdNZVIvbW6RgPNJsliv6swQNCL8="

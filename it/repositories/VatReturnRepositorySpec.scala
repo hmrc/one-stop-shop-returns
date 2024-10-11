@@ -1,7 +1,7 @@
 package repositories
 
 import config.AppConfig
-import crypto.{CorrectionEncryptor, CountryEncryptor, ReturnEncryptor, SecureGCMCipher}
+import crypto.{AesGCMCrypto, CorrectionEncryptor, CountryEncryptor, ReturnEncryptor}
 import generators.Generators
 import models.{EncryptedVatReturn, Period, ReturnReference, StandardPeriod, VatReturn}
 import models.corrections.CorrectionPayload
@@ -28,7 +28,7 @@ class VatReturnRepositorySpec
     with OptionValues
     with Generators {
 
-  private val cipher    = new SecureGCMCipher
+  private val cipher    = new AesGCMCrypto
   private val countryEncryptor = new CountryEncryptor(cipher)
   private val encryptor = new ReturnEncryptor(countryEncryptor, cipher)
   private val correctionEncryptor = new CorrectionEncryptor(countryEncryptor, cipher)
