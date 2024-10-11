@@ -8,7 +8,7 @@ import java.util.Base64
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.{Cipher, IllegalBlockSizeException, KeyGenerator, NoSuchPaddingException}
 
-class SecureGCMCipherSpec extends AnyFreeSpec with Matchers {
+class AesGCMCryptoSpec extends AnyFreeSpec with Matchers {
 
   private val encryptor      = new AesGCMCrypto
   private val secretKey      = "VqmXp7yigDFxbCUdDdNZVIvbW6RgPNJsliv6swQNCL8="
