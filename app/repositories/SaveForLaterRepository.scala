@@ -69,7 +69,7 @@ class SaveForLaterRepository @Inject()(
   private def byVrnAndPeriod(vrn: Vrn, period: Period): Bson =
     Filters.and(
       Filters.equal("vrn", vrn.vrn),
-      Filters.equal("period", period.toBson(legacyNumbers = false))
+      Filters.equal("period", period.toBson)
     )
 
   def set(savedUserAnswers: SavedUserAnswers): Future[SavedUserAnswers] = {
