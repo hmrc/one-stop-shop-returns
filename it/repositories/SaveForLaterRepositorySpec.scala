@@ -1,9 +1,11 @@
 package repositories
 
+import com.typesafe.config.Config
 import config.AppConfig
 import crypto.{AesGCMCrypto, SavedUserAnswersEncryptor}
 import generators.Generators
-import models.{EncryptedSavedUserAnswers, Period, SavedUserAnswers, StandardPeriod}
+import models.{EncryptedSavedUserAnswers, LegacyEncryptedSavedUserAnswers, NewEncryptedSavedUserAnswers, Period, SavedUserAnswers, StandardPeriod}
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalatest.OptionValues
@@ -11,6 +13,8 @@ import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar.mock
+import play.api.Configuration
+import services.crypto.EncryptionService
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.mongo.test.{CleanMongoCollectionSupport, DefaultPlayMongoRepositorySupport}
 import utils.StringUtils
@@ -29,22 +33,28 @@ class SaveForLaterRepositorySpec
     with OptionValues
     with Generators {
 
-  private val cipher    = new AesGCMCrypto
-  private val encryptor = new SavedUserAnswersEncryptor(cipher)
-  private val appConfig = mock[AppConfig]
-  private val secretKey = "VqmXp7yigDFxbCUdDdNZVIvbW6RgPNJsliv6swQNCL8="
+  private val mockAppConfig = mock[AppConfig]
+  private val mockConfiguration = mock[Configuration]
+  private val mockConfig = mock[Config]
+  private val mockAesGCMCryptoCipher = mock[AesGCMCrypto]
+  private val mockEncryptionService: EncryptionService = new EncryptionService(mockConfiguration)
+  private val encryptor = new SavedUserAnswersEncryptor(mockAppConfig, mockAesGCMCryptoCipher, mockEncryptionService)
+  private val secretKey: String = "VqmXp7yigDFxbCUdDdNZVIvbW6RgPNJsliv6swQNCL8="
 
   private val instant = Instant.now
   private val stubClock: Clock = Clock.fixed(instant, ZoneId.systemDefault)
-
-  when(appConfig.encryptionKey) thenReturn secretKey
   
   override protected val repository =
     new SaveForLaterRepository(
       mongoComponent = mongoComponent,
       encryptor = encryptor,
-      appConfig = appConfig
+      appConfig = mockAppConfig
     )
+
+  when(mockConfiguration.underlying) thenReturn mockConfig
+  when(mockConfig.getString(any())) thenReturn secretKey
+  when(mockAppConfig.encryptionKey) thenReturn secretKey
+
 
   ".set savedAnswers" - {
 
@@ -62,7 +72,7 @@ class SaveForLaterRepositorySpec
       val insertReturn2 = repository.set(answers2).futureValue
       val databaseRecords = findAll().futureValue
       val decryptedDatabaseRecords =
-        databaseRecords.map(e => encryptor.decryptAnswers(e, e.vrn, secretKey))
+        databaseRecords.map(e => determineEncryptionType(e))
 
       insertResult1 mustBe answers1
       insertReturn2 mustBe answers2
@@ -82,7 +92,7 @@ class SaveForLaterRepositorySpec
       val insertReturn2 = repository.set(answers2).futureValue
       val databaseRecords = findAll().futureValue
       val decryptedDatabaseRecords =
-        databaseRecords.map(e => encryptor.decryptAnswers(e, e.vrn, secretKey))
+        databaseRecords.map(e => determineEncryptionType(e))
 
       insertResult1 mustBe answers1
       insertReturn2 mustBe answers2
@@ -100,7 +110,7 @@ class SaveForLaterRepositorySpec
       insertResult2 mustBe answers2
 
       val decryptedDatabaseRecords =
-        findAll().futureValue.map(e => encryptor.decryptAnswers(e, e.vrn, secretKey))
+        findAll().futureValue.map(e => determineEncryptionType(e))
 
       decryptedDatabaseRecords must contain only answers2
     }
@@ -123,9 +133,9 @@ class SaveForLaterRepositorySpec
         vrn         = vrn3
       )
 
-      insert(encryptor.encryptAnswers(answers1, answers1.vrn, secretKey)).futureValue
-      insert(encryptor.encryptAnswers(answers2, answers2.vrn, secretKey)).futureValue
-      insert(encryptor.encryptAnswers(answers3, answers3.vrn, secretKey)).futureValue
+      insert(encryptor.encryptAnswers(answers1, answers1.vrn)).futureValue
+      insert(encryptor.encryptAnswers(answers2, answers2.vrn)).futureValue
+      insert(encryptor.encryptAnswers(answers3, answers3.vrn)).futureValue
 
       val returns = repository.get(answers1.vrn).futureValue
 
@@ -141,7 +151,7 @@ class SaveForLaterRepositorySpec
 
       val answers = answers1.copy(lastUpdated = Instant.now(stubClock).truncatedTo(ChronoUnit.MILLIS))
 
-      insert(encryptor.encryptAnswers(answers, answers.vrn, secretKey)).futureValue
+      insert(encryptor.encryptAnswers(answers, answers.vrn)).futureValue
 
       val result = repository.get(answers.vrn, answers.period).futureValue
 
@@ -165,11 +175,21 @@ class SaveForLaterRepositorySpec
 
       val answers = arbitrary[SavedUserAnswers].sample.value
 
-      insert(encryptor.encryptAnswers(answers, answers.vrn, secretKey)).futureValue
+      insert(encryptor.encryptAnswers(answers, answers.vrn)).futureValue
 
       val result = repository.clear(answers.vrn, answers.period).futureValue
 
       result mustEqual true
+    }
+  }
+
+  private def determineEncryptionType(answers: EncryptedSavedUserAnswers): SavedUserAnswers = {
+    answers match {
+      case l: LegacyEncryptedSavedUserAnswers =>
+        encryptor.decryptLegacyAnswers(l, l.vrn)
+      case n: NewEncryptedSavedUserAnswers =>
+        encryptor.decryptAnswers(n, n.vrn)
+      case _ => throw new IllegalArgumentException("Not a valid EncryptedSavedUserAnswers type.")
     }
   }
 }

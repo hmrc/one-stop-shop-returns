@@ -16,7 +16,6 @@
 
 package models
 
-import crypto.EncryptedValue
 import play.api.libs.json.{Json, OFormat}
 
 case class SalesFromEuCountry(
@@ -73,7 +72,7 @@ object SalesDetails {
 
 case class EncryptedSalesDetails(
                          vatRate: EncryptedVatRate,
-                         netValueOfSales: EncryptedValue,
+                         netValueOfSales: String,
                          vatOnSales: EncryptedVatOnSales
                        )
 

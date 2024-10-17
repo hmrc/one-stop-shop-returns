@@ -16,42 +16,51 @@
 
 package crypto
 
+import config.AppConfig
 import models._
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json.Json
+import services.crypto.EncryptionService
 import uk.gov.hmrc.domain.Vrn
 
 import javax.inject.Inject
 
 class SavedUserAnswersEncryptor @Inject()(
-                                 crypto: AesGCMCrypto
-                               ) {
+                                           appConfig: AppConfig,
+                                           crypto: AesGCMCrypto,
+                                           encryptionService: EncryptionService
+                                         ) {
 
-  def encryptData(data: JsValue, vrn: Vrn, key: String): EncryptedValue = {
-    def e(field: String): EncryptedValue = crypto.encrypt(field, vrn.vrn, key)
+  protected val encryptionKey: String = appConfig.encryptionKey
 
-    e(data.toString)
-  }
+  def encryptAnswers(answers: SavedUserAnswers, vrn: Vrn): EncryptedSavedUserAnswers = {
+    def encryptAnswerValue(answerValue: String): String = encryptionService.encryptField(answerValue)
 
-  def decryptData(data: EncryptedValue, vrn: Vrn, key: String): JsValue = {
-    def d(field: EncryptedValue): String = crypto.decrypt(field, vrn.vrn, key)
-    Json.parse(d(data))
-
-  }
-
-  def encryptAnswers(answers: SavedUserAnswers, vrn: Vrn, key: String): EncryptedSavedUserAnswers = {
-    EncryptedSavedUserAnswers(
+    NewEncryptedSavedUserAnswers(
       vrn = vrn,
       period = answers.period,
-      data = encryptData(answers.data, vrn, key),
+      data = encryptAnswerValue(answers.data.toString),
       lastUpdated = answers.lastUpdated
     )
   }
 
-  def decryptAnswers(encryptedAnswers: EncryptedSavedUserAnswers, vrn: Vrn, key: String): SavedUserAnswers = {
+  def decryptAnswers(encryptedAnswers: NewEncryptedSavedUserAnswers, vrn: Vrn): SavedUserAnswers = {
+    def decryptAnswerValue(answerValue: String): String = encryptionService.decryptField(answerValue)
+
     SavedUserAnswers(
       vrn = vrn,
       period = encryptedAnswers.period,
-      data = decryptData(encryptedAnswers.data, vrn, key),
+      data = Json.parse(decryptAnswerValue(encryptedAnswers.data)),
+      lastUpdated = encryptedAnswers.lastUpdated
+    )
+  }
+
+  def decryptLegacyAnswers(encryptedAnswers: LegacyEncryptedSavedUserAnswers, vrn: Vrn): SavedUserAnswers = {
+    def decryptAnswerValue(answerValue: EncryptedValue): String = crypto.decrypt(answerValue, vrn.vrn, encryptionKey)
+
+    SavedUserAnswers(
+      vrn = vrn,
+      period = encryptedAnswers.period,
+      data = Json.parse(decryptAnswerValue(encryptedAnswers.data)),
       lastUpdated = encryptedAnswers.lastUpdated
     )
   }

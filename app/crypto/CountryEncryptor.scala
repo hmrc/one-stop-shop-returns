@@ -17,20 +17,21 @@
 package crypto
 
 import models.{Country, EncryptedCountry}
-import uk.gov.hmrc.domain.Vrn
+import services.crypto.EncryptionService
 
 import javax.inject.Inject
 
-class CountryEncryptor @Inject()(crypto: AesGCMCrypto) {
+class CountryEncryptor @Inject()(encryptionService: EncryptionService) {
 
-  def encryptCountry(country: Country, vrn: Vrn, key: String): EncryptedCountry = {
-    def e(field: String): EncryptedValue = crypto.encrypt(field, vrn.vrn, key)
+
+  def encryptCountry(country: Country): EncryptedCountry = {
+    def e(field: String): String = encryptionService.encryptField(field)
 
     EncryptedCountry(e(country.code), e(country.name))
   }
 
-  def decryptCountry(country: EncryptedCountry, vrn: Vrn, key: String): Country = {
-    def d(field: EncryptedValue): String = crypto.decrypt(field, vrn.vrn, key)
+  def decryptCountry(country: EncryptedCountry): Country = {
+    def d(field: String): String = encryptionService.decryptField(field)
     import country._
 
     Country(d(code), d(name))

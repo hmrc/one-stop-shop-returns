@@ -1,28 +1,38 @@
 package crypto
 
 import base.SpecBase
+import com.typesafe.config.Config
 import generators.Generators
 import models._
 import models.corrections.{CorrectionPayload, CorrectionToCountry, PeriodWithCorrections}
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+import play.api.Configuration
+import services.crypto.EncryptionService
 
 import java.time.Instant
 
 class CorrectionEncryptorSpec extends SpecBase with ScalaCheckPropertyChecks with Generators {
 
-  private val cipher = new AesGCMCrypto
-  private val countryEncyrpter = new CountryEncryptor(cipher)
-  private val encryptor = new CorrectionEncryptor(countryEncyrpter, cipher)
+  private val mockConfiguration = mock[Configuration]
+  private val mockConfig = mock[Config]
+  private val mockEncryptionService: EncryptionService = new EncryptionService(mockConfiguration)
+  private val countryEncyrpter = new CountryEncryptor(mockEncryptionService)
+  private val encryptor = new CorrectionEncryptor(countryEncyrpter, mockEncryptionService)
   private val secretKey = "VqmXp7yigDFxbCUdDdNZVIvbW6RgPNJsliv6swQNCL8="
+
+  when(mockConfiguration.underlying) thenReturn mockConfig
+  when(mockConfig.getString(any())) thenReturn secretKey
 
   "encrypt / decrypt CorrectionToCountry" - {
 
     "must encrypt a CorrectionToCountry and decrypt them" in {
       forAll(arbitrary[CorrectionToCountry]) {
         correctionToCountry =>
-          val e = encryptor.encryptCorrectionToCountry(correctionToCountry, vrn, secretKey)
-          val d = encryptor.decryptCorrectionToCountry(e, vrn, secretKey)
+          val e = encryptor.encryptCorrectionToCountry(correctionToCountry)
+          val d = encryptor.decryptCorrectionToCountry(e)
 
           d mustEqual correctionToCountry
       }
@@ -34,8 +44,8 @@ class CorrectionEncryptorSpec extends SpecBase with ScalaCheckPropertyChecks wit
     "must encrypt a PeriodWithCorrections and decrypt them" in {
       forAll(arbitrary[PeriodWithCorrections]) {
         periodWithCorrections =>
-          val e = encryptor.encryptPeriodWithCorrections(periodWithCorrections, vrn, secretKey)
-          val d = encryptor.decryptPeriodWithCorrections(e, vrn, secretKey)
+          val e = encryptor.encryptPeriodWithCorrections(periodWithCorrections)
+          val d = encryptor.decryptPeriodWithCorrections(e)
 
           d mustEqual periodWithCorrections
       }
@@ -55,8 +65,8 @@ class CorrectionEncryptorSpec extends SpecBase with ScalaCheckPropertyChecks wit
         lastUpdated = Instant.now(stubClock)
       )
 
-      val e = encryptor.encryptCorrectionPayload(correctionPayload, vrn, secretKey)
-      val d = encryptor.decryptCorrectionPayload(e, vrn, secretKey)
+      val e = encryptor.encryptCorrectionPayload(correctionPayload, vrn)
+      val d = encryptor.decryptCorrectionPayload(e, vrn)
 
       d mustEqual correctionPayload
     }
@@ -82,8 +92,8 @@ class CorrectionEncryptorSpec extends SpecBase with ScalaCheckPropertyChecks wit
         lastUpdated = Instant.now(stubClock)
       )
 
-      val e = encryptor.encryptCorrectionPayload(vatReturn, vrn, secretKey)
-      val d = encryptor.decryptCorrectionPayload(e, vrn, secretKey)
+      val e = encryptor.encryptCorrectionPayload(vatReturn, vrn)
+      val d = encryptor.decryptCorrectionPayload(e, vrn)
 
       d mustEqual vatReturn
     }

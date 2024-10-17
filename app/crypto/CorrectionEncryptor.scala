@@ -17,67 +17,67 @@
 package crypto
 
 import models.corrections._
-
+import services.crypto.EncryptionService
 import uk.gov.hmrc.domain.Vrn
 
 import javax.inject.Inject
 
 class CorrectionEncryptor @Inject()(
                                      countryEncryptor: CountryEncryptor,
-                                     crypto: AesGCMCrypto
+                                     encryptionService: EncryptionService
                                    ) {
   import countryEncryptor._
 
-  def encryptCorrectionToCountry(correctionToCountry: CorrectionToCountry, vrn: Vrn, key: String): EncryptedCorrectionToCountry = {
-    def e(field: String): EncryptedValue = crypto.encrypt(field, vrn.vrn, key)
+  def encryptCorrectionToCountry(correctionToCountry: CorrectionToCountry): EncryptedCorrectionToCountry = {
+    def e(field: String): String = encryptionService.encryptField(field)
     import correctionToCountry._
 
-    EncryptedCorrectionToCountry(encryptCountry(correctionCountry, vrn, key), e(countryVatCorrection.toString()))
+    EncryptedCorrectionToCountry(encryptCountry(correctionCountry), e(countryVatCorrection.toString()))
   }
 
-  def decryptCorrectionToCountry(encryptedCorrectionToCountry: EncryptedCorrectionToCountry, vrn: Vrn, key: String): CorrectionToCountry = {
-    def d(field: EncryptedValue): String = crypto.decrypt(field, vrn.vrn, key)
+  def decryptCorrectionToCountry(encryptedCorrectionToCountry: EncryptedCorrectionToCountry): CorrectionToCountry = {
+    def d(field: String): String = encryptionService.decryptField(field)
     import encryptedCorrectionToCountry._
 
     CorrectionToCountry(
-      decryptCountry(correctionCountry, vrn, key),
+      decryptCountry(correctionCountry),
       BigDecimal(d(countryVatCorrection))
     )
   }
 
-  def encryptPeriodWithCorrections(periodWithCorrections: PeriodWithCorrections, vrn: Vrn, key: String): EncryptedPeriodWithCorrections = {
+  def encryptPeriodWithCorrections(periodWithCorrections: PeriodWithCorrections): EncryptedPeriodWithCorrections = {
     import periodWithCorrections._
 
     EncryptedPeriodWithCorrections(
       correctionReturnPeriod = correctionReturnPeriod,
-      correctionsToCountry = correctionsToCountry.map(encryptCorrectionToCountry(_, vrn, key))
+      correctionsToCountry = correctionsToCountry.map(encryptCorrectionToCountry)
     )
   }
 
-  def decryptPeriodWithCorrections(encryptedPeriodWithCorrections: EncryptedPeriodWithCorrections, vrn: Vrn, key: String): PeriodWithCorrections = {
+  def decryptPeriodWithCorrections(encryptedPeriodWithCorrections: EncryptedPeriodWithCorrections): PeriodWithCorrections = {
     import encryptedPeriodWithCorrections._
 
     PeriodWithCorrections(
       correctionReturnPeriod = correctionReturnPeriod,
-      correctionsToCountry = correctionsToCountry.map(decryptCorrectionToCountry(_, vrn, key))
+      correctionsToCountry = correctionsToCountry.map(decryptCorrectionToCountry)
     )
   }
 
-  def encryptCorrectionPayload(correctionPayload: CorrectionPayload, vrn: Vrn, key: String): EncryptedCorrectionPayload = {
+  def encryptCorrectionPayload(correctionPayload: CorrectionPayload, vrn: Vrn): EncryptedCorrectionPayload = {
     EncryptedCorrectionPayload(
       vrn = vrn,
       period = correctionPayload.period,
-      corrections = correctionPayload.corrections.map(encryptPeriodWithCorrections(_, vrn, key)),
+      corrections = correctionPayload.corrections.map(encryptPeriodWithCorrections),
       submissionReceived = correctionPayload.submissionReceived,
       lastUpdated = correctionPayload.lastUpdated
     )
   }
 
-  def decryptCorrectionPayload(encryptedCorrectionPayload: EncryptedCorrectionPayload, vrn: Vrn, key: String): CorrectionPayload = {
+  def decryptCorrectionPayload(encryptedCorrectionPayload: EncryptedCorrectionPayload, vrn: Vrn): CorrectionPayload = {
     CorrectionPayload(
       vrn = vrn,
       period = encryptedCorrectionPayload.period,
-      corrections = encryptedCorrectionPayload.corrections.map(decryptPeriodWithCorrections(_, vrn, key)),
+      corrections = encryptedCorrectionPayload.corrections.map(decryptPeriodWithCorrections),
       submissionReceived = encryptedCorrectionPayload.submissionReceived,
       lastUpdated = encryptedCorrectionPayload.lastUpdated
     )

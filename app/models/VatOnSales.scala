@@ -17,7 +17,6 @@
 package models
 
 
-import crypto.EncryptedValue
 import play.api.libs.json.{Json, OFormat}
 
 case class VatOnSales(choice: VatOnSalesChoice, amount: BigDecimal)
@@ -40,7 +39,7 @@ object VatOnSalesChoice extends Enumerable.Implicits {
     Enumerable(values.map(v => v.toString -> v): _*)
 }
 
-case class EncryptedVatOnSales(choice: EncryptedValue, amount: EncryptedValue)
+case class EncryptedVatOnSales(choice: String, amount: String)
 
 object EncryptedVatOnSales {
 

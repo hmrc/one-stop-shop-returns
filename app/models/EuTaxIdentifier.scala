@@ -16,7 +16,6 @@
 
 package models
 
-import crypto.EncryptedValue
 import play.api.libs.json.{Json, OFormat}
 
 case class EuTaxIdentifier(identifierType: EuTaxIdentifierType, value: String)
@@ -26,7 +25,7 @@ object EuTaxIdentifier {
   implicit val format: OFormat[EuTaxIdentifier] = Json.format[EuTaxIdentifier]
 }
 
-case class EncryptedEuTaxIdentifier(identifierType: EncryptedValue, value: EncryptedValue)
+case class EncryptedEuTaxIdentifier(identifierType: String, value: String)
 
 object EncryptedEuTaxIdentifier {
 
