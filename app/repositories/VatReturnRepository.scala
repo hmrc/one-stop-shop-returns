@@ -16,7 +16,6 @@
 
 package repositories
 
-import config.AppConfig
 import crypto.{CorrectionEncryptor, ReturnEncryptor}
 import logging.Logging
 import models.corrections.CorrectionPayload
@@ -36,7 +35,6 @@ class VatReturnRepository @Inject()(
                                      val mongoComponent: MongoComponent,
                                      returnEncryptor: ReturnEncryptor,
                                      correctionEncryptor: CorrectionEncryptor,
-                                     appConfig: AppConfig,
                                      correctionRepository: CorrectionRepository
                                    )(implicit ec: ExecutionContext)
   extends PlayMongoRepository[EncryptedVatReturn](
@@ -56,11 +54,10 @@ class VatReturnRepository @Inject()(
   import uk.gov.hmrc.mongo.play.json.Codecs.toBson
 
   private implicit val tc: TransactionConfiguration = TransactionConfiguration.strict
-  private val encryptionKey = appConfig.encryptionKey
 
   def insert(vatReturn: VatReturn, correction: CorrectionPayload): Future[Option[(VatReturn, CorrectionPayload)]] = {
-    val encryptedVatReturn = returnEncryptor.encryptReturn(vatReturn, vatReturn.vrn, encryptionKey)
-    val encryptedCorrectionPayload = correctionEncryptor.encryptCorrectionPayload(correction, vatReturn.vrn, encryptionKey)
+    val encryptedVatReturn = returnEncryptor.encryptReturn(vatReturn, vatReturn.vrn)
+    val encryptedCorrectionPayload = correctionEncryptor.encryptCorrectionPayload(correction, vatReturn.vrn)
 
     for {
       _ <- ensureIndexes()
@@ -80,7 +77,7 @@ class VatReturnRepository @Inject()(
   }
 
   def insert(vatReturn: VatReturn): Future[Option[VatReturn]] = {
-    val encryptedVatReturn = returnEncryptor.encryptReturn(vatReturn, vatReturn.vrn, encryptionKey)
+    val encryptedVatReturn = returnEncryptor.encryptReturn(vatReturn, vatReturn.vrn)
 
     collection
       .insertOne(encryptedVatReturn)
@@ -97,7 +94,7 @@ class VatReturnRepository @Inject()(
       .toFuture()
       .map(_.map {
         vatReturn =>
-          returnEncryptor.decryptReturn(vatReturn, vatReturn.vrn, encryptionKey)
+          returnEncryptor.decryptReturn(vatReturn, vatReturn.vrn)
       })
 
   def get(vrn: Vrn): Future[Seq[VatReturn]] =
@@ -106,7 +103,7 @@ class VatReturnRepository @Inject()(
       .toFuture()
       .map(_.map {
         vatReturn =>
-          returnEncryptor.decryptReturn(vatReturn, vatReturn.vrn, encryptionKey)
+          returnEncryptor.decryptReturn(vatReturn, vatReturn.vrn)
       })
 
   def getByPeriods(periods: Seq[Period]): Future[Seq[VatReturn]] = {
@@ -116,7 +113,7 @@ class VatReturnRepository @Inject()(
       .toFuture()
       .map(_.map {
         vatReturn =>
-          returnEncryptor.decryptReturn(vatReturn, vatReturn.vrn, encryptionKey)
+          returnEncryptor.decryptReturn(vatReturn, vatReturn.vrn)
       })
   }
 
@@ -130,6 +127,6 @@ class VatReturnRepository @Inject()(
       ).headOption()
       .map(_.map {
         vatReturn =>
-          returnEncryptor.decryptReturn(vatReturn, vatReturn.vrn, encryptionKey)
+          returnEncryptor.decryptReturn(vatReturn, vatReturn.vrn)
       })
 }
