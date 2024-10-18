@@ -63,8 +63,8 @@ class CorrectionEncryptor @Inject()(
     )
   }
 
-  def encryptCorrectionPayload(correctionPayload: CorrectionPayload, vrn: Vrn): EncryptedCorrectionPayload = {
-    EncryptedCorrectionPayload(
+  def encryptCorrectionPayload(correctionPayload: CorrectionPayload, vrn: Vrn): NewEncryptedCorrectionPayload = {
+    NewEncryptedCorrectionPayload(
       vrn = vrn,
       period = correctionPayload.period,
       corrections = correctionPayload.corrections.map(encryptPeriodWithCorrections),
@@ -73,7 +73,17 @@ class CorrectionEncryptor @Inject()(
     )
   }
 
-  def decryptCorrectionPayload(encryptedCorrectionPayload: EncryptedCorrectionPayload, vrn: Vrn): CorrectionPayload = {
+  def decryptCorrectionPayload(encryptedCorrectionPayload: NewEncryptedCorrectionPayload, vrn: Vrn): CorrectionPayload = {
+    CorrectionPayload(
+      vrn = vrn,
+      period = encryptedCorrectionPayload.period,
+      corrections = encryptedCorrectionPayload.corrections.map(decryptPeriodWithCorrections),
+      submissionReceived = encryptedCorrectionPayload.submissionReceived,
+      lastUpdated = encryptedCorrectionPayload.lastUpdated
+    )
+  }
+
+  def decryptLegacyCorrectionPayload(encryptedCorrectionPayload: LegacyEncryptedCorrectionPayload, vrn: Vrn): CorrectionPayload = {
     CorrectionPayload(
       vrn = vrn,
       period = encryptedCorrectionPayload.period,

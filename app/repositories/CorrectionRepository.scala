@@ -18,7 +18,7 @@ package repositories
 
 import crypto.CorrectionEncryptor
 import models.Period
-import models.corrections.{CorrectionPayload, EncryptedCorrectionPayload}
+import models.corrections.{CorrectionPayload, EncryptedCorrectionPayload, LegacyEncryptedCorrectionPayload, NewEncryptedCorrectionPayload}
 import org.mongodb.scala.model.{Filters, IndexModel, IndexOptions, Indexes}
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.mongo.MongoComponent
@@ -51,8 +51,11 @@ class CorrectionRepository @Inject()(
     collection
       .find()
       .toFuture()
-      .map(_.map { correction =>
-        correctionEncryptor.decryptCorrectionPayload(correction, correction.vrn)
+      .map(_.map {
+        case l: LegacyEncryptedCorrectionPayload =>
+          correctionEncryptor.decryptLegacyCorrectionPayload(l, l.vrn)
+        case n: NewEncryptedCorrectionPayload =>
+          correctionEncryptor.decryptCorrectionPayload(n, n.vrn)
       })
 
   def getByPeriods(periods: Seq[Period]): Future[Seq[CorrectionPayload]] =
@@ -60,8 +63,11 @@ class CorrectionRepository @Inject()(
       .find(
         Filters.in("period", periods.map(toBson(_)):_*))
       .toFuture()
-      .map(_.map { correction =>
-        correctionEncryptor.decryptCorrectionPayload(correction, correction.vrn)
+      .map(_.map {
+        case l: LegacyEncryptedCorrectionPayload =>
+          correctionEncryptor.decryptLegacyCorrectionPayload(l, l.vrn)
+        case n: NewEncryptedCorrectionPayload =>
+          correctionEncryptor.decryptCorrectionPayload(n, n.vrn)
       })
 
 
@@ -69,7 +75,12 @@ class CorrectionRepository @Inject()(
     collection
       .find(Filters.equal("vrn", toBson(vrn)))
       .toFuture()
-      .map(_.map(correctionEncryptor.decryptCorrectionPayload(_, vrn)))
+      .map(_.map {
+        case l: LegacyEncryptedCorrectionPayload =>
+          correctionEncryptor.decryptLegacyCorrectionPayload(l, l.vrn)
+        case n: NewEncryptedCorrectionPayload =>
+          correctionEncryptor.decryptCorrectionPayload(n, n.vrn)
+      })
 
   def get(vrn: Vrn, period: Period): Future[Option[CorrectionPayload]] =
     collection
@@ -78,7 +89,13 @@ class CorrectionRepository @Inject()(
         Filters.equal("period", toBson(period))
       ))
       .headOption()
-      .map(_.map(correctionEncryptor.decryptCorrectionPayload(_, vrn)))
+      .map(_.map {
+        case l: LegacyEncryptedCorrectionPayload =>
+          correctionEncryptor.decryptLegacyCorrectionPayload(l, l.vrn)
+        case n: NewEncryptedCorrectionPayload =>
+          correctionEncryptor.decryptCorrectionPayload(n, n.vrn)
+      }
+      )
 
 
   def getByCorrectionPeriod(vrn: Vrn, period: Period): Future[Seq[CorrectionPayload]] =
@@ -88,5 +105,10 @@ class CorrectionRepository @Inject()(
         Filters.elemMatch("corrections", Filters.eq("correctionReturnPeriod", toBson(period)))
       ))
       .toFuture()
-      .map(_.map(correctionEncryptor.decryptCorrectionPayload(_, vrn)))
+      .map(_.map {
+        case l: LegacyEncryptedCorrectionPayload =>
+          correctionEncryptor.decryptLegacyCorrectionPayload(l, l.vrn)
+        case n: NewEncryptedCorrectionPayload =>
+          correctionEncryptor.decryptCorrectionPayload(n, n.vrn)
+      })
 }

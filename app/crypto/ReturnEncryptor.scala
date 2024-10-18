@@ -184,8 +184,6 @@ class ReturnEncryptor @Inject()(
   }
 
   def decryptLegacyReturn(encryptedVatReturn: LegacyEncryptedVatReturn, vrn: Vrn): VatReturn = {
-    def decryptReturnValue(retunValue: EncryptedValue): String = crypto.decrypt(retunValue, vrn.vrn, encryptionKey)
-
     VatReturn(
       vrn = vrn,
       period = encryptedVatReturn.period,
