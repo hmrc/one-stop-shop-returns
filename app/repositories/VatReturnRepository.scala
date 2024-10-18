@@ -16,11 +16,10 @@
 
 package repositories
 
-import config.AppConfig
 import crypto.{CorrectionEncryptor, ReturnEncryptor}
 import logging.Logging
 import models.corrections.CorrectionPayload
-import models.{EncryptedVatReturn, Period, VatReturn}
+import models.{EncryptedVatReturn, LegacyEncryptedVatReturn, NewEncryptedVatReturn, Period, VatReturn}
 import org.mongodb.scala.model.{Filters, IndexModel, IndexOptions, Indexes}
 import repositories.MongoErrors.Duplicate
 import uk.gov.hmrc.domain.Vrn
@@ -36,7 +35,6 @@ class VatReturnRepository @Inject()(
                                      val mongoComponent: MongoComponent,
                                      returnEncryptor: ReturnEncryptor,
                                      correctionEncryptor: CorrectionEncryptor,
-                                     appConfig: AppConfig,
                                      correctionRepository: CorrectionRepository
                                    )(implicit ec: ExecutionContext)
   extends PlayMongoRepository[EncryptedVatReturn](
@@ -56,11 +54,10 @@ class VatReturnRepository @Inject()(
   import uk.gov.hmrc.mongo.play.json.Codecs.toBson
 
   private implicit val tc: TransactionConfiguration = TransactionConfiguration.strict
-  private val encryptionKey = appConfig.encryptionKey
 
   def insert(vatReturn: VatReturn, correction: CorrectionPayload): Future[Option[(VatReturn, CorrectionPayload)]] = {
-    val encryptedVatReturn = returnEncryptor.encryptReturn(vatReturn, vatReturn.vrn, encryptionKey)
-    val encryptedCorrectionPayload = correctionEncryptor.encryptCorrectionPayload(correction, vatReturn.vrn, encryptionKey)
+    val encryptedVatReturn = returnEncryptor.encryptReturn(vatReturn, vatReturn.vrn)
+    val encryptedCorrectionPayload = correctionEncryptor.encryptCorrectionPayload(correction, vatReturn.vrn)
 
     for {
       _ <- ensureIndexes()
@@ -80,7 +77,7 @@ class VatReturnRepository @Inject()(
   }
 
   def insert(vatReturn: VatReturn): Future[Option[VatReturn]] = {
-    val encryptedVatReturn = returnEncryptor.encryptReturn(vatReturn, vatReturn.vrn, encryptionKey)
+    val encryptedVatReturn = returnEncryptor.encryptReturn(vatReturn, vatReturn.vrn)
 
     collection
       .insertOne(encryptedVatReturn)
@@ -96,8 +93,10 @@ class VatReturnRepository @Inject()(
       .find()
       .toFuture()
       .map(_.map {
-        vatReturn =>
-          returnEncryptor.decryptReturn(vatReturn, vatReturn.vrn, encryptionKey)
+        case l: LegacyEncryptedVatReturn =>
+          returnEncryptor.decryptLegacyReturn(l, l.vrn)
+        case n: NewEncryptedVatReturn =>
+          returnEncryptor.decryptReturn(n, n.vrn)
       })
 
   def get(vrn: Vrn): Future[Seq[VatReturn]] =
@@ -105,8 +104,10 @@ class VatReturnRepository @Inject()(
       .find(Filters.equal("vrn", toBson(vrn)))
       .toFuture()
       .map(_.map {
-        vatReturn =>
-          returnEncryptor.decryptReturn(vatReturn, vatReturn.vrn, encryptionKey)
+        case l: LegacyEncryptedVatReturn =>
+          returnEncryptor.decryptLegacyReturn(l, l.vrn)
+        case n: NewEncryptedVatReturn =>
+          returnEncryptor.decryptReturn(n, n.vrn)
       })
 
   def getByPeriods(periods: Seq[Period]): Future[Seq[VatReturn]] = {
@@ -115,8 +116,10 @@ class VatReturnRepository @Inject()(
         Filters.in("period", periods.map(toBson(_)):_*))
       .toFuture()
       .map(_.map {
-        vatReturn =>
-          returnEncryptor.decryptReturn(vatReturn, vatReturn.vrn, encryptionKey)
+        case l: LegacyEncryptedVatReturn =>
+          returnEncryptor.decryptLegacyReturn(l, l.vrn)
+        case n: NewEncryptedVatReturn =>
+          returnEncryptor.decryptReturn(n, n.vrn)
       })
   }
 
@@ -129,7 +132,9 @@ class VatReturnRepository @Inject()(
         )
       ).headOption()
       .map(_.map {
-        vatReturn =>
-          returnEncryptor.decryptReturn(vatReturn, vatReturn.vrn, encryptionKey)
+        case l: LegacyEncryptedVatReturn =>
+          returnEncryptor.decryptLegacyReturn(l, l.vrn)
+        case n: NewEncryptedVatReturn =>
+          returnEncryptor.decryptReturn(n, n.vrn)
       })
 }

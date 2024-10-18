@@ -35,16 +35,68 @@ object SavedUserAnswers {
   implicit val format: OFormat[SavedUserAnswers] = Json.format[SavedUserAnswers]
 }
 
-case class EncryptedSavedUserAnswers(
-                      vrn: Vrn,
-                      period: Period,
-                      data: EncryptedValue,
-                      lastUpdated: Instant
-                    )
+trait EncryptedSavedUserAnswers
 
 object EncryptedSavedUserAnswers {
 
-  val reads: Reads[EncryptedSavedUserAnswers] = {
+  def reads: Reads[EncryptedSavedUserAnswers] =
+    NewEncryptedSavedUserAnswers.reads.widen[EncryptedSavedUserAnswers] orElse
+      LegacyEncryptedSavedUserAnswers.reads.widen[EncryptedSavedUserAnswers]
+
+  def writes: Writes[EncryptedSavedUserAnswers] = Writes {
+    case n: NewEncryptedSavedUserAnswers => Json.toJson(n)(NewEncryptedSavedUserAnswers.writes)
+    case l: LegacyEncryptedSavedUserAnswers => Json.toJson(l)(LegacyEncryptedSavedUserAnswers.writes)
+  }
+
+  implicit val format: Format[EncryptedSavedUserAnswers] = Format(reads, writes)
+}
+
+case class NewEncryptedSavedUserAnswers(
+                             vrn: Vrn,
+                             period: Period,
+                             data: String,
+                             lastUpdated: Instant
+                           ) extends EncryptedSavedUserAnswers
+
+object NewEncryptedSavedUserAnswers {
+
+  val reads: Reads[NewEncryptedSavedUserAnswers] = {
+
+    import play.api.libs.functional.syntax._
+
+    (
+      (__ \ "vrn").read[Vrn] and
+        (__ \ "period").read[Period] and
+        (__ \ "data").read[String] and
+        (__ \ "lastUpdated").read(MongoJavatimeFormats.instantFormat)
+      ) (NewEncryptedSavedUserAnswers.apply _)
+  }
+
+  val writes: OWrites[NewEncryptedSavedUserAnswers] = {
+
+    import play.api.libs.functional.syntax._
+
+    (
+      (__ \ "vrn").write[Vrn] and
+        (__ \ "period").write[Period] and
+        (__ \ "data").write[String] and
+        (__ \ "lastUpdated").write(MongoJavatimeFormats.instantFormat)
+      ) (unlift(NewEncryptedSavedUserAnswers.unapply))
+  }
+
+  implicit val format: OFormat[NewEncryptedSavedUserAnswers] = OFormat(reads, writes)
+}
+
+case class LegacyEncryptedSavedUserAnswers(
+                                         vrn: Vrn,
+                                         period: Period,
+                                         data: EncryptedValue,
+                                         lastUpdated: Instant
+                                       ) extends EncryptedSavedUserAnswers
+
+object LegacyEncryptedSavedUserAnswers {
+
+  val reads: Reads[LegacyEncryptedSavedUserAnswers] = {
 
     import play.api.libs.functional.syntax._
 
@@ -53,10 +105,10 @@ object EncryptedSavedUserAnswers {
         (__ \ "period").read[Period] and
         (__ \ "data").read[EncryptedValue] and
         (__ \ "lastUpdated").read(MongoJavatimeFormats.instantFormat)
-      ) (EncryptedSavedUserAnswers.apply _)
+      ) (LegacyEncryptedSavedUserAnswers.apply _)
   }
 
-  val writes: OWrites[EncryptedSavedUserAnswers] = {
+  val writes: OWrites[LegacyEncryptedSavedUserAnswers] = {
 
     import play.api.libs.functional.syntax._
 
@@ -65,8 +117,8 @@ object EncryptedSavedUserAnswers {
         (__ \ "period").write[Period] and
         (__ \ "data").write[EncryptedValue] and
         (__ \ "lastUpdated").write(MongoJavatimeFormats.instantFormat)
-      ) (unlift(EncryptedSavedUserAnswers.unapply))
+      ) (unlift(LegacyEncryptedSavedUserAnswers.unapply))
   }
 
-  implicit val format: OFormat[EncryptedSavedUserAnswers] = OFormat(reads, writes)
+  implicit val format: OFormat[LegacyEncryptedSavedUserAnswers] = OFormat(reads, writes)
 }

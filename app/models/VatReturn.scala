@@ -16,7 +16,7 @@
 
 package models
 
-import play.api.libs.json.{Json, OFormat}
+import play.api.libs.json._
 import uk.gov.hmrc.domain.Vrn
 
 import java.time.{Instant, LocalDate}
@@ -39,20 +39,54 @@ object VatReturn {
   implicit val format: OFormat[VatReturn] = Json.format[VatReturn]
 }
 
-case class EncryptedVatReturn(
-                      vrn: Vrn,
-                      period: Period,
-                      reference: ReturnReference,
-                      paymentReference: PaymentReference,
-                      startDate: Option[LocalDate],
-                      endDate: Option[LocalDate],
-                      salesFromNi: List[EncryptedSalesToCountry],
-                      salesFromEu: List[EncryptedSalesFromEuCountry],
-                      submissionReceived: Instant,
-                      lastUpdated: Instant
-                    )
+trait EncryptedVatReturn
 
 object EncryptedVatReturn {
 
-  implicit val format: OFormat[EncryptedVatReturn] = Json.format[EncryptedVatReturn]
+  def reads: Reads[EncryptedVatReturn] =
+    NewEncryptedVatReturn.format.widen[EncryptedVatReturn] orElse
+      LegacyEncryptedVatReturn.format.widen[EncryptedVatReturn]
+
+  def writes: Writes[EncryptedVatReturn] = Writes {
+    case n: NewEncryptedVatReturn => Json.toJson(n)(NewEncryptedVatReturn.format)
+    case l: LegacyEncryptedVatReturn => Json.toJson(l)(LegacyEncryptedVatReturn.format)
+  }
+
+  implicit val format: Format[EncryptedVatReturn] = Format(reads, writes)
+}
+
+case class NewEncryptedVatReturn(
+                               vrn: Vrn,
+                               period: Period,
+                               reference: ReturnReference,
+                               paymentReference: PaymentReference,
+                               startDate: Option[LocalDate],
+                               endDate: Option[LocalDate],
+                               salesFromNi: List[EncryptedSalesToCountry],
+                               salesFromEu: List[EncryptedSalesFromEuCountry],
+                               submissionReceived: Instant,
+                               lastUpdated: Instant
+                             ) extends EncryptedVatReturn
+
+object NewEncryptedVatReturn {
+
+  implicit val format: OFormat[NewEncryptedVatReturn] = Json.format[NewEncryptedVatReturn]
+}
+
+case class LegacyEncryptedVatReturn(
+                               vrn: Vrn,
+                               period: Period,
+                               reference: ReturnReference,
+                               paymentReference: PaymentReference,
+                               startDate: Option[LocalDate],
+                               endDate: Option[LocalDate],
+                               salesFromNi: List[EncryptedSalesToCountry],
+                               salesFromEu: List[EncryptedSalesFromEuCountry],
+                               submissionReceived: Instant,
+                               lastUpdated: Instant
+                             ) extends EncryptedVatReturn
+
+object LegacyEncryptedVatReturn {
+
+  implicit val format: OFormat[LegacyEncryptedVatReturn] = Json.format[LegacyEncryptedVatReturn]
 }

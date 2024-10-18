@@ -17,7 +17,7 @@
 package models.corrections
 
 import models.Period
-import play.api.libs.json.{Json, OFormat}
+import play.api.libs.json._
 
 case class PeriodWithCorrections(correctionReturnPeriod: Period, correctionsToCountry: List[CorrectionToCountry])
 

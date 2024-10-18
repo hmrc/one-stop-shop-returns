@@ -16,7 +16,6 @@
 
 package models.corrections
 
-import crypto.EncryptedValue
 import models.{Country, EncryptedCountry}
 import play.api.libs.json.{Json, OFormat}
 
@@ -28,7 +27,7 @@ object CorrectionToCountry {
 
 }
 
-case class EncryptedCorrectionToCountry(correctionCountry: EncryptedCountry, countryVatCorrection: EncryptedValue)
+case class EncryptedCorrectionToCountry(correctionCountry: EncryptedCountry, countryVatCorrection: String)
 
 object EncryptedCorrectionToCountry {
 
