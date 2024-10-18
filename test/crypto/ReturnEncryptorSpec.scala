@@ -2,6 +2,7 @@ package crypto
 
 import base.SpecBase
 import com.typesafe.config.Config
+import config.AppConfig
 import generators.Generators
 import models.{SalesDetails, _}
 import org.mockito.ArgumentMatchers.any
@@ -15,11 +16,13 @@ import java.time.{Instant, LocalDate}
 
 class ReturnEncryptorSpec extends SpecBase with ScalaCheckPropertyChecks with Generators {
 
+  private val mockAppConfig: AppConfig = mock[AppConfig]
   private val mockConfiguration = mock[Configuration]
   private val mockConfig = mock[Config]
+  private val mockSecureGCMCipher: AesGCMCrypto = mock[AesGCMCrypto]
   private val mockEncryptionService: EncryptionService = new EncryptionService(mockConfiguration)
   private val countryEncyrpter = new CountryEncryptor(mockEncryptionService)
-  private val encryptor = new ReturnEncryptor(countryEncyrpter, mockEncryptionService)
+  private val encryptor = new ReturnEncryptor(mockAppConfig, countryEncyrpter, mockSecureGCMCipher, mockEncryptionService)
   private val secretKey = "VqmXp7yigDFxbCUdDdNZVIvbW6RgPNJsliv6swQNCL8="
 
   when(mockConfiguration.underlying) thenReturn mockConfig

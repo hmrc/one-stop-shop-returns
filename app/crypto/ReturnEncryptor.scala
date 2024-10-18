@@ -16,6 +16,7 @@
 
 package crypto
 
+import config.AppConfig
 import models._
 import services.crypto.EncryptionService
 import uk.gov.hmrc.domain.Vrn
@@ -23,10 +24,13 @@ import uk.gov.hmrc.domain.Vrn
 import javax.inject.Inject
 
 class ReturnEncryptor @Inject()(
+                                 appConfig: AppConfig,
                                  countryEncryptor: CountryEncryptor,
+                                 crypto: AesGCMCrypto,
                                  encryptionService: EncryptionService
                                ) {
 
+  protected val encryptionKey: String = appConfig.encryptionKey
   import countryEncryptor._
 
   def encryptVatOnSales(vatOnSales: VatOnSales): EncryptedVatOnSales = {
@@ -149,8 +153,8 @@ class ReturnEncryptor @Inject()(
     )
   }
 
-  def encryptReturn(vatReturn: VatReturn, vrn: Vrn): EncryptedVatReturn = {
-    EncryptedVatReturn(
+  def encryptReturn(vatReturn: VatReturn, vrn: Vrn): NewEncryptedVatReturn = {
+    NewEncryptedVatReturn(
       vrn = vrn,
       period = vatReturn.period,
       reference = vatReturn.reference,
@@ -164,7 +168,24 @@ class ReturnEncryptor @Inject()(
     )
   }
 
-  def decryptReturn(encryptedVatReturn: EncryptedVatReturn, vrn: Vrn): VatReturn = {
+  def decryptReturn(encryptedVatReturn: NewEncryptedVatReturn, vrn: Vrn): VatReturn = {
+    VatReturn(
+      vrn = vrn,
+      period = encryptedVatReturn.period,
+      reference = encryptedVatReturn.reference,
+      paymentReference = encryptedVatReturn.paymentReference,
+      startDate = encryptedVatReturn.startDate,
+      endDate = encryptedVatReturn.endDate,
+      salesFromNi = encryptedVatReturn.salesFromNi.map(decryptSalesToCountry),
+      salesFromEu = encryptedVatReturn.salesFromEu.map(decryptSalesFromEuCountry),
+      submissionReceived = encryptedVatReturn.submissionReceived,
+      lastUpdated = encryptedVatReturn.lastUpdated
+    )
+  }
+
+  def decryptLegacyReturn(encryptedVatReturn: LegacyEncryptedVatReturn, vrn: Vrn): VatReturn = {
+    def decryptReturnValue(retunValue: EncryptedValue): String = crypto.decrypt(retunValue, vrn.vrn, encryptionKey)
+
     VatReturn(
       vrn = vrn,
       period = encryptedVatReturn.period,

@@ -2,9 +2,9 @@ package repositories
 
 import com.typesafe.config.Config
 import config.AppConfig
-import crypto.{CorrectionEncryptor, CountryEncryptor, ReturnEncryptor}
+import crypto.{AesGCMCrypto, CorrectionEncryptor, CountryEncryptor, ReturnEncryptor}
 import generators.Generators
-import models.{EncryptedVatReturn, Period, ReturnReference, StandardPeriod, VatReturn}
+import models.{EncryptedVatReturn, LegacyEncryptedVatReturn, NewEncryptedVatReturn, Period, ReturnReference, StandardPeriod, VatReturn}
 import models.corrections.CorrectionPayload
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
@@ -35,9 +35,10 @@ class VatReturnRepositorySpec
   private val mockAppConfig = mock[AppConfig]
   private val mockConfiguration = mock[Configuration]
   private val mockConfig = mock[Config]
+  private val mockSecureGCMCipher: AesGCMCrypto = mock[AesGCMCrypto]
   private val mockEncryptionService: EncryptionService = new EncryptionService(mockConfiguration)
   private val countryEncryptor = new CountryEncryptor(mockEncryptionService)
-  private val encryptor = new ReturnEncryptor(countryEncryptor, mockEncryptionService)
+  private val encryptor = new ReturnEncryptor(mockAppConfig ,countryEncryptor, mockSecureGCMCipher, mockEncryptionService)
   private val correctionEncryptor = new CorrectionEncryptor(countryEncryptor, mockEncryptionService)
   private val secretKey = "VqmXp7yigDFxbCUdDdNZVIvbW6RgPNJsliv6swQNCL8="
 
@@ -70,7 +71,7 @@ class VatReturnRepositorySpec
       val insertReturn2 = repository.insert(vatReturn2).futureValue
       val databaseRecords = findAll().futureValue
       val decryptedDatabaseRecords =
-        databaseRecords.map(e => encryptor.decryptReturn(e, e.vrn))
+        databaseRecords.map(e => determineEncryptionType(e))
 
       insertResult1 mustBe Some(vatReturn1)
       insertReturn2 mustBe Some(vatReturn2)
@@ -90,7 +91,7 @@ class VatReturnRepositorySpec
       val insertReturn2 = repository.insert(vatReturn2).futureValue
       val databaseRecords = findAll().futureValue
       val decryptedDatabaseRecords =
-        databaseRecords.map(e => encryptor.decryptReturn(e, e.vrn))
+        databaseRecords.map(e => determineEncryptionType(e))
 
       insertResult1 mustBe Some(vatReturn1)
       insertReturn2 mustBe Some(vatReturn2)
@@ -108,7 +109,7 @@ class VatReturnRepositorySpec
       insertResult2 mustBe None
 
       val decryptedDatabaseRecords =
-        findAll().futureValue.map(e => encryptor.decryptReturn(e, e.vrn))
+        findAll().futureValue.map(e => determineEncryptionType(e))
 
       decryptedDatabaseRecords must contain only vatReturn
     }
@@ -134,7 +135,7 @@ class VatReturnRepositorySpec
       val insertReturn2 = repository.insert(vatReturn2, correction2).futureValue
       val databaseRecords = findAll().futureValue
       val decryptedDatabaseRecords =
-        databaseRecords.map(e => encryptor.decryptReturn(e, e.vrn))
+        databaseRecords.map(e => determineEncryptionType(e))
 
       /* TODO some form of this should work for this test
       val insertedCorrection1 = correctionRepository.get(correction1.vrn)
@@ -167,7 +168,7 @@ class VatReturnRepositorySpec
       val insertReturn2 = repository.insert(vatReturn2, correction2).futureValue
       val databaseRecords = findAll().futureValue
       val decryptedDatabaseRecords =
-        databaseRecords.map(e => encryptor.decryptReturn(e, e.vrn))
+        databaseRecords.map(e => determineEncryptionType(e))
 
       insertResult1 mustBe Some((vatReturn1, correction1))
       insertReturn2 mustBe Some((vatReturn2, correction2))
@@ -186,7 +187,7 @@ class VatReturnRepositorySpec
       insertResult2 mustBe None
 
       val decryptedDatabaseRecords =
-        findAll().futureValue.map(e => encryptor.decryptReturn(e, e.vrn))
+        findAll().futureValue.map(e => determineEncryptionType(e))
 
       decryptedDatabaseRecords must contain only vatReturn
     }
@@ -291,6 +292,16 @@ class VatReturnRepositorySpec
       val result = repository.get(vrn, period).futureValue
 
       result must not be defined
+    }
+  }
+
+  private def determineEncryptionType(returns: EncryptedVatReturn): VatReturn = {
+    returns match {
+      case l: LegacyEncryptedVatReturn =>
+        encryptor.decryptLegacyReturn(l, l.vrn)
+      case n: NewEncryptedVatReturn =>
+        encryptor.decryptReturn(n, n.vrn)
+      case _ => throw new IllegalArgumentException("Not a valid EncryptedVatReturn type.")
     }
   }
 }

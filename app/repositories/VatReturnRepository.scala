@@ -19,7 +19,7 @@ package repositories
 import crypto.{CorrectionEncryptor, ReturnEncryptor}
 import logging.Logging
 import models.corrections.CorrectionPayload
-import models.{EncryptedVatReturn, Period, VatReturn}
+import models.{EncryptedVatReturn, LegacyEncryptedVatReturn, NewEncryptedVatReturn, Period, VatReturn}
 import org.mongodb.scala.model.{Filters, IndexModel, IndexOptions, Indexes}
 import repositories.MongoErrors.Duplicate
 import uk.gov.hmrc.domain.Vrn
@@ -93,8 +93,10 @@ class VatReturnRepository @Inject()(
       .find()
       .toFuture()
       .map(_.map {
-        vatReturn =>
-          returnEncryptor.decryptReturn(vatReturn, vatReturn.vrn)
+        case l: LegacyEncryptedVatReturn =>
+          returnEncryptor.decryptLegacyReturn(l, l.vrn)
+        case n: NewEncryptedVatReturn =>
+          returnEncryptor.decryptReturn(n, n.vrn)
       })
 
   def get(vrn: Vrn): Future[Seq[VatReturn]] =
@@ -102,8 +104,10 @@ class VatReturnRepository @Inject()(
       .find(Filters.equal("vrn", toBson(vrn)))
       .toFuture()
       .map(_.map {
-        vatReturn =>
-          returnEncryptor.decryptReturn(vatReturn, vatReturn.vrn)
+        case l: LegacyEncryptedVatReturn =>
+          returnEncryptor.decryptLegacyReturn(l, l.vrn)
+        case n: NewEncryptedVatReturn =>
+          returnEncryptor.decryptReturn(n, n.vrn)
       })
 
   def getByPeriods(periods: Seq[Period]): Future[Seq[VatReturn]] = {
@@ -112,8 +116,10 @@ class VatReturnRepository @Inject()(
         Filters.in("period", periods.map(toBson(_)):_*))
       .toFuture()
       .map(_.map {
-        vatReturn =>
-          returnEncryptor.decryptReturn(vatReturn, vatReturn.vrn)
+        case l: LegacyEncryptedVatReturn =>
+          returnEncryptor.decryptLegacyReturn(l, l.vrn)
+        case n: NewEncryptedVatReturn =>
+          returnEncryptor.decryptReturn(n, n.vrn)
       })
   }
 
@@ -126,7 +132,9 @@ class VatReturnRepository @Inject()(
         )
       ).headOption()
       .map(_.map {
-        vatReturn =>
-          returnEncryptor.decryptReturn(vatReturn, vatReturn.vrn)
+        case l: LegacyEncryptedVatReturn =>
+          returnEncryptor.decryptLegacyReturn(l, l.vrn)
+        case n: NewEncryptedVatReturn =>
+          returnEncryptor.decryptReturn(n, n.vrn)
       })
 }
