@@ -38,12 +38,24 @@ class EncryptionDecryptionException(method: String, reason: String, message: Str
 
 class AesGCMCrypto @Inject()() {
 
+  val IV_SIZE = 96
   val TAG_BIT_LENGTH = 128
   val ALGORITHM_TO_TRANSFORM_STRING = "AES/GCM/PKCS5Padding"
   lazy val secureRandom = new SecureRandom()
   val ALGORITHM_KEY = "AES"
   val METHOD_ENCRYPT = "encrypt"
   val METHOD_DECRYPT = "decrypt"
+
+  def encrypt(valueToEncrypt: String, associatedText: String, aesKey: String): EncryptedValue = {
+
+    val initialisationVector = generateInitialisationVector
+    val nonce                = new String(Base64.getEncoder.encode(initialisationVector))
+    val gcmParameterSpec     = new GCMParameterSpec(TAG_BIT_LENGTH, initialisationVector)
+    val secretKey            = validateSecretKey(aesKey, METHOD_ENCRYPT)
+    val cipherText           = generateCipherText(valueToEncrypt, validateAssociatedText(associatedText, METHOD_ENCRYPT), gcmParameterSpec, secretKey)
+
+    EncryptedValue(cipherText, nonce)
+  }
 
   def decrypt(valueToDecrypt: EncryptedValue, associatedText: String, aesKey: String): String = {
 
@@ -54,12 +66,30 @@ class AesGCMCrypto @Inject()() {
     decryptCipherText(valueToDecrypt.value, validateAssociatedText(associatedText, METHOD_DECRYPT), gcmParameterSpec, secretKey)
   }
 
+  private def generateInitialisationVector: Array[Byte] = {
+    val iv = new Array[Byte](IV_SIZE)
+    secureRandom.nextBytes(iv)
+    iv
+  }
+
   private def validateSecretKey(key: String, method: String): SecretKey = Try {
     val decodedKey = Base64.getDecoder.decode(key)
     new SecretKeySpec(decodedKey, 0 , decodedKey.length, ALGORITHM_KEY)
   } match {
     case Success(secretKey) => secretKey
     case Failure(ex) => throw new EncryptionDecryptionException(method, "The key provided is invalid", ex.getMessage)
+  }
+
+  def generateCipherText(valueToEncrypt: String, associatedText: Array[Byte], gcmParameterSpec: GCMParameterSpec, secretKey: SecretKey): String = {
+    Try {
+      val cipher = getCipherInstance
+      cipher.init(Cipher.ENCRYPT_MODE, secretKey, gcmParameterSpec, new SecureRandom())
+      cipher.updateAAD(associatedText)
+      cipher.doFinal(valueToEncrypt.getBytes)
+    } match {
+      case Success(cipherTextBytes) => new String(Base64.getEncoder.encode(cipherTextBytes))
+      case Failure(ex) => throw processCipherTextFailure(ex, METHOD_ENCRYPT)
+    }
   }
 
   def decryptCipherText(valueToDecrypt: String, associatedText: Array[Byte], gcmParameterSpec: GCMParameterSpec, secretKey: SecretKey): String = {

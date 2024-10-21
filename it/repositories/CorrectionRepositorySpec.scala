@@ -1,11 +1,10 @@
 package repositories
 
-import com.typesafe.config.Config
-import crypto.{CorrectionEncryptor, CountryEncryptor}
+import config.AppConfig
+import crypto.{AesGCMCrypto, CorrectionEncryptor, CountryEncryptor}
 import generators.Generators
 import models.corrections.{CorrectionPayload, CorrectionToCountry, EncryptedCorrectionPayload, PeriodWithCorrections}
 import models.{Country, Period, StandardPeriod}
-import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalatest.OptionValues
@@ -13,8 +12,6 @@ import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar.mock
-import play.api.Configuration
-import services.crypto.EncryptionService
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.mongo.test.{CleanMongoCollectionSupport, PlayMongoRepositorySupport}
 import utils.StringUtils
@@ -32,22 +29,20 @@ class CorrectionRepositorySpec
     with OptionValues
     with Generators {
 
+  private val cipher = new AesGCMCrypto
+  private val countryEncryptor = new CountryEncryptor(cipher)
+  private val correctionEncryptor = new CorrectionEncryptor(countryEncryptor, cipher)
+  private val secretKey = "VqmXp7yigDFxbCUdDdNZVIvbW6RgPNJsliv6swQNCL8="
+  private val appConfig = mock[AppConfig]
 
-  private val mockConfiguration = mock[Configuration]
-  private val mockConfig = mock[Config]
-  private val mockEncryptionService: EncryptionService = new EncryptionService(mockConfiguration)
-  private val countryEncryptor = new CountryEncryptor(mockEncryptionService)
-  private val correctionEncryptor = new CorrectionEncryptor(countryEncryptor, mockEncryptionService)
-  private val secretKey: String = "VqmXp7yigDFxbCUdDdNZVIvbW6RgPNJsliv6swQNCL8="
+  when(appConfig.encryptionKey) thenReturn secretKey
 
   override protected val repository =
     new CorrectionRepository(
       mongoComponent = mongoComponent,
+      appConfig = appConfig,
       correctionEncryptor = correctionEncryptor
     )
-
-  when(mockConfiguration.underlying) thenReturn mockConfig
-  when(mockConfig.getString(any())) thenReturn secretKey
 
   ".get many" - {
     "must return all records for the given VRN" in {
@@ -62,9 +57,9 @@ class CorrectionRepositorySpec
         vrn = vrn3
       )
 
-      insert(correctionEncryptor.encryptCorrectionPayload(correctionPayload1, correctionPayload1.vrn)).futureValue
-      insert(correctionEncryptor.encryptCorrectionPayload(correctionPayload2, correctionPayload2.vrn)).futureValue
-      insert(correctionEncryptor.encryptCorrectionPayload(correctionPayload3, correctionPayload3.vrn)).futureValue
+      insert(correctionEncryptor.encryptCorrectionPayload(correctionPayload1, correctionPayload1.vrn, secretKey)).futureValue
+      insert(correctionEncryptor.encryptCorrectionPayload(correctionPayload2, correctionPayload2.vrn, secretKey)).futureValue
+      insert(correctionEncryptor.encryptCorrectionPayload(correctionPayload3, correctionPayload3.vrn, secretKey)).futureValue
 
       val returns = repository.get(correctionPayload1.vrn).futureValue
 
@@ -96,9 +91,9 @@ class CorrectionRepositorySpec
         period = correctionPayload3Period
       )
 
-      insert(correctionEncryptor.encryptCorrectionPayload(correctionPayload1, correctionPayload1.vrn)).futureValue
-      insert(correctionEncryptor.encryptCorrectionPayload(correctionPayload2, correctionPayload2.vrn)).futureValue
-      insert(correctionEncryptor.encryptCorrectionPayload(correctionPayload3, correctionPayload3.vrn)).futureValue
+      insert(correctionEncryptor.encryptCorrectionPayload(correctionPayload1, correctionPayload1.vrn, secretKey)).futureValue
+      insert(correctionEncryptor.encryptCorrectionPayload(correctionPayload2, correctionPayload2.vrn, secretKey)).futureValue
+      insert(correctionEncryptor.encryptCorrectionPayload(correctionPayload3, correctionPayload3.vrn, secretKey)).futureValue
 
       val returns = repository.getByPeriods(Seq(correctionPayload1.period, correctionPayload2Period)).futureValue
 
@@ -129,9 +124,9 @@ class CorrectionRepositorySpec
         vrn = vrn3
       )
 
-      insert(correctionEncryptor.encryptCorrectionPayload(correctionPayload1, correctionPayload1.vrn)).futureValue
-      insert(correctionEncryptor.encryptCorrectionPayload(correctionPayload2, correctionPayload2.vrn)).futureValue
-      insert(correctionEncryptor.encryptCorrectionPayload(correctionPayload3, correctionPayload3.vrn)).futureValue
+      insert(correctionEncryptor.encryptCorrectionPayload(correctionPayload1, correctionPayload1.vrn, secretKey)).futureValue
+      insert(correctionEncryptor.encryptCorrectionPayload(correctionPayload2, correctionPayload2.vrn, secretKey)).futureValue
+      insert(correctionEncryptor.encryptCorrectionPayload(correctionPayload3, correctionPayload3.vrn, secretKey)).futureValue
 
       val returns = repository.get().futureValue
 
@@ -145,7 +140,7 @@ class CorrectionRepositorySpec
 
       val correctionPayload = arbitrary[CorrectionPayload].sample.value
 
-      insert(correctionEncryptor.encryptCorrectionPayload(correctionPayload, correctionPayload.vrn)).futureValue
+      insert(correctionEncryptor.encryptCorrectionPayload(correctionPayload, correctionPayload.vrn, secretKey)).futureValue
 
       val result = repository.get(correctionPayload.vrn, correctionPayload.period).futureValue
 
@@ -178,11 +173,11 @@ class CorrectionRepositorySpec
         lastUpdated = Instant.now()
       )
 
-      insert(correctionEncryptor.encryptCorrectionPayload(correctionPayload, correctionPayload.vrn)).futureValue
+      insert(correctionEncryptor.encryptCorrectionPayload(correctionPayload, correctionPayload.vrn, secretKey)).futureValue
 
       val result = repository.getByCorrectionPeriod(correctionPayload.vrn, correctionPayload.corrections.head.correctionReturnPeriod).futureValue
 
-      result.nonEmpty mustBe true
+      result.nonEmpty mustBe(true)
 
       result mustEqual List(correctionPayload)
     }

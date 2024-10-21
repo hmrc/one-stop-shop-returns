@@ -17,7 +17,7 @@
 package models.corrections
 
 import models.Period
-import play.api.libs.json._
+import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.domain.Vrn
 
 import java.time.Instant
@@ -36,47 +36,16 @@ object CorrectionPayload {
 
 }
 
-trait EncryptedCorrectionPayload
+case class EncryptedCorrectionPayload(
+                                       vrn: Vrn,
+                                       period: Period,
+                                       corrections: List[EncryptedPeriodWithCorrections],
+                                       submissionReceived: Instant,
+                                       lastUpdated: Instant
+                                     )
 
 object EncryptedCorrectionPayload {
 
-  def reads: Reads[EncryptedCorrectionPayload] =
-    NewEncryptedCorrectionPayload.format.widen[EncryptedCorrectionPayload] orElse
-      LegacyEncryptedCorrectionPayload.format.widen[EncryptedCorrectionPayload]
-
-  def writes: Writes[EncryptedCorrectionPayload] = Writes {
-    case n: NewEncryptedCorrectionPayload => Json.toJson(n)(NewEncryptedCorrectionPayload.format)
-    case l: LegacyEncryptedCorrectionPayload => Json.toJson(l)(LegacyEncryptedCorrectionPayload.format)
-  }
-
-  implicit val format: Format[EncryptedCorrectionPayload] = Format(reads, writes)
-
-}
-
-case class NewEncryptedCorrectionPayload(
-                                       vrn: Vrn,
-                                       period: Period,
-                                       corrections: List[EncryptedPeriodWithCorrections],
-                                       submissionReceived: Instant,
-                                       lastUpdated: Instant
-                                     ) extends EncryptedCorrectionPayload
-
-object NewEncryptedCorrectionPayload {
-
-  implicit val format: OFormat[NewEncryptedCorrectionPayload] = Json.format[NewEncryptedCorrectionPayload]
-
-}
-
-case class LegacyEncryptedCorrectionPayload(
-                                       vrn: Vrn,
-                                       period: Period,
-                                       corrections: List[EncryptedPeriodWithCorrections],
-                                       submissionReceived: Instant,
-                                       lastUpdated: Instant
-                                     ) extends EncryptedCorrectionPayload
-
-object LegacyEncryptedCorrectionPayload {
-
-  implicit val format: OFormat[LegacyEncryptedCorrectionPayload] = Json.format[LegacyEncryptedCorrectionPayload]
+  implicit val format: OFormat[EncryptedCorrectionPayload] = Json.format[EncryptedCorrectionPayload]
 
 }

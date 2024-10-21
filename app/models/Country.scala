@@ -16,6 +16,7 @@
 
 package models
 
+import crypto.EncryptedValue
 import play.api.libs.json.{Json, OFormat}
 
 case class Country(code: String, name: String)
@@ -88,7 +89,7 @@ object CountryWithValidationDetails {
   private val slovakiaVatNumberRegex = """^SK[0-9]{10}$"""
 }
 
-case class EncryptedCountry(code: String, name: String)
+case class EncryptedCountry(code: EncryptedValue, name: EncryptedValue)
 
 object EncryptedCountry {
 

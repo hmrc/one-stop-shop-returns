@@ -16,31 +16,26 @@
 
 package crypto
 
-import config.AppConfig
 import models._
-import services.crypto.EncryptionService
 import uk.gov.hmrc.domain.Vrn
 
 import javax.inject.Inject
 
 class ReturnEncryptor @Inject()(
-                                 appConfig: AppConfig,
                                  countryEncryptor: CountryEncryptor,
-                                 crypto: AesGCMCrypto,
-                                 encryptionService: EncryptionService
+                                 crypto: AesGCMCrypto
                                ) {
 
-  protected val encryptionKey: String = appConfig.encryptionKey
   import countryEncryptor._
 
-  def encryptVatOnSales(vatOnSales: VatOnSales): EncryptedVatOnSales = {
-    def e(field: String): String = encryptionService.encryptField(field)
+  def encryptVatOnSales(vatOnSales: VatOnSales, vrn: Vrn, key: String): EncryptedVatOnSales = {
+    def e(field: String): EncryptedValue = crypto.encrypt(field, vrn.vrn, key)
 
     EncryptedVatOnSales(e(vatOnSales.choice.toString), e(vatOnSales.amount.toString))
   }
 
-  def decryptVatOnSales(vatOnSales: EncryptedVatOnSales): VatOnSales = {
-    def d(field: String): String = encryptionService.decryptField(field)
+  def decryptVatOnSales(vatOnSales: EncryptedVatOnSales, vrn: Vrn, key: String): VatOnSales = {
+    def d(field: EncryptedValue): String = crypto.decrypt(field, vrn.vrn, key)
 
     val choice = d(vatOnSales.choice) match {
       case VatOnSalesChoice.Standard.toString    => VatOnSalesChoice.Standard
@@ -52,37 +47,37 @@ class ReturnEncryptor @Inject()(
     VatOnSales(choice, amount)
   }
 
-  def encryptSalesDetails(salesDetails: SalesDetails): EncryptedSalesDetails = {
-    def e(field: String): String = encryptionService.encryptField(field)
+  def encryptSalesDetails(salesDetails: SalesDetails, vrn: Vrn, key: String): EncryptedSalesDetails = {
+    def e(field: String): EncryptedValue = crypto.encrypt(field, vrn.vrn, key)
     import salesDetails._
 
     EncryptedSalesDetails(
-      encryptVatRate(vatRate),
+      encryptVatRate(vatRate, vrn, key),
       e(netValueOfSales.toString()),
-      encryptVatOnSales(vatOnSales)
+      encryptVatOnSales(vatOnSales, vrn, key)
     )
   }
 
-  def decryptSalesDetails(country: EncryptedSalesDetails): SalesDetails = {
-    def d(field: String): String = encryptionService.decryptField(field)
+  def decryptSalesDetails(country: EncryptedSalesDetails, vrn: Vrn, key: String): SalesDetails = {
+    def d(field: EncryptedValue): String = crypto.decrypt(field, vrn.vrn, key)
     import country._
 
     SalesDetails(
-      decryptVatRate(vatRate),
+      decryptVatRate(vatRate, vrn, key),
       BigDecimal(d(netValueOfSales)),
-      decryptVatOnSales(vatOnSales)
+      decryptVatOnSales(vatOnSales, vrn, key)
     )
   }
 
-  def encryptVatRate(vatRate: VatRate): EncryptedVatRate = {
-    def e(field: String): String = encryptionService.encryptField(field)
+  def encryptVatRate(vatRate: VatRate, vrn: Vrn, key: String): EncryptedVatRate = {
+    def e(field: String): EncryptedValue = crypto.encrypt(field, vrn.vrn, key)
     import vatRate._
 
     EncryptedVatRate(e(rate.toString()), e(rateType.toString))
   }
 
-  def decryptVatRate(encryptedVatRate: EncryptedVatRate): VatRate = {
-    def d(field: String): String = encryptionService.decryptField(field)
+  def decryptVatRate(encryptedVatRate: EncryptedVatRate, vrn: Vrn, key: String): VatRate = {
+    def d(field: EncryptedValue): String = crypto.decrypt(field, vrn.vrn, key)
     import encryptedVatRate._
 
     val decryptedVatRateType =
@@ -95,32 +90,32 @@ class ReturnEncryptor @Inject()(
     VatRate(BigDecimal(d(rate)), decryptedVatRateType)
   }
 
-  def encryptSalesToCountry(salesToCountry: SalesToCountry): EncryptedSalesToCountry = {
+  def encryptSalesToCountry(salesToCountry: SalesToCountry, vrn: Vrn, key: String): EncryptedSalesToCountry = {
     import salesToCountry._
 
     EncryptedSalesToCountry(
-      countryOfConsumption = encryptCountry(countryOfConsumption),
-      amounts              = amounts.map(amount => encryptSalesDetails(amount))
+      countryOfConsumption = encryptCountry(countryOfConsumption, vrn, key),
+      amounts              = amounts.map(amount => encryptSalesDetails(amount, vrn, key))
     )
   }
 
-  def decryptSalesToCountry(encryptedSalesToCountry: EncryptedSalesToCountry): SalesToCountry = {
+  def decryptSalesToCountry(encryptedSalesToCountry: EncryptedSalesToCountry, vrn: Vrn, key: String): SalesToCountry = {
     import encryptedSalesToCountry._
 
     SalesToCountry(
-      decryptCountry(countryOfConsumption),
-      amounts.map(amount => decryptSalesDetails(amount)))
+      decryptCountry(countryOfConsumption, vrn, key),
+      amounts.map(amount => decryptSalesDetails(amount, vrn, key)))
   }
 
-  def encryptEuTaxIdentifier(identifier: EuTaxIdentifier): EncryptedEuTaxIdentifier = {
-    def e(field: String): String = encryptionService.encryptField(field)
+  def encryptEuTaxIdentifier(identifier: EuTaxIdentifier, vrn: Vrn, key: String): EncryptedEuTaxIdentifier = {
+    def e(field: String): EncryptedValue = crypto.encrypt(field, vrn.vrn, key)
     import identifier._
 
     EncryptedEuTaxIdentifier(e(identifierType.toString), e(value))
   }
 
-  def decryptEuTaxIdentifier(encryptedEuTaxIdentifier: EncryptedEuTaxIdentifier): EuTaxIdentifier = {
-    def d(field: String): String = encryptionService.decryptField(field)
+  def decryptEuTaxIdentifier(encryptedEuTaxIdentifier: EncryptedEuTaxIdentifier, vrn: Vrn, key: String): EuTaxIdentifier = {
+    def d(field: EncryptedValue): String = crypto.decrypt(field, vrn.vrn, key)
     import encryptedEuTaxIdentifier._
 
     val decryptedIdentifierType =
@@ -133,42 +128,42 @@ class ReturnEncryptor @Inject()(
     EuTaxIdentifier(decryptedIdentifierType, d(value))
   }
 
-    def encryptSalesFromEuCountry(salesFromEuCountry: SalesFromEuCountry): EncryptedSalesFromEuCountry = {
+    def encryptSalesFromEuCountry(salesFromEuCountry: SalesFromEuCountry, vrn: Vrn, key: String): EncryptedSalesFromEuCountry = {
     import salesFromEuCountry._
 
     EncryptedSalesFromEuCountry(
-      countryOfSale = encryptCountry(countryOfSale),
-      taxIdentifier = taxIdentifier.map(identifier => encryptEuTaxIdentifier(identifier)),
-      sales = sales.map(sale => encryptSalesToCountry(sale))
+      countryOfSale = encryptCountry(countryOfSale, vrn, key),
+      taxIdentifier = taxIdentifier.map(identifier => encryptEuTaxIdentifier(identifier, vrn, key)),
+      sales = sales.map(sale => encryptSalesToCountry(sale, vrn, key))
     )
   }
 
-  def decryptSalesFromEuCountry(encryptedSalesFromEuCountry: EncryptedSalesFromEuCountry): SalesFromEuCountry = {
+  def decryptSalesFromEuCountry(encryptedSalesFromEuCountry: EncryptedSalesFromEuCountry, vrn: Vrn, key: String): SalesFromEuCountry = {
     import encryptedSalesFromEuCountry._
 
     SalesFromEuCountry(
-      countryOfSale = decryptCountry(countryOfSale),
-      taxIdentifier = taxIdentifier.map(identifier => decryptEuTaxIdentifier(identifier)),
-      sales = sales.map(sale => decryptSalesToCountry(sale))
+      countryOfSale = decryptCountry(countryOfSale, vrn, key),
+      taxIdentifier = taxIdentifier.map(identifier => decryptEuTaxIdentifier(identifier, vrn, key)),
+      sales = sales.map(sale => decryptSalesToCountry(sale, vrn, key))
     )
   }
 
-  def encryptReturn(vatReturn: VatReturn, vrn: Vrn): NewEncryptedVatReturn = {
-    NewEncryptedVatReturn(
+  def encryptReturn(vatReturn: VatReturn, vrn: Vrn, key: String): EncryptedVatReturn = {
+    EncryptedVatReturn(
       vrn = vrn,
       period = vatReturn.period,
       reference = vatReturn.reference,
       paymentReference = vatReturn.paymentReference,
       startDate = vatReturn.startDate,
       endDate = vatReturn.endDate,
-      salesFromNi = vatReturn.salesFromNi.map(encryptSalesToCountry),
-      salesFromEu = vatReturn.salesFromEu.map(encryptSalesFromEuCountry),
+      salesFromNi = vatReturn.salesFromNi.map(encryptSalesToCountry(_, vrn, key)),
+      salesFromEu = vatReturn.salesFromEu.map(encryptSalesFromEuCountry(_, vrn, key)),
       submissionReceived = vatReturn.submissionReceived,
       lastUpdated = vatReturn.lastUpdated
     )
   }
 
-  def decryptReturn(encryptedVatReturn: NewEncryptedVatReturn, vrn: Vrn): VatReturn = {
+  def decryptReturn(encryptedVatReturn: EncryptedVatReturn, vrn: Vrn, key: String): VatReturn = {
     VatReturn(
       vrn = vrn,
       period = encryptedVatReturn.period,
@@ -176,23 +171,8 @@ class ReturnEncryptor @Inject()(
       paymentReference = encryptedVatReturn.paymentReference,
       startDate = encryptedVatReturn.startDate,
       endDate = encryptedVatReturn.endDate,
-      salesFromNi = encryptedVatReturn.salesFromNi.map(decryptSalesToCountry),
-      salesFromEu = encryptedVatReturn.salesFromEu.map(decryptSalesFromEuCountry),
-      submissionReceived = encryptedVatReturn.submissionReceived,
-      lastUpdated = encryptedVatReturn.lastUpdated
-    )
-  }
-
-  def decryptLegacyReturn(encryptedVatReturn: LegacyEncryptedVatReturn, vrn: Vrn): VatReturn = {
-    VatReturn(
-      vrn = vrn,
-      period = encryptedVatReturn.period,
-      reference = encryptedVatReturn.reference,
-      paymentReference = encryptedVatReturn.paymentReference,
-      startDate = encryptedVatReturn.startDate,
-      endDate = encryptedVatReturn.endDate,
-      salesFromNi = encryptedVatReturn.salesFromNi.map(decryptSalesToCountry),
-      salesFromEu = encryptedVatReturn.salesFromEu.map(decryptSalesFromEuCountry),
+      salesFromNi = encryptedVatReturn.salesFromNi.map(decryptSalesToCountry(_, vrn, key)),
+      salesFromEu = encryptedVatReturn.salesFromEu.map(decryptSalesFromEuCountry(_, vrn, key)),
       submissionReceived = encryptedVatReturn.submissionReceived,
       lastUpdated = encryptedVatReturn.lastUpdated
     )
