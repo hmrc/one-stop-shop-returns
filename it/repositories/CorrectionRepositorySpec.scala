@@ -1,7 +1,7 @@
 package repositories
 
 import config.AppConfig
-import crypto.{CorrectionEncryptor, CountryEncryptor, SecureGCMCipher}
+import crypto.{AesGCMCrypto, CorrectionEncryptor, CountryEncryptor}
 import generators.Generators
 import models.corrections.{CorrectionPayload, CorrectionToCountry, EncryptedCorrectionPayload, PeriodWithCorrections}
 import models.{Country, Period, StandardPeriod}
@@ -29,7 +29,7 @@ class CorrectionRepositorySpec
     with OptionValues
     with Generators {
 
-  private val cipher = new SecureGCMCipher
+  private val cipher = new AesGCMCrypto
   private val countryEncryptor = new CountryEncryptor(cipher)
   private val correctionEncryptor = new CorrectionEncryptor(countryEncryptor, cipher)
   private val secretKey = "VqmXp7yigDFxbCUdDdNZVIvbW6RgPNJsliv6swQNCL8="

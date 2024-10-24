@@ -21,7 +21,7 @@ import uk.gov.hmrc.domain.Vrn
 
 import javax.inject.Inject
 
-class CountryEncryptor @Inject()(crypto: SecureGCMCipher) {
+class CountryEncryptor @Inject()(crypto: AesGCMCrypto) {
 
   def encryptCountry(country: Country, vrn: Vrn, key: String): EncryptedCountry = {
     def e(field: String): EncryptedValue = crypto.encrypt(field, vrn.vrn, key)

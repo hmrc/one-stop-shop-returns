@@ -17,13 +17,14 @@
 package crypto
 
 import models.corrections._
+
 import uk.gov.hmrc.domain.Vrn
 
 import javax.inject.Inject
 
 class CorrectionEncryptor @Inject()(
                                      countryEncryptor: CountryEncryptor,
-                                     crypto: SecureGCMCipher
+                                     crypto: AesGCMCrypto
                                    ) {
   import countryEncryptor._
 

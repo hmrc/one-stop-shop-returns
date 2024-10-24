@@ -10,7 +10,7 @@ import java.time.{Instant, LocalDate}
 
 class ReturnEncryptorSpec extends SpecBase with ScalaCheckPropertyChecks with Generators {
 
-  private val cipher    = new SecureGCMCipher
+  private val cipher    = new AesGCMCrypto
   private val countryEncyrpter = new CountryEncryptor(cipher)
   private val encryptor = new ReturnEncryptor(countryEncyrpter, cipher)
   private val secretKey = "VqmXp7yigDFxbCUdDdNZVIvbW6RgPNJsliv6swQNCL8="

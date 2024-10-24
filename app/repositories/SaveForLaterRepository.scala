@@ -19,7 +19,7 @@ package repositories
 import config.AppConfig
 import crypto.SavedUserAnswersEncryptor
 import logging.Logging
-import models.{EncryptedSavedUserAnswers, Period, SavedUserAnswers}
+import models.{EncryptedSavedUserAnswers, LegacyEncryptedSavedUserAnswers, NewEncryptedSavedUserAnswers, Period, SavedUserAnswers}
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model._
 import play.api.libs.json.Format
@@ -64,17 +64,15 @@ class SaveForLaterRepository @Inject()(
 
   implicit val instantFormat: Format[Instant] = MongoJavatimeFormats.instantFormat
 
-  private val encryptionKey = appConfig.encryptionKey
-
   private def byVrnAndPeriod(vrn: Vrn, period: Period): Bson =
     Filters.and(
       Filters.equal("vrn", vrn.vrn),
-      Filters.equal("period", period.toBson(legacyNumbers = false))
+      Filters.equal("period", period.toBson)
     )
 
   def set(savedUserAnswers: SavedUserAnswers): Future[SavedUserAnswers] = {
 
-    val encryptedAnswers = encryptor.encryptAnswers(savedUserAnswers, savedUserAnswers.vrn, encryptionKey)
+    val encryptedAnswers = encryptor.encryptAnswers(savedUserAnswers, savedUserAnswers.vrn)
 
     collection
       .replaceOne(
@@ -91,8 +89,10 @@ class SaveForLaterRepository @Inject()(
       .find(Filters.equal("vrn", toBson(vrn)))
       .toFuture()
       .map(_.map {
-        answers =>
-          encryptor.decryptAnswers(answers, answers.vrn, encryptionKey)
+        case l: LegacyEncryptedSavedUserAnswers =>
+          encryptor.decryptLegacyAnswers(l, l.vrn)
+        case n: NewEncryptedSavedUserAnswers =>
+          encryptor.decryptAnswers(n, n.vrn)
       })
 
   def get(vrn: Vrn, period: Period): Future[Option[SavedUserAnswers]] =
@@ -104,8 +104,10 @@ class SaveForLaterRepository @Inject()(
         )
       ).headOption()
       .map(_.map {
-        answers =>
-          encryptor.decryptAnswers(answers, answers.vrn, encryptionKey)
+        case l: LegacyEncryptedSavedUserAnswers =>
+          encryptor.decryptLegacyAnswers(l, l.vrn)
+        case n: NewEncryptedSavedUserAnswers =>
+          encryptor.decryptAnswers(n, n.vrn)
       })
 
   def clear(vrn: Vrn, period: Period): Future[Boolean] =
