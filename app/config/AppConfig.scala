@@ -46,4 +46,6 @@ class AppConfig @Inject()(config: Configuration) {
   val exclusionsEnabled: Boolean = config.get[Boolean]("features.exclusions.enabled")
 
   val externalEntryTtlDays: Int = config.get[Int]("features.externalEntry.ttlInDays")
+
+  val strategicReturnApiEnabled: Boolean = config.get[Boolean]("features.strategic-returns.enabled")
 }
