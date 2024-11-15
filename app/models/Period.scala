@@ -20,8 +20,8 @@ import models.Quarter._
 import play.api.libs.json._
 import play.api.mvc.{PathBindable, QueryStringBindable}
 
-import java.time.format.DateTimeFormatter
 import java.time.{Clock, LocalDate}
+import java.time.format.DateTimeFormatter
 import scala.util.{Failure, Success, Try}
 import scala.util.matching.Regex
 
@@ -97,6 +97,15 @@ object Period {
       case _ =>
         None
     }
+
+  def toEtmpPeriodString(currentPeriod: Period): String = {
+    val standardPeriod = StandardPeriod(currentPeriod.year, currentPeriod.quarter)
+    val year = standardPeriod.year
+    val quarter = standardPeriod.quarter
+    val lastYearDigits = year.toString.substring(2)
+
+    s"$lastYearDigits$quarter"
+  }
 
   implicit def orderingByPeriod[A <: Period]: Ordering[A] =
     Ordering.by(e => e.firstDay.toEpochDay)

@@ -16,8 +16,10 @@
 
 package controllers
 
+import connectors.ReturnCorrectionConnector
 import controllers.actions.AuthenticatedControllerComponents
 import models.Period
+import models.Period.toEtmpPeriodString
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent}
 import services.CorrectionService
@@ -28,7 +30,8 @@ import scala.concurrent.ExecutionContext
 
 class CorrectionController @Inject()(
                                       cc: AuthenticatedControllerComponents,
-                                      correctionService: CorrectionService
+                                      correctionService: CorrectionService,
+                                      returnCorrectionConnector: ReturnCorrectionConnector
                                     )(implicit ec: ExecutionContext)
   extends BackendController(cc) {
 
@@ -53,6 +56,16 @@ class CorrectionController @Inject()(
       correctionService.getByCorrectionPeriod(request.vrn, period).map {
         case Nil => NotFound
         case value => Ok(Json.toJson(value))
+      }
+  }
+
+  def getCorrectionValue(countryCode: String, period: Period): Action[AnyContent] = cc.auth.async {
+    implicit request =>
+      returnCorrectionConnector.getMaximumCorrectionValue(request.vrn, countryCode, toEtmpPeriodString(period)).map {
+        case Right(returnCorrectionValue) =>
+          Ok(Json.toJson(returnCorrectionValue))
+        case Left(errorResponse) =>
+          InternalServerError(Json.toJson(errorResponse.body))
       }
   }
 }

@@ -17,7 +17,7 @@
 package generators
 
 import models._
-import models.corrections.{CorrectionPayload, CorrectionToCountry, PeriodWithCorrections}
+import models.corrections.{CorrectionPayload, CorrectionToCountry, PeriodWithCorrections, ReturnCorrectionValue}
 import models.exclusions.{ExcludedTrader, ExclusionReason}
 import models.financialdata.Charge
 import models.requests.{CorrectionRequest, SaveForLaterRequest, VatReturnRequest, VatReturnWithCorrectionRequest}
@@ -237,5 +237,12 @@ trait ModelGenerators {
         exclusionReason = exclusionReason,
         effectiveDate = effectiveDate
       )
+    }
+
+  implicit val arbitraryReturnCorrectionValue: Arbitrary[ReturnCorrectionValue] =
+    Arbitrary {
+      for {
+        correctionValue <- arbitrary[BigDecimal]
+      } yield ReturnCorrectionValue(correctionValue)
     }
 }
