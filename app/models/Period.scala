@@ -164,4 +164,16 @@ object Period {
     val threeYearsAgo = LocalDate.now(clock).minusYears(3)
     dueDate.isBefore(threeYearsAgo) || dueDate.isEqual(threeYearsAgo)
   }
+
+  def fromKey(key: String): Period = {
+    val yearLast2 = key.take(2)
+    val quarterString = key.drop(2)
+    val quarter = Quarter.fromString(quarterString) match {
+      case Success(q) => q
+      case Failure(_) => throw new IllegalArgumentException(s"Invalid quarter string: $quarterString")
+    }
+
+    StandardPeriod(s"20$yearLast2".toInt, quarter)
+  }
+
 }

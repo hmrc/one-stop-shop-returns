@@ -14,20 +14,16 @@
  * limitations under the License.
  */
 
-package utils
+package models.etmp
 
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.util.Locale
+import play.api.libs.json.{Json, OFormat}
 
-object Formatters {
+case class EtmpObligationDetails(
+                                  status: EtmpObligationsFulfilmentStatus,
+                                  periodKey: String
+                                )
 
-  val dateTimeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss z")
-    .withLocale(Locale.UK)
-    .withZone(ZoneId.of("GMT"))
+object EtmpObligationDetails {
 
-  val etmpDateTimeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX")
-
-  val etmpDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-
+  implicit val format: OFormat[EtmpObligationDetails] = Json.format[EtmpObligationDetails]
 }

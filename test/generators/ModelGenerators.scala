@@ -18,6 +18,7 @@ package generators
 
 import models._
 import models.corrections.{CorrectionPayload, CorrectionToCountry, PeriodWithCorrections, ReturnCorrectionValue}
+import models.etmp.{EtmpObligation, EtmpObligationDetails, EtmpObligations, EtmpObligationsFulfilmentStatus}
 import models.exclusions.{ExcludedTrader, ExclusionReason}
 import models.financialdata.Charge
 import models.requests.{CorrectionRequest, SaveForLaterRequest, VatReturnRequest, VatReturnWithCorrectionRequest}
@@ -244,5 +245,28 @@ trait ModelGenerators {
       for {
         correctionValue <- arbitrary[BigDecimal]
       } yield ReturnCorrectionValue(correctionValue)
+    }
+
+  implicit val arbitraryObligationDetails: Arbitrary[EtmpObligationDetails] =
+    Arbitrary {
+      for {
+        status <- Gen.oneOf(EtmpObligationsFulfilmentStatus.values)
+        periodKey <- arbitrary[String]
+      } yield EtmpObligationDetails(
+        status = status,
+        periodKey = periodKey
+      )
+    }
+
+  implicit val arbitraryObligations: Arbitrary[EtmpObligations] =
+    Arbitrary {
+      for {
+        referenceNumber <- arbitrary[String]
+        obligationDetails <- Gen.listOfN(3, arbitrary[EtmpObligationDetails])
+      } yield {
+        EtmpObligations(obligations = Seq(EtmpObligation(
+          obligationDetails = obligationDetails
+        )))
+      }
     }
 }
