@@ -16,12 +16,12 @@
 
 package models.etmp
 
-import play.api.libs.json.{Json, OFormat}
+import play.api.libs.functional.syntax.{toFunctionalBuilderOps, unlift}
+import play.api.libs.json.{Format, Reads, Writes, __}
 
 import java.time.{LocalDate, LocalDateTime}
 
-// TODO -> Tests
-// TODO -> What should be in this model?
+
 case class EtmpVatReturn(
                           returnReference: String,
                           returnVersion: LocalDateTime,
@@ -41,6 +41,43 @@ case class EtmpVatReturn(
 
 object EtmpVatReturn {
 
-  // TODO -> Needs reads and writes like in ioss-returns
-  implicit val format: OFormat[EtmpVatReturn] = Json.format[EtmpVatReturn]
+  implicit val reads: Reads[EtmpVatReturn] = {
+    (
+      (__ \ "returnReference").read[String] and
+        (__ \ "returnVersion").read[LocalDateTime] and
+        (__ \ "periodKey").read[String] and
+        (__ \ "returnPeriodFrom").read[LocalDate] and
+        (__ \ "returnPeriodTo").read[LocalDate] and
+        (__ \ "goodsSupplied").readWithDefault[Seq[EtmpVatReturnGoodsSupplied]](Seq.empty) and
+        (__ \ "totalVATGoodsSuppliedGBP").read[BigDecimal] and
+        (__ \ "totalVATAmountPayable").read[BigDecimal] and
+        (__ \ "totalVATAmountPayableAllSpplied").read[BigDecimal] and
+        (__ \ "correctionPreviousVATReturn").readWithDefault[Seq[EtmpVatReturnCorrection]](Seq.empty) and
+        (__ \ "totalVATAmountFromCorrectionGBP").read[BigDecimal] and
+        (__ \ "balanceOfVATDueForMS").readWithDefault[Seq[EtmpVatReturnBalanceOfVatDue]](Seq.empty) and
+        (__ \ "totalVATAmountDueForAllMSGBP").read[BigDecimal] and
+        (__ \ "paymentReference").read[String]
+      )(EtmpVatReturn.apply _)
+  }
+
+  implicit val writes: Writes[EtmpVatReturn] = {
+    (
+      (__ \ "returnReference").write[String] and
+        (__ \ "returnVersion").write[LocalDateTime] and
+        (__ \ "periodKey").write[String] and
+        (__ \ "returnPeriodFrom").write[LocalDate] and
+        (__ \ "returnPeriodTo").write[LocalDate] and
+        (__ \ "goodsSupplied").write[Seq[EtmpVatReturnGoodsSupplied]] and
+        (__ \ "totalVATGoodsSuppliedGBP").write[BigDecimal] and
+        (__ \ "totalVATAmountPayable").write[BigDecimal] and
+        (__ \ "totalVATAmountPayableAllSpplied").write[BigDecimal] and
+        (__ \ "correctionPreviousVATReturn").write[Seq[EtmpVatReturnCorrection]] and
+        (__ \ "totalVATAmountFromCorrectionGBP").write[BigDecimal] and
+        (__ \ "balanceOfVATDueForMS").write[Seq[EtmpVatReturnBalanceOfVatDue]] and
+        (__ \ "totalVATAmountDueForAllMSGBP").write[BigDecimal] and
+        (__ \ "paymentReference").write[String]
+      )(unlift(EtmpVatReturn.unapply))
+  }
+
+  implicit val format: Format[EtmpVatReturn] = Format(reads, writes)
 }

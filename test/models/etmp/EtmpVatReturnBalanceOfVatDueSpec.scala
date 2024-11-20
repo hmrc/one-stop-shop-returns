@@ -1,8 +1,30 @@
 package models.etmp
 
 import base.SpecBase
+import play.api.libs.json.{JsSuccess, Json}
 
-// TODO
 class EtmpVatReturnBalanceOfVatDueSpec extends SpecBase {
 
+  private val etmpVatReturnBalanceOfVatDue: EtmpVatReturnBalanceOfVatDue = arbitraryEtmpVatReturnBalanceOfVatDue.arbitrary.sample.value
+
+  "EtmpVatReturnBalanceOfVatDue" - {
+
+    "must serialise and deserialise from and to an EtmpVatReturnBalanceOfVatDue" in {
+
+      val json = Json.obj(
+        "msOfConsumption" -> etmpVatReturnBalanceOfVatDue.msOfConsumption,
+        "totalVATDueGBP" -> etmpVatReturnBalanceOfVatDue.totalVATDueGBP,
+        "totalVATEUR" -> etmpVatReturnBalanceOfVatDue.totalVATEUR
+      )
+
+      val expectedResult = EtmpVatReturnBalanceOfVatDue(
+        msOfConsumption = etmpVatReturnBalanceOfVatDue.msOfConsumption,
+        totalVATDueGBP = etmpVatReturnBalanceOfVatDue.totalVATDueGBP,
+        totalVATEUR = etmpVatReturnBalanceOfVatDue.totalVATEUR
+      )
+
+      Json.toJson(expectedResult) mustBe json
+      json.validate[EtmpVatReturnBalanceOfVatDue] mustBe JsSuccess(expectedResult)
+    }
+  }
 }
