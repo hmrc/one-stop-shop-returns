@@ -18,9 +18,6 @@ package models.etmp
 
 import play.api.libs.json.{Json, OFormat}
 
-
-// TODO -> Tests
-// TODO -> Add country from or to which ever it is
 case class EtmpVatReturnGoodsSupplied(
                                        msOfConsumption: String,
                                        msOfEstablishment: String, // TODO -> May be called something else

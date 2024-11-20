@@ -18,8 +18,6 @@ package models.etmp
 
 import play.api.libs.json.{Json, OFormat}
 
-
-// TODO -> Tests
 case class EtmpVatReturnBalanceOfVatDue(
                                          msOfConsumption: String,
                                          totalVATDueGBP: BigDecimal,
