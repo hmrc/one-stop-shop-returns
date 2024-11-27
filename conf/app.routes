@@ -27,4 +27,4 @@ GET         /financial-data/prepare/:vrn                      controllers.Financ
 POST        /external-entry/:page                             controllers.external.ExternalEntryController.onExternal(page: String, period: Option[Period] ?= None, lang: Option[String] ?= None)
 GET         /external-entry                                   controllers.external.ExternalEntryController.getExternalEntry()
 
-GET         /obligations/:vrn
+GET         /obligations/:vrn                                 controllers.VatReturnController.getObligations(vrn: String)
