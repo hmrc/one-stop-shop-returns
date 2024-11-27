@@ -50,14 +50,12 @@ class CorrectionServiceSpec
 
       val vrn = arbitrary[Vrn].sample.value
 
-      val now = Instant.now
-      val stubClock = Clock.fixed(now, ZoneId.systemDefault())
       val mockRepository = mock[CorrectionRepository]
       val correctionPayloads = Gen.listOfN(2, arbitrary[CorrectionPayload]).sample.value
 
       when(mockRepository.get(any())) thenReturn Future.successful(correctionPayloads)
 
-      val service = new CorrectionService(mockRepository, stubClock)
+      val service = new CorrectionService(mockRepository)
 
       val result = service.get(vrn).futureValue
 
@@ -74,14 +72,12 @@ class CorrectionServiceSpec
       val vrn = arbitrary[Vrn].sample.value
       val period = arbitrary[Period].sample.value
 
-      val now = Instant.now
-      val stubClock = Clock.fixed(now, ZoneId.systemDefault())
       val mockRepository = mock[CorrectionRepository]
       val correctionPayload = arbitrary[CorrectionPayload].sample.value
 
       when(mockRepository.get(any(), any())) thenReturn Future.successful(Some(correctionPayload))
 
-      val service = new CorrectionService(mockRepository, stubClock)
+      val service = new CorrectionService(mockRepository)
 
       val result = service.get(vrn, period).futureValue
 
@@ -98,14 +94,12 @@ class CorrectionServiceSpec
       val vrn = arbitrary[Vrn].sample.value
       val period = arbitrary[Period].sample.value
 
-      val now = Instant.now
-      val stubClock = Clock.fixed(now, ZoneId.systemDefault())
       val mockRepository = mock[CorrectionRepository]
       val correctionPayload = arbitrary[CorrectionPayload].sample.value
 
       when(mockRepository.getByCorrectionPeriod(any(), any())) thenReturn Future.successful(List(correctionPayload))
 
-      val service = new CorrectionService(mockRepository, stubClock)
+      val service = new CorrectionService(mockRepository)
 
       val result = service.getByCorrectionPeriod(vrn, period).futureValue
 

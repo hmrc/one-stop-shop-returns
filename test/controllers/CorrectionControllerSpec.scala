@@ -17,11 +17,12 @@
 package controllers
 
 import base.SpecBase
+import connectors.ReturnCorrectionConnector
 import controllers.actions.FakeFailingAuthConnector
 import generators.Generators
 import models._
 import models.Quarter.Q3
-import models.corrections.CorrectionPayload
+import models.corrections.{CorrectionPayload, ReturnCorrectionValue}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
@@ -211,6 +212,65 @@ class CorrectionControllerSpec
 
       val app =
         new GuiceApplicationBuilder()
+          .overrides(bind[AuthConnector].toInstance(new FakeFailingAuthConnector(new MissingBearerToken)))
+          .build()
+
+      running(app) {
+        val result = route(app, request).value
+        status(result) mustEqual UNAUTHORIZED
+      }
+    }
+  }
+
+  ".getCorrectionValue(countryCode, period)" - {
+    val period = StandardPeriod(2021, Q3)
+    val country1 = arbitrary[Country].sample.value
+    val returnCorrectionValue: ReturnCorrectionValue = arbitraryReturnCorrectionValue.arbitrary.sample.value
+
+    val mockCorrectionService = mock[CorrectionService]
+    val mockReturnCorrectionConnector = mock[ReturnCorrectionConnector]
+
+    lazy val request = FakeRequest(GET, routes.CorrectionController.getCorrectionValue(country1.code, period).url)
+
+    "must return OK and a valid response payload when connector returns Right" in {
+
+      when(mockReturnCorrectionConnector.getMaximumCorrectionValue(any(), any(), any())) thenReturn Future.successful(Right(returnCorrectionValue))
+
+      val application = applicationBuilder
+        .overrides(bind[CorrectionService].toInstance(mockCorrectionService))
+        .overrides(bind[ReturnCorrectionConnector].toInstance(mockReturnCorrectionConnector))
+        .build()
+
+      running(application) {
+        val result = route(application, request).value
+
+        status(result) mustBe OK
+        contentAsJson(result) mustBe Json.toJson(returnCorrectionValue)
+      }
+    }
+
+    "must return InternalServerError when connector returns an error" in {
+
+      when(mockReturnCorrectionConnector.getMaximumCorrectionValue(any(), any(), any())) thenReturn Future.successful(Left(ServerError))
+
+      val application = applicationBuilder
+        .overrides(bind[CorrectionService].toInstance(mockCorrectionService))
+        .overrides(bind[ReturnCorrectionConnector].toInstance(mockReturnCorrectionConnector))
+        .build()
+
+      running(application) {
+        val result = route(application, request).value
+
+        status(result) mustBe INTERNAL_SERVER_ERROR
+      }
+    }
+
+    "must respond with Unauthorized when the user is not authorised" in {
+
+      val app =
+        new GuiceApplicationBuilder()
+          .overrides(bind[CorrectionService].toInstance(mockCorrectionService))
+          .overrides(bind[ReturnCorrectionConnector].toInstance(mockReturnCorrectionConnector))
           .overrides(bind[AuthConnector].toInstance(new FakeFailingAuthConnector(new MissingBearerToken)))
           .build()
 

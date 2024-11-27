@@ -21,12 +21,10 @@ import models.corrections.CorrectionPayload
 import repositories.CorrectionRepository
 import uk.gov.hmrc.domain.Vrn
 
-import java.time.Clock
 import javax.inject.Inject
 import scala.concurrent.Future
 
-class CorrectionService @Inject()( repository: CorrectionRepository,
-                                   clock: Clock ) {
+class CorrectionService @Inject()(repository: CorrectionRepository) {
 
   def get(): Future[Seq[CorrectionPayload]] =
     repository.get()
