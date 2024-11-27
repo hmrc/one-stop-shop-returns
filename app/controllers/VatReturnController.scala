@@ -86,7 +86,7 @@ class VatReturnController @Inject()(
       registrationConnector.getRegistration(Vrn(vrn)).flatMap {
         case Some(registration) =>
           val fromDate: String = registration.commencementDate.format(etmpDateFormatter)
-          val toDate = LocalDate.now(clock).plusMonths(3).withDayOfMonth(1).minusDays(1).format(etmpDateFormatter)
+          val toDate = LocalDate.now(clock).plusMonths(1).withDayOfMonth(1).minusDays(1).format(etmpDateFormatter)
 
           val queryParameters: EtmpObligationsQueryParameters = EtmpObligationsQueryParameters(
             fromDate = fromDate,

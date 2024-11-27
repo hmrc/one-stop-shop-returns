@@ -104,18 +104,20 @@ class ReturnStatusController @Inject()(
 
     val etmpObligationsQueryParameters = EtmpObligationsQueryParameters(
       fromDate = commencementLocalDate.format(etmpDateFormatter),
-      toDate = LocalDate.now(clock).plusMonths(3).withDayOfMonth(1).minusDays(1).format(etmpDateFormatter),
+      toDate = LocalDate.now(clock).plusMonths(1).withDayOfMonth(1).minusDays(1).format(etmpDateFormatter),
       status = None
+
     )
-    val futureFulfilledPeriods = if (config.strategicReturnApiEnabled) {
+    val futureFulfilledPeriods: Future[Seq[Period]] = if (config.strategicReturnApiEnabled) {
       vatReturnConnector.getObligations(vrn.vrn, etmpObligationsQueryParameters).map {
-        case Right(obligations) => obligations.getFulfilledPeriods
+        case Right(obligations) =>
+          obligations.getFulfilledPeriods
         case x =>
           logger.error(s"Error when getting obligations for return status' $x")
           throw new Exception("Error getting obligations for status")
       }
     } else {
-      Future.successful(List.empty[Period])
+      vatReturnService.get(vrn).map(x => x.map(y => y.period))
     }
 
     for {
@@ -138,14 +140,11 @@ class ReturnStatusController @Inject()(
           }
         }
       }
-      returns <- vatReturnService.get(vrn)
       fulfilledPeriods <- futureFulfilledPeriods
     } yield {
-      val returnPeriods = returns.map(_.period)
-      val periodsToMap = if (config.strategicReturnApiEnabled) fulfilledPeriods else periods
-      val currentPeriods = periodsToMap.map {
+      val currentPeriods = periods.map {
         period =>
-          if (returnPeriods.contains(period)) {
+          if (fulfilledPeriods.contains(period)) {
             PeriodWithStatus(period, SubmissionStatus.Complete)
           } else if (isPeriodExcluded(period, excludedTrader)) {
             PeriodWithStatus(period, SubmissionStatus.Excluded)
