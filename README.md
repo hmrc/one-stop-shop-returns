@@ -7,56 +7,32 @@ Frontend: https://github.com/hmrc/one-stop-shop-returns-frontend
 
 Stub: https://github.com/hmrc/one-stop-shop-returns-stub
 
+For more details on the One Stop Shop Returns service, including how to use the application, please refer
+to the instructions in the one-stop-shop-returns-frontend repository.
+
 Requirements
 ------------
 
 This service is written in [Scala](http://www.scala-lang.org/) and [Play](http://playframework.com/), so needs at least a [JRE] to run.
 
-## Run the application
+## Run the application locally via Service Manager
 
-To update from Nexus and start all services from the RELEASE version instead of snapshot
 ```
-sm --start ONE_STOP_SHOP_ALL -r
+sm2 --start ONE_STOP_SHOP_ALL -r
 ```
 
-### To run the application locally execute the following:
+### To run the application locally from the repository, execute the following:
 ```
-sm --stop ONE_STOP_SHOP_RETURNS
+sm2 --stop ONE_STOP_SHOP_RETURNS
 ```
 and 
 ```
-sbt 'run 10205'
+sbt run -Dapplication.router=testOnlyDoNotUseInAppConf.Routes
 ```
 
 ### Running correct version of mongo
-We have introduced a transaction to the call to be able to ensure that both the vatreturn and correction get submitted to mongo.
-Your local mongo is unlikely to be running a latest enough version and probably not in a replica set.
-To do this, you'll need to stop your current mongo instance (docker ps to get the name of your mongo docker then docker stop <name> to stop)
-Run at least 4.0 with a replica set:
-```  
-docker run --restart unless-stopped -d -p 27017-27019:27017-27019 --name mongo4 mongo:4.0 --replSet rs0
-```
-Connect to said replica set:
-```
-docker exec -it mongo4 mongo
-```
-When that console is there:
-```
-rs.initiate()
-```
-You then should be running 4.0 with a replica set. You may have to re-run the rs.initiate() after you've restarted
+Mongo 6 with a replica set is required to run the service. Please refer to the MDTP Handbook for instructions on how to run this
 
-
-### Using the application
-To log in using the Authority Wizard provide "continue url", "affinity group" and "enrolments" as follows:
-
-![image](https://user-images.githubusercontent.com/48218839/145842535-6209b43e-483b-4874-b53d-364c9b121f14.png)
-
-![image](https://user-images.githubusercontent.com/48218839/145842926-c318cb10-70c3-4186-a839-b1928c8e2625.png)
-
-The VRN can be any 9-digit number.
-  
-To be able to use the application you need to be registered for the service (instructions to complete a registration can be found here https://github.com/hmrc/one-stop-shop-registration-frontend).
 
 Unit and Integration Tests
 ------------
