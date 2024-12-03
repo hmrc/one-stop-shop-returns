@@ -14,20 +14,23 @@
  * limitations under the License.
  */
 
-package utils
+package models.etmp
 
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.util.Locale
+import models.{Enumerable, WithName}
 
-object Formatters {
+sealed trait EtmpObligationsFulfilmentStatus
 
-  val dateTimeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss z")
-    .withLocale(Locale.UK)
-    .withZone(ZoneId.of("GMT"))
+object EtmpObligationsFulfilmentStatus extends Enumerable.Implicits {
 
-  val etmpDateTimeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX")
+  case object Open extends WithName("O") with EtmpObligationsFulfilmentStatus
 
-  val etmpDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+  case object Fulfilled extends WithName("F") with EtmpObligationsFulfilmentStatus
 
+  val values: Seq[EtmpObligationsFulfilmentStatus] = Seq(
+    Open,
+    Fulfilled
+  )
+
+  implicit val enumerable: Enumerable[EtmpObligationsFulfilmentStatus] =
+    Enumerable(values.map(v => v.toString -> v): _*)
 }

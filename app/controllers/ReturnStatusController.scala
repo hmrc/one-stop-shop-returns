@@ -16,12 +16,16 @@
 
 package controllers
 
+import config.AppConfig
+import connectors.VatReturnConnector
 import controllers.actions.AuthenticatedControllerComponents
+import logging.Logging
 import models.Period.isThreeYearsOld
 import models.SubmissionStatus.{Complete, Excluded, Expired}
+import models.etmp.EtmpObligationsQueryParameters
 import models.exclusions.ExcludedTrader
 import models.yourAccount._
-import models.{Period, PeriodWithStatus, SubmissionStatus}
+import models.{Period, PeriodWithStatus, StandardPeriod, SubmissionStatus}
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent}
 import repositories.SaveForLaterRepository
@@ -29,6 +33,7 @@ import services.exclusions.ExclusionService
 import services.{PeriodService, VatReturnService}
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+import utils.Formatters.etmpDateFormatter
 
 import java.time.{Clock, LocalDate}
 import javax.inject.Inject
@@ -36,13 +41,15 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class ReturnStatusController @Inject()(
                                         cc: AuthenticatedControllerComponents,
+                                        config: AppConfig,
                                         vatReturnService: VatReturnService,
                                         periodService: PeriodService,
                                         exclusionService: ExclusionService,
                                         saveForLaterRepository: SaveForLaterRepository,
+                                        vatReturnConnector: VatReturnConnector,
                                         clock: Clock
                                       )(implicit ec: ExecutionContext)
-  extends BackendController(cc) {
+  extends BackendController(cc) with Logging {
 
   def listStatuses(commencementLocalDate: LocalDate): Action[AnyContent] = cc.authAndGetRegistration().async {
     implicit request =>
@@ -95,6 +102,24 @@ class ReturnStatusController @Inject()(
 
   private def getStatuses(commencementLocalDate: LocalDate, vrn: Vrn, excludedTrader: Option[ExcludedTrader]): Future[Seq[PeriodWithStatus]] = {
 
+    val etmpObligationsQueryParameters = EtmpObligationsQueryParameters(
+      fromDate = commencementLocalDate.format(etmpDateFormatter),
+      toDate = LocalDate.now(clock).plusMonths(1).withDayOfMonth(1).minusDays(1).format(etmpDateFormatter),
+      status = None
+
+    )
+    val futureFulfilledPeriods: Future[Seq[Period]] = if (config.strategicReturnApiEnabled) {
+      vatReturnConnector.getObligations(vrn.vrn, etmpObligationsQueryParameters).map {
+        case Right(obligations) =>
+          obligations.getFulfilledPeriods
+        case x =>
+          logger.error(s"Error when getting obligations for return status' $x")
+          throw new Exception("Error getting obligations for status")
+      }
+    } else {
+      vatReturnService.get(vrn).map(x => x.map(y => y.period))
+    }
+
     for {
       periods <- Future {
         periodService.getReturnPeriods(commencementLocalDate)
@@ -115,12 +140,11 @@ class ReturnStatusController @Inject()(
           }
         }
       }
-      returns <- vatReturnService.get(vrn)
+      fulfilledPeriods <- futureFulfilledPeriods
     } yield {
-      val returnPeriods = returns.map(_.period)
       val currentPeriods = periods.map {
         period =>
-          if (returnPeriods.contains(period)) {
+          if (fulfilledPeriods.contains(period)) {
             PeriodWithStatus(period, SubmissionStatus.Complete)
           } else if (isPeriodExcluded(period, excludedTrader)) {
             PeriodWithStatus(period, SubmissionStatus.Excluded)

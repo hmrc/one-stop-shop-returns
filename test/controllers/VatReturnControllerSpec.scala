@@ -17,6 +17,7 @@
 package controllers
 
 import base.SpecBase
+import connectors.{RegistrationConnector, VatReturnConnector}
 import controllers.actions.FakeFailingAuthConnector
 import generators.Generators
 import models._
@@ -25,6 +26,8 @@ import models.Quarter.Q3
 import models.core.{CoreErrorResponse, EisErrorResponse}
 import models.core.CoreErrorResponse.REGISTRATION_NOT_FOUND
 import models.corrections.CorrectionPayload
+import models.ServerError
+import models.etmp.EtmpObligations
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito.{times, verify, when}
 import org.scalacheck.Arbitrary.arbitrary
@@ -36,7 +39,9 @@ import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import services.VatReturnService
+import testutils.RegistrationData
 import uk.gov.hmrc.auth.core.{AuthConnector, MissingBearerToken}
+import uk.gov.hmrc.domain.Vrn
 
 import java.time.Instant
 import scala.concurrent.Future
@@ -336,6 +341,66 @@ class VatReturnControllerSpec
         val result = route(app, request).value
 
         status(result) mustEqual NOT_FOUND
+      }
+    }
+
+    "must respond with Unauthorized when the user is not authorised" in {
+
+      val app =
+        new GuiceApplicationBuilder()
+          .overrides(bind[AuthConnector].toInstance(new FakeFailingAuthConnector(new MissingBearerToken)))
+          .build()
+
+      running(app) {
+        val result = route(app, request).value
+        status(result) mustEqual UNAUTHORIZED
+      }
+    }
+  }
+
+  ".getObligations" - {
+
+    val etmpObligations: EtmpObligations = arbitraryObligations.arbitrary.sample.value
+    val vrn = arbitrary[Vrn].sample.value
+    val mockCoreVatReturnConnector = mock[VatReturnConnector]
+    val mockRegistrationConnector = mock[RegistrationConnector]
+
+    lazy val request = FakeRequest(GET, routes.VatReturnController.getObligations(vrn.vrn).url)
+
+    "must respond with OK and return a valid response" in {
+
+      when(mockCoreVatReturnConnector.getObligations(any(), any())) thenReturn Future.successful(Right(etmpObligations))
+      when(mockRegistrationConnector.getRegistration(any())(any())) thenReturn Future.successful(Some(RegistrationData.registration))
+
+      val app =
+        applicationBuilder
+          .overrides(bind[VatReturnConnector].toInstance(mockCoreVatReturnConnector))
+          .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
+          .build()
+
+      running(app) {
+        val result = route(app, request).value
+
+        status(result) mustEqual OK
+        contentAsJson(result) mustEqual Json.toJson(etmpObligations)
+      }
+    }
+
+    "must respond with and error when the connector responds with an error" in {
+
+      when(mockCoreVatReturnConnector.getObligations(any(), any())) thenReturn Future.successful(Left(ServerError))
+      when(mockRegistrationConnector.getRegistration(any())(any())) thenReturn Future.successful(Some(RegistrationData.registration))
+
+      val app =
+        applicationBuilder
+          .overrides(bind[VatReturnConnector].toInstance(mockCoreVatReturnConnector))
+          .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
+          .build()
+
+      running(app) {
+        val result = route(app, request).value
+
+        status(result) mustEqual INTERNAL_SERVER_ERROR
       }
     }
 

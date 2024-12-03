@@ -16,22 +16,31 @@
 
 package controllers
 
-import controllers.actions.AuthAction
+import connectors.{RegistrationConnector, VatReturnConnector}
+import controllers.actions.{AuthAction, AuthenticatedControllerComponents}
 import models.requests.{VatReturnRequest, VatReturnWithCorrectionRequest}
 import models.Period
 import models.core.CoreErrorResponse
+import models.etmp.EtmpObligationsQueryParameters
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import services.VatReturnService
+import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+import utils.Formatters.etmpDateFormatter
 
+import java.time.{Clock, LocalDate}
 import javax.inject.Inject
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 class VatReturnController @Inject()(
                                      cc: ControllerComponents,
+                                     ac: AuthenticatedControllerComponents,
                                      vatReturnService: VatReturnService,
-                                     auth: AuthAction
+                                     coreVatReturnConnector: VatReturnConnector,
+                                     registrationConnector: RegistrationConnector,
+                                     auth: AuthAction,
+                                     clock: Clock
                                    )(implicit ec: ExecutionContext)
   extends BackendController(cc) {
 
@@ -68,6 +77,29 @@ class VatReturnController @Inject()(
       vatReturnService.get(request.vrn, period).map {
         case None => NotFound
         case value => Ok(Json.toJson(value))
+      }
+  }
+
+  def getObligations(vrn: String): Action[AnyContent] = auth.async {
+    implicit request =>
+
+      registrationConnector.getRegistration(Vrn(vrn)).flatMap {
+        case Some(registration) =>
+          val fromDate: String = registration.commencementDate.format(etmpDateFormatter)
+          val toDate = LocalDate.now(clock).plusMonths(1).withDayOfMonth(1).minusDays(1).format(etmpDateFormatter)
+
+          val queryParameters: EtmpObligationsQueryParameters = EtmpObligationsQueryParameters(
+            fromDate = fromDate,
+            toDate = toDate,
+            status = None
+          )
+
+          coreVatReturnConnector.getObligations(vrn, queryParameters = queryParameters).map {
+            case Right(etmpObligations) => Ok(Json.toJson(etmpObligations))
+            case Left(errorResponse) => InternalServerError(Json.toJson(errorResponse.body))
+          }
+        case _ =>
+          Future.successful(NotFound)
       }
   }
 }
