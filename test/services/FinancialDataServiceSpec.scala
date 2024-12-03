@@ -9,7 +9,7 @@ import models.corrections.{CorrectionPayload, CorrectionToCountry, PeriodWithCor
 import models.des.{DesException, UnexpectedResponseStatus}
 import models.VatReturn
 import org.mockito.ArgumentMatchers.{any, eq => equalTo}
-import org.mockito.ArgumentMatchersSugar.eqTo
+import org.mockito.ArgumentMatchers.{eq => eqTo}
 import org.mockito.Mockito
 import org.mockito.Mockito.{times, verify, when}
 import org.scalacheck.Arbitrary

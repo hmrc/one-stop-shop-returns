@@ -8,7 +8,7 @@ import models.core.{CoreErrorResponse, CorePeriod, EisErrorResponse}
 import models.corrections.CorrectionPayload
 import models.{Period, ReturnReference, StandardPeriod, VatReturn}
 import org.mockito.ArgumentMatchers.any
-import org.mockito.ArgumentMatchersSugar.eqTo
+import org.mockito.ArgumentMatchers.{eq => eqTo}
 import org.mockito.Mockito
 import org.mockito.Mockito.{times, verify, when}
 import org.scalatest.BeforeAndAfterEach
