@@ -108,4 +108,43 @@ class CorrectionServiceSpec
     }
 
   }
+
+  ".get" - {
+
+    "must get a list of corrections" in {
+
+      val mockRepository = mock[CorrectionRepository]
+      val correctionPayloads = Gen.listOfN(2, arbitrary[CorrectionPayload]).sample.value
+
+      when(mockRepository.get()) thenReturn Future.successful(correctionPayloads)
+
+      val service = new CorrectionService(mockRepository)
+
+      val result = service.get().futureValue
+
+      result mustEqual correctionPayloads
+      verify(mockRepository, times(1)).get()
+    }
+
+  }
+
+  ".getByPeriods" - {
+
+    "must return a single correction" in {
+
+      val periods = Gen.listOfN(2, arbitrary[Period]).sample.value
+      val mockRepository = mock[CorrectionRepository]
+      val correctionPayload = Gen.listOfN(2, arbitrary[CorrectionPayload]).sample.value
+
+      when(mockRepository.getByPeriods(any())) thenReturn Future.successful(List(correctionPayload))
+
+      val service = new CorrectionService(mockRepository)
+
+      val result = service.getByPeriods(periods).futureValue
+
+      result mustBe List(correctionPayload)
+      verify(mockRepository, times(1)).getByPeriods(any())
+    }
+
+  }
 }
