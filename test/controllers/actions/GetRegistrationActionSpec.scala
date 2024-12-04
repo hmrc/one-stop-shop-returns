@@ -4,7 +4,7 @@ import base.SpecBase
 import connectors.RegistrationConnector
 import models.requests.RegistrationRequest
 import org.mockito.ArgumentMatchers.any
-import org.mockito.ArgumentMatchersSugar.eqTo
+import org.mockito.ArgumentMatchers.{eq => eqTo}
 import org.mockito.Mockito.when
 import org.scalatest.EitherValues
 import org.scalatestplus.mockito.MockitoSugar

@@ -37,7 +37,7 @@ class CorrectionRepositorySpec
 
   when(appConfig.encryptionKey) thenReturn secretKey
 
-  override protected val repository =
+  override protected val repository: CorrectionRepository =
     new CorrectionRepository(
       mongoComponent = mongoComponent,
       appConfig = appConfig,

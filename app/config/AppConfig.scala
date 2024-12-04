@@ -27,7 +27,7 @@ class AppConfig @Inject()(config: Configuration) {
   val appName: String = config.get[String]("appName")
 
   val encryptionKey: String = config.get[String]("mongodb.encryption.key")
-  val cacheTtl: Int = config.get[Int]("mongodb.timeToLiveInDays")
+  val cacheTtl: Long = config.get[Long]("mongodb.timeToLiveInDays")
 
   val coreVatReturnsEnabled: Boolean = config.get[Boolean]("features.coreVatReturns")
   val historicCoreVatReturnsEnabled: Boolean = config.get[Boolean]("features.historicCoreVatReturns")
@@ -45,7 +45,7 @@ class AppConfig @Inject()(config: Configuration) {
 
   val exclusionsEnabled: Boolean = config.get[Boolean]("features.exclusions.enabled")
 
-  val externalEntryTtlDays: Int = config.get[Int]("features.externalEntry.ttlInDays")
+  val externalEntryTtlDays: Long = config.get[Long]("features.externalEntry.ttlInDays")
 
   val strategicReturnApiEnabled: Boolean = config.get[Boolean]("features.strategic-returns.enabled")
 }

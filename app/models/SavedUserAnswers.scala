@@ -21,6 +21,7 @@ import play.api.libs.json._
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 
+
 import java.time.Instant
 
 case class SavedUserAnswers(
@@ -81,7 +82,7 @@ object NewEncryptedSavedUserAnswers {
         (__ \ "period").write[Period] and
         (__ \ "data").write[String] and
         (__ \ "lastUpdated").write(MongoJavatimeFormats.instantFormat)
-      ) (unlift(NewEncryptedSavedUserAnswers.unapply))
+      ) (newEncryptedSavedUserAnswers => Tuple.fromProductTyped(newEncryptedSavedUserAnswers))
   }
 
   implicit val format: OFormat[NewEncryptedSavedUserAnswers] = OFormat(reads, writes)
@@ -117,7 +118,7 @@ object LegacyEncryptedSavedUserAnswers {
         (__ \ "period").write[Period] and
         (__ \ "data").write[EncryptedValue] and
         (__ \ "lastUpdated").write(MongoJavatimeFormats.instantFormat)
-      ) (unlift(LegacyEncryptedSavedUserAnswers.unapply))
+      ) (legacyEncryptedSavedUserAnswers => Tuple.fromProductTyped(legacyEncryptedSavedUserAnswers))
   }
 
   implicit val format: OFormat[LegacyEncryptedSavedUserAnswers] = OFormat(reads, writes)

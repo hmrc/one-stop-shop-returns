@@ -24,6 +24,7 @@ import play.api.http.HeaderNames.AUTHORIZATION
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpException, StringContextOps}
+import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
 
 import java.net.URL
 import java.time.Instant
