@@ -38,7 +38,7 @@ class ExternalEntryRepositorySpec
         now)
     }
 
-  override protected val repository =
+  override protected val repository: ExternalEntryRepository =
     new ExternalEntryRepository(
       mongoComponent = mongoComponent,
       appConfig = appConfig

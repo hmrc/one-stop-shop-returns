@@ -27,9 +27,6 @@ object PaymentReference {
 
   private val pattern: Regex = """NI(\d{9})(Q[1-4])(\d{2})""".r.anchored
 
-  def apply(ref: String): PaymentReference =
-    PaymentReference(ref)
-    
   def apply(vrn: Vrn, period: Period): PaymentReference =
     PaymentReference(s"NI${vrn.vrn}${period.quarter.toString}${twoDigitYear(period.year)}")
 

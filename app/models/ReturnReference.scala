@@ -26,14 +26,11 @@ case class ReturnReference private(value: String)
 object ReturnReference {
 
   private val pattern: Regex = """XI/XI(\d{9})/(Q[1-4])\.(\d{4})""".r.anchored
-
-  def apply(ref: String): ReturnReference =
-    ReturnReference(ref)
   
   def apply(vrn: Vrn, period: Period): ReturnReference =
     ReturnReference(s"XI/XI${vrn.vrn}/${period.quarter.toString}.${period.year}")
 
-  private[models] def fromString(string: String): Option[ReturnReference] =
+  def fromString(string: String): Option[ReturnReference] =
     string match {
       case pattern(vrn, quarter, year) =>
         Period(year, quarter)

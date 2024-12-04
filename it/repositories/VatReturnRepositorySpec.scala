@@ -39,7 +39,7 @@ class VatReturnRepositorySpec
 
   val correctionRepository = new CorrectionRepository(mongoComponent, correctionEncryptor, appConfig)
 
-  override protected val repository =
+  override protected val repository: VatReturnRepository =
     new VatReturnRepository(
       mongoComponent = mongoComponent,
       returnEncryptor = encryptor,
