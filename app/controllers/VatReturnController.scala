@@ -16,11 +16,14 @@
 
 package controllers
 
+import connectors.CoreVatReturnConnector
+import controllers.actions.AuthAction
 import connectors.{RegistrationConnector, VatReturnConnector}
 import controllers.actions.AuthAction
 import models.requests.{VatReturnRequest, VatReturnWithCorrectionRequest}
 import models.Period
 import models.core.CoreErrorResponse
+import models.requests.{VatReturnRequest, VatReturnWithCorrectionRequest}
 import models.etmp.EtmpObligationsQueryParameters
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
@@ -36,6 +39,8 @@ import scala.concurrent.{ExecutionContext, Future}
 class VatReturnController @Inject()(
                                      cc: ControllerComponents,
                                      vatReturnService: VatReturnService,
+                                     coreVatReturnConnector: CoreVatReturnConnector,
+                                     auth: AuthAction
                                      coreVatReturnConnector: VatReturnConnector,
                                      registrationConnector: RegistrationConnector,
                                      auth: AuthAction,
@@ -48,7 +53,7 @@ class VatReturnController @Inject()(
       vatReturnService.createVatReturn(request.body).map {
         case Right(Some(vatReturn)) => Created(Json.toJson(vatReturn))
         case Right(None) => Conflict
-        case Left(errorResponse) if(errorResponse.errorDetail.errorCode == CoreErrorResponse.REGISTRATION_NOT_FOUND) => NotFound(Json.toJson(errorResponse.errorDetail))
+        case Left(errorResponse) if (errorResponse.errorDetail.errorCode == CoreErrorResponse.REGISTRATION_NOT_FOUND) => NotFound(Json.toJson(errorResponse.errorDetail))
         case Left(errorResponse) => ServiceUnavailable(Json.toJson(errorResponse.errorDetail))
       }
   }
@@ -58,7 +63,7 @@ class VatReturnController @Inject()(
       vatReturnService.createVatReturnWithCorrection(request.body).map {
         case Right(Some(vatReturnWithCorrection)) => Created(Json.toJson(vatReturnWithCorrection))
         case Right(None) => Conflict
-        case Left(errorResponse) if(errorResponse.errorDetail.errorCode == CoreErrorResponse.REGISTRATION_NOT_FOUND) => NotFound(Json.toJson(errorResponse.errorDetail))
+        case Left(errorResponse) if (errorResponse.errorDetail.errorCode == CoreErrorResponse.REGISTRATION_NOT_FOUND) => NotFound(Json.toJson(errorResponse.errorDetail))
         case Left(errorResponse) => ServiceUnavailable(Json.toJson(errorResponse.errorDetail))
       }
   }
@@ -77,6 +82,13 @@ class VatReturnController @Inject()(
         case None => NotFound
         case value => Ok(Json.toJson(value))
       }
+  }
+
+  def getEtmpVatReturn(): Action[AnyContent] = auth.async {
+    coreVatReturnConnector.get.map {
+      case Right(etmpVatReturn) => Ok(Json.toJson(etmpVatReturn))
+      case Left(errorResponse) => InternalServerError(Json.toJson(errorResponse.body))
+    }
   }
 
   def getObligations(vrn: String): Action[AnyContent] = auth.async {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,25 +14,13 @@
  * limitations under the License.
  */
 
-package models.responses
+package utils
 
-sealed trait ErrorResponse {
-  val body: String
+import scala.concurrent.Future
+
+object FutureSyntax {
+
+  implicit class FutureOps[A](val a: A) extends AnyVal {
+    def toFuture: Future[A] = Future.successful(a)
+  }
 }
-
-case object InvalidJson extends ErrorResponse {
-
-  override val body: String = "Invalid Response"
-}
-
-case object GatewayTimeout extends ErrorResponse {
-
-  override val body: String = "Gateway timeout"
-}
-
-case object InternalServerError extends ErrorResponse {
-
-  override val body = "Internal server error"
-}
-
-final case class UnexpectedResponseStatus(status: Int, body: String) extends ErrorResponse

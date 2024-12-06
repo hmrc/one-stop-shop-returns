@@ -16,7 +16,6 @@
 
 package config
 
-import models.Period
 import play.api.Configuration
 
 import javax.inject.{Inject, Singleton}
@@ -30,20 +29,9 @@ class AppConfig @Inject()(config: Configuration) {
   val cacheTtl: Long = config.get[Long]("mongodb.timeToLiveInDays")
 
   val coreVatReturnsEnabled: Boolean = config.get[Boolean]("features.coreVatReturns")
-  val historicCoreVatReturnsEnabled: Boolean = config.get[Boolean]("features.historicCoreVatReturns")
-  val historicPeriodsToSubmit: Seq[Period] = config.get[Seq[String]]("historicPeriodsToSubmit").flatMap(Period.fromString)
-  val historicCoreVatReturnIndexFilteringEnabled: Boolean = config.get[Boolean]("historicCoreVatReturns.indexFiltering")
-  val historicCoreVatReturnStartIdx: Int = config.get[Int]("historicCoreVatReturns.startIdx")
-  val historicCoreVatReturnEndIdx: Int = config.get[Int]("historicCoreVatReturns.endIdx")
-  val historicCoreVatReturnIndexesToInclude : Seq[Int] = config.get[Seq[Int]]("historicCoreVatReturns.includeIndexes")
-  val historicCoreVatReturnIndexesToExclude : Seq[Int] = config.get[Seq[Int]]("historicCoreVatReturns.excludeIndexes")
-  val historicCoreVatReturnReferencesEnabled: Boolean = config.get[Boolean]("historicCoreVatReturns.referenceFiltering.enabled")
-  val historicCoreVatReturnReferences: Seq[String] = config.get[Seq[String]]("historicCoreVatReturns.referenceFiltering.references")
 
   val ossEnrolment: String = config.get[String]("oss-enrolment")
   val ossEnrolmentEnabled: Boolean = config.get[Boolean]("features.oss-enrolment")
-
-  val exclusionsEnabled: Boolean = config.get[Boolean]("features.exclusions.enabled")
 
   val externalEntryTtlDays: Long = config.get[Long]("features.externalEntry.ttlInDays")
 

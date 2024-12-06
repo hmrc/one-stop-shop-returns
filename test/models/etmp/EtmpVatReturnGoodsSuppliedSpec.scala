@@ -13,7 +13,7 @@ class EtmpVatReturnGoodsSuppliedSpec extends SpecBase {
 
       val json = Json.obj(
         "msOfConsumption" -> etmpVatReturnGoodsSupplied.msOfConsumption,
-        "msOfEstablishment" -> etmpVatReturnGoodsSupplied.msOfEstablishment, // TODO -> May be called something else
+        "msOfEstablishment" -> etmpVatReturnGoodsSupplied.msOfEstablishment,
         "vatRateType" -> etmpVatReturnGoodsSupplied.vatRateType,
         "taxableAmountGBP" -> etmpVatReturnGoodsSupplied.taxableAmountGBP,
         "vatAmountGBP" -> etmpVatReturnGoodsSupplied.vatAmountGBP

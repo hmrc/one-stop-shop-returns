@@ -16,10 +16,11 @@
 
 package connectors
 
-import config.IfConfig
+import config.{EtmpDisplayVatReturnConfig, IfConfig}
 import connectors.CoreVatReturnHttpParser._
 import logging.Logging
 import models.core.{CoreErrorResponse, CoreVatReturn, EisErrorResponse}
+import models.responses.GatewayTimeout
 import play.api.http.HeaderNames.AUTHORIZATION
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.client.HttpClientV2
@@ -34,13 +35,15 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class CoreVatReturnConnector @Inject()(
                                         httpClientV2: HttpClientV2,
-                                        ifConfig: IfConfig
+                                        ifConfig: IfConfig,
+                                        etmpDisplayVatReturnConfig: EtmpDisplayVatReturnConfig
                                       )(implicit ec: ExecutionContext) extends Logging {
 
   private implicit val emptyHc: HeaderCarrier = HeaderCarrier()
+
   private def headers(correlationId: String): Seq[(String, String)] = ifConfig.ifHeaders(correlationId)
 
-  private val url: URL = url"${ifConfig.baseUrl}"
+  private def etmpDisplayHeaders(correlationId: String): Seq[(String, String)] = etmpDisplayVatReturnConfig.headers(correlationId)
 
   def submit(coreVatReturn: CoreVatReturn): Future[CoreVatReturnResponse] = {
     val correlationId = UUID.randomUUID().toString
@@ -49,6 +52,8 @@ class CoreVatReturnConnector @Inject()(
     val headersWithoutAuth = headersWithCorrelationId.filterNot {
       case (key, _) => key.matches(AUTHORIZATION)
     }
+
+    val url: URL = url"${ifConfig.baseUrl}"
 
     logger.info(s"Sending request to core with headers $headersWithoutAuth")
 
@@ -62,4 +67,23 @@ class CoreVatReturnConnector @Inject()(
     }
   }
 
+  def get: Future[DisplayVatReturnResponse] = {
+
+    val correlationId = UUID.randomUUID().toString
+    val headersWithCorrelationId = etmpDisplayHeaders(correlationId)
+
+    val headersWithoutAuth = headersWithCorrelationId.filterNot {
+      case (key, _) => key.matches(AUTHORIZATION)
+    }
+
+    val url: URL = url"${etmpDisplayVatReturnConfig.baseUrl}"
+
+    logger.info(s"Sending get request to ETMP with headers $headersWithoutAuth")
+
+    httpClientV2.get(url).setHeader(headersWithCorrelationId: _*).execute[DisplayVatReturnResponse].recover {
+      case e: HttpException =>
+        logger.error(s"Unexpected error response from core $url, received status ${e.responseCode} with body: ${e.message}")
+        Left(GatewayTimeout)
+    }
+  }
 }
