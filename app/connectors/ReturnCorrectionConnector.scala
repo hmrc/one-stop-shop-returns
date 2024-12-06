@@ -19,8 +19,8 @@ package connectors
 import config.ReturnCorrectionConfig
 import connectors.ReturnCorrectionHttpParser.{ReturnCorrectionReads, ReturnCorrectionResponse}
 import uk.gov.hmrc.domain.Vrn
-import uk.gov.hmrc.http.{HeaderCarrier, HttpErrorFunctions, StringContextOps}
 import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http.{HeaderCarrier, HttpErrorFunctions, StringContextOps}
 
 import java.util.UUID
 import javax.inject.Inject

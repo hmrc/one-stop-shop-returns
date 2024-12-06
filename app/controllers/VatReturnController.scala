@@ -16,15 +16,12 @@
 
 package controllers
 
-import connectors.CoreVatReturnConnector
+import connectors.{CoreVatReturnConnector, RegistrationConnector, VatReturnConnector}
 import controllers.actions.AuthAction
-import connectors.{RegistrationConnector, VatReturnConnector}
-import controllers.actions.AuthAction
-import models.requests.{VatReturnRequest, VatReturnWithCorrectionRequest}
 import models.Period
 import models.core.CoreErrorResponse
-import models.requests.{VatReturnRequest, VatReturnWithCorrectionRequest}
 import models.etmp.EtmpObligationsQueryParameters
+import models.requests.{VatReturnRequest, VatReturnWithCorrectionRequest}
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import services.VatReturnService
@@ -40,8 +37,7 @@ class VatReturnController @Inject()(
                                      cc: ControllerComponents,
                                      vatReturnService: VatReturnService,
                                      coreVatReturnConnector: CoreVatReturnConnector,
-                                     auth: AuthAction
-                                     coreVatReturnConnector: VatReturnConnector,
+                                     vatReturnConnector: VatReturnConnector,
                                      registrationConnector: RegistrationConnector,
                                      auth: AuthAction,
                                      clock: Clock
@@ -105,7 +101,7 @@ class VatReturnController @Inject()(
             status = None
           )
 
-          coreVatReturnConnector.getObligations(vrn, queryParameters = queryParameters).map {
+          vatReturnConnector.getObligations(vrn, queryParameters = queryParameters).map {
             case Right(etmpObligations) => Ok(Json.toJson(etmpObligations))
             case Left(errorResponse) => InternalServerError(Json.toJson(errorResponse.body))
           }
