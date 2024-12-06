@@ -18,8 +18,6 @@ package generators
 
 import models._
 import models.corrections.{CorrectionPayload, CorrectionToCountry, PeriodWithCorrections, ReturnCorrectionValue}
-import models.etmp.{EtmpObligation, EtmpObligationDetails, EtmpObligations, EtmpObligationsFulfilmentStatus}
-import models.corrections.{CorrectionPayload, CorrectionToCountry, PeriodWithCorrections}
 import models.etmp._
 import models.exclusions.{ExcludedTrader, ExclusionReason}
 import models.financialdata.Charge

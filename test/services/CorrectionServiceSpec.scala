@@ -32,7 +32,6 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import repositories.CorrectionRepository
 import uk.gov.hmrc.domain.Vrn
 
-import java.time.{Clock, Instant, ZoneId}
 import scala.concurrent.Future
 
 class CorrectionServiceSpec
