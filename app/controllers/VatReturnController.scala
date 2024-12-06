@@ -80,11 +80,12 @@ class VatReturnController @Inject()(
       }
   }
 
-  def getEtmpVatReturn(): Action[AnyContent] = auth.async {
-    coreVatReturnConnector.get.map {
-      case Right(etmpVatReturn) => Ok(Json.toJson(etmpVatReturn))
-      case Left(errorResponse) => InternalServerError(Json.toJson(errorResponse.body))
-    }
+  def getEtmpVatReturn(period: Period): Action[AnyContent] = auth.async {
+    implicit request =>
+      coreVatReturnConnector.get(request.vrn, period).map {
+        case Right(etmpVatReturn) => Ok(Json.toJson(etmpVatReturn))
+        case Left(errorResponse) => InternalServerError(Json.toJson(errorResponse.body))
+      }
   }
 
   def getObligations(vrn: String): Action[AnyContent] = auth.async {

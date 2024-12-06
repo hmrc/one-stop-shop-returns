@@ -163,7 +163,7 @@ class CoreVatReturnConnectorSpec extends SpecBase with WireMockHelper {
 
   ".get" - {
 
-    val url: String = "/one-stop-shop-returns-stub/vec/ossreturns/viewreturns/v1"
+    val url: String = s"/one-stop-shop-returns-stub/vec/ossreturns/viewreturns/v1/$vrn/$period"
 
     "must return Right(VatReturn) when the server returns OK with a valid payload" in {
 
@@ -197,7 +197,7 @@ class CoreVatReturnConnectorSpec extends SpecBase with WireMockHelper {
 
       running(app) {
         val connector = app.injector.instanceOf[CoreVatReturnConnector]
-        val result = connector.get.futureValue
+        val result = connector.get(vrn, period).futureValue
 
         result mustBe Right(vatReturn)
       }
@@ -218,7 +218,7 @@ class CoreVatReturnConnectorSpec extends SpecBase with WireMockHelper {
 
       running(app) {
         val connector = app.injector.instanceOf[CoreVatReturnConnector]
-        val result = connector.get.futureValue
+        val result = connector.get(vrn, period).futureValue
 
         result mustBe Left(InvalidJson)
       }
@@ -240,7 +240,7 @@ class CoreVatReturnConnectorSpec extends SpecBase with WireMockHelper {
 
         val connector = app.injector.instanceOf[CoreVatReturnConnector]
 
-        val result = connector.get.futureValue
+        val result = connector.get(vrn, period).futureValue
 
         result mustBe Left(UnexpectedResponseStatus(status, s"Unexpected response form Display VAT Return with status: $status and response body: "))
       }
@@ -263,7 +263,7 @@ class CoreVatReturnConnectorSpec extends SpecBase with WireMockHelper {
 
         val connector = app.injector.instanceOf[CoreVatReturnConnector]
 
-        whenReady(connector.get, Timeout(Span(30, Seconds))) { exp =>
+        whenReady(connector.get(vrn, period), Timeout(Span(30, Seconds))) { exp =>
           exp.isLeft mustBe true
           exp.left.toOption.get mustBe a[ErrorResponse]
           exp.left.toOption.get mustBe GatewayTimeout
