@@ -425,13 +425,13 @@ class VatReturnControllerSpec
 
   ".getEtmpVatReturn" - {
 
-    lazy val request = FakeRequest(GET, routes.VatReturnController.getEtmpVatReturn().url)
+    lazy val request = FakeRequest(GET, routes.VatReturnController.getEtmpVatReturn(period).url)
 
     "must return OK with an EtmpVatReturn when they exist" in {
 
       val etmpVatReturn: EtmpVatReturn = arbitraryEtmpVatReturn.arbitrary.sample.value
 
-      when(mockCoreVatReturnConnector.get) thenReturn Right(etmpVatReturn).toFuture
+      when(mockCoreVatReturnConnector.get(any(), any())) thenReturn Right(etmpVatReturn).toFuture
 
       val app = applicationBuilder
         .overrides(bind[CoreVatReturnConnector].toInstance(mockCoreVatReturnConnector))
@@ -448,7 +448,7 @@ class VatReturnControllerSpec
 
     "must return an error when the server returns an error" in {
 
-      when(mockCoreVatReturnConnector.get) thenReturn Left(InternalServerError).toFuture
+      when(mockCoreVatReturnConnector.get(any(), any())) thenReturn Left(InternalServerError).toFuture
 
       val app = applicationBuilder
         .overrides(bind[CoreVatReturnConnector].toInstance(mockCoreVatReturnConnector))

@@ -19,10 +19,12 @@ package connectors
 import config.{EtmpDisplayVatReturnConfig, IfConfig}
 import connectors.CoreVatReturnHttpParser._
 import logging.Logging
+import models.Period
 import models.core.{CoreErrorResponse, CoreVatReturn, EisErrorResponse}
 import models.responses.GatewayTimeout
 import play.api.http.HeaderNames.AUTHORIZATION
 import play.api.libs.json.Json
+import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpException, StringContextOps}
 import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
@@ -67,7 +69,7 @@ class CoreVatReturnConnector @Inject()(
     }
   }
 
-  def get: Future[DisplayVatReturnResponse] = {
+  def get(vrn: Vrn, period: Period): Future[DisplayVatReturnResponse] = {
 
     val correlationId = UUID.randomUUID().toString
     val headersWithCorrelationId = etmpDisplayHeaders(correlationId)
@@ -76,7 +78,7 @@ class CoreVatReturnConnector @Inject()(
       case (key, _) => key.matches(AUTHORIZATION)
     }
 
-    val url: URL = url"${etmpDisplayVatReturnConfig.baseUrl}"
+    val url: URL = url"${etmpDisplayVatReturnConfig.baseUrl}/$vrn/$period"
 
     logger.info(s"Sending get request to ETMP with headers $headersWithoutAuth")
 
