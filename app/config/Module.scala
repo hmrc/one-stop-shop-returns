@@ -18,7 +18,6 @@ package config
 
 import com.google.inject.AbstractModule
 import controllers.actions.{AuthAction, AuthActionImpl, AuthenticatedControllerComponents, DefaultAuthenticatedControllerComponents}
-import services.{HistoricalReturnSubmitService, HistoricalReturnSubmitServiceImpl}
 
 import java.time.{Clock, ZoneOffset}
 
@@ -28,6 +27,5 @@ class Module extends AbstractModule {
     bind(classOf[AuthAction]).to(classOf[AuthActionImpl]).asEagerSingleton()
     bind(classOf[Clock]).toInstance(Clock.systemDefaultZone.withZone(ZoneOffset.UTC))
     bind(classOf[AuthenticatedControllerComponents]).to(classOf[DefaultAuthenticatedControllerComponents]).asEagerSingleton()
-    bind(classOf[HistoricalReturnSubmitService]).to(classOf[HistoricalReturnSubmitServiceImpl]).asEagerSingleton()
   }
 }

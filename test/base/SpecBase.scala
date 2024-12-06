@@ -3,9 +3,9 @@ package base
 import controllers.actions.{AuthAction, FakeAuthAction}
 import generators.Generators
 import models.VatOnSalesChoice.Standard
+import models._
 import models.core._
 import models.corrections.CorrectionPayload
-import models._
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -13,7 +13,6 @@ import org.scalatest.{OptionValues, TryValues}
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
-import services.{FakeHistoricalReturnSubmitService, HistoricalReturnSubmitService}
 import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.domain.Vrn
 
@@ -30,9 +29,10 @@ trait SpecBase
     with Generators {
 
   protected val vrn: Vrn = Vrn("123456789")
+
   def period: Period = StandardPeriod(2021, Quarter.Q3)
 
-  val userAnswersId: String        = "12345-credId"
+  val userAnswersId: String = "12345-credId"
   val testCredentials: Credentials = Credentials(userAnswersId, "GGW")
 
   val commencementDate: LocalDate = LocalDate.of(2021, 7, 1)
@@ -154,7 +154,6 @@ trait SpecBase
   protected def applicationBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
       .overrides(
-        bind[AuthAction].to[FakeAuthAction],
-        bind[HistoricalReturnSubmitService].to[FakeHistoricalReturnSubmitService]
+        bind[AuthAction].to[FakeAuthAction]
       )
 }

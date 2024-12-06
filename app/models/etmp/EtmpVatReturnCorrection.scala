@@ -16,9 +16,8 @@
 
 package models.etmp
 
-import play.api.libs.json.{Json, OFormat}
+import play.api.libs.json.{Format, Json}
 
-// TODO -> Tests
 case class EtmpVatReturnCorrection(
                                     periodKey: String,
                                     periodFrom: String,
@@ -30,5 +29,5 @@ case class EtmpVatReturnCorrection(
 
 object EtmpVatReturnCorrection {
 
-  implicit val format: OFormat[EtmpVatReturnCorrection] = Json.format[EtmpVatReturnCorrection]
+  implicit val format: Format[EtmpVatReturnCorrection] = Json.format[EtmpVatReturnCorrection]
 }

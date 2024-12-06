@@ -28,14 +28,12 @@ import models.{PaymentReference, Period, ReturnReference, VatReturn}
 import repositories.VatReturnRepository
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.http.HeaderCarrier
+import utils.FutureSyntax.FutureOps
 
 import java.time.{Clock, Instant}
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-// TODO -> Make this a trait, call existing service VatReturnRepositoryService and new one EtmpVatReturnService or
-//  something then can add config in module with flag wrapped like what Andrew has done
-//trait VatReturnService
 
 class VatReturnService @Inject()(
                                   repository: VatReturnRepository,
@@ -88,7 +86,7 @@ class VatReturnService @Inject()(
           case Left(eisErrorResponse) =>
             logger.error(s"Error occurred while submitting to core $eisErrorResponse", eisErrorResponse.errorDetail.asException)
             auditService.audit(CoreVatReturnAuditModel.build(coreVatReturn, SubmissionResult.Failure, Some(eisErrorResponse.errorDetail)))
-            Future.successful(Left(eisErrorResponse))
+            Left(eisErrorResponse).toFuture
         }
       } yield submissionResult
 
@@ -125,12 +123,6 @@ class VatReturnService @Inject()(
 
     sendToCoreIfEnabled(vatReturn, correctionPayload, repository.insert(vatReturn, correctionPayload))
   }
-
-  def get(): Future[Seq[VatReturn]] =
-    repository.get()
-
-  def getByPeriods(periods: Seq[Period]): Future[Seq[VatReturn]] =
-    repository.getByPeriods(periods)
 
   def get(vrn: Vrn): Future[Seq[VatReturn]] =
     repository.get(vrn)

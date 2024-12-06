@@ -275,7 +275,7 @@ trait ModelGenerators {
     Arbitrary {
       for {
         msOfConsumption <- arbitrary[String]
-        msOfEstablishment <- arbitrary[String] // TODO -> May be called something else
+        msOfEstablishment <- arbitrary[String]
         vatRateType <- Gen.oneOf(EtmpVatRateType.values)
         taxableAmountGBP <- arbitrary[BigDecimal]
         vatAmountGBP <- arbitrary[BigDecimal]
