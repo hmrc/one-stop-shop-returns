@@ -32,5 +32,5 @@ object EtmpObligationsFulfilmentStatus extends Enumerable.Implicits {
   )
 
   implicit val enumerable: Enumerable[EtmpObligationsFulfilmentStatus] =
-    Enumerable(values.map(v => v.toString -> v): _*)
+    Enumerable(values.map(v => v.toString -> v)*)
 }

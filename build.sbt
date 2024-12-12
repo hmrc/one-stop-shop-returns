@@ -10,7 +10,7 @@ lazy val microservice = Project(appName, file("."))
   .disablePlugins(JUnitXmlReportPlugin) //Required to prevent https://github.com/scalatest/scalatest/issues/1427
   .settings(
     majorVersion                     := 0,
-    scalaVersion                     := "3.3.4",
+    scalaVersion                     := "3.5.2",
     libraryDependencies              ++= AppDependencies.compile ++ AppDependencies.test,
 
     ScoverageKeys.coverageExcludedFiles := "<empty>;Reverse.*;" +
@@ -26,11 +26,11 @@ lazy val microservice = Project(appName, file("."))
   )
   .settings(PlayKeys.playDefaultPort := 10205)
   .configs(IntegrationTest)
-  .settings(inConfig(IntegrationTest)(itSettings): _*)
+  .settings(inConfig(IntegrationTest)(itSettings)*)
   .configs(Test)
-  .settings(inConfig(Test)(testSettings): _*)
+  .settings(inConfig(Test)(testSettings)*)
   .settings(resolvers += Resolver.jcenterRepo)
-  .settings(scalacOptions += "-Wconf:src=routes/.*:s")
+  .settings(scalacOptions ++= Seq("-Wconf:src=routes/.*:s", "-Wconf:msg=Flag.*repeatedly:s"))
 
 lazy val itSettings = Defaults.itSettings ++ Seq(
   unmanagedSourceDirectories := Seq(

@@ -37,7 +37,7 @@ object VatOnSalesChoice extends Enumerable.Implicits {
   val values: Seq[VatOnSalesChoice] = Seq(Standard, NonStandard)
 
   implicit val enumerable: Enumerable[VatOnSalesChoice] =
-    Enumerable(values.map(v => v.toString -> v): _*)
+    Enumerable(values.map(v => v.toString -> v)*)
 }
 
 case class EncryptedVatOnSales(choice: EncryptedValue, amount: EncryptedValue)

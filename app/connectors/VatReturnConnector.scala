@@ -56,8 +56,8 @@ class VatReturnConnector @Inject()(
     logger.info(s"Sending getObligations request to ETMP with headers $headersWithoutAuth")
 
     httpClientV2.get(url)
-      .setHeader(headersWithCorrelationId: _*)
-      .transform(_.withQueryStringParameters(queryParameters.toSeqQueryParams: _*))
+      .setHeader(headersWithCorrelationId*)
+      .transform(_.withQueryStringParameters(queryParameters.toSeqQueryParams*))
       .execute[EtmpListObligationsResponse].recover( {
         case e: HttpException =>
           logger.error(s"Unexpected error response from ETMP $url, received status ${e.responseCode}, body of response was: ${e.message}")

@@ -70,7 +70,7 @@ object NewEncryptedSavedUserAnswers {
         (__ \ "period").read[Period] and
         (__ \ "data").read[String] and
         (__ \ "lastUpdated").read(MongoJavatimeFormats.instantFormat)
-      ) (NewEncryptedSavedUserAnswers.apply _)
+      ) (NewEncryptedSavedUserAnswers.apply)
   }
 
   val writes: OWrites[NewEncryptedSavedUserAnswers] = {
@@ -106,7 +106,7 @@ object LegacyEncryptedSavedUserAnswers {
         (__ \ "period").read[Period] and
         (__ \ "data").read[EncryptedValue] and
         (__ \ "lastUpdated").read(MongoJavatimeFormats.instantFormat)
-      ) (LegacyEncryptedSavedUserAnswers.apply _)
+      ) (LegacyEncryptedSavedUserAnswers.apply)
   }
 
   val writes: OWrites[LegacyEncryptedSavedUserAnswers] = {

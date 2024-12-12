@@ -51,9 +51,9 @@ class SaveForLaterRepositorySpec
       appConfig = mockAppConfig
     )
 
-  when(mockConfiguration.underlying) thenReturn mockConfig
-  when(mockConfig.getString(any())) thenReturn secretKey
-  when(mockAppConfig.encryptionKey) thenReturn secretKey
+  when(mockConfiguration.underlying) `thenReturn` mockConfig
+  when(mockConfig.getString(any())) `thenReturn` secretKey
+  when(mockAppConfig.encryptionKey) `thenReturn` secretKey
 
 
   ".set savedAnswers" - {

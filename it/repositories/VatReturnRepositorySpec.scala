@@ -35,7 +35,7 @@ class VatReturnRepositorySpec
   private val appConfig = mock[AppConfig]
   private val secretKey = "VqmXp7yigDFxbCUdDdNZVIvbW6RgPNJsliv6swQNCL8="
 
-  when(appConfig.encryptionKey) thenReturn secretKey
+  when(appConfig.encryptionKey) `thenReturn` secretKey
 
   val correctionRepository = new CorrectionRepository(mongoComponent, correctionEncryptor, appConfig)
 

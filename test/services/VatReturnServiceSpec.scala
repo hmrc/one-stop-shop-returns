@@ -56,7 +56,7 @@ class VatReturnServiceSpec extends SpecBase {
       val insertResult = Gen.oneOf(Some(vatReturn), None).sample.value
       val mockRepository = mock[VatReturnRepository]
 
-      when(mockRepository.insert(any())) thenReturn Future.successful(insertResult)
+      when(mockRepository.insert(any())) `thenReturn` Future.successful(insertResult)
 
       val request = arbitrary[VatReturnRequest].sample.value
       val service = new VatReturnService(mockRepository, coreVatReturnService, auditService, coreVatReturnConnector, appConfig, stubClock)
@@ -75,7 +75,7 @@ class VatReturnServiceSpec extends SpecBase {
       val insertResult = Gen.oneOf(Some((vatReturn, correctionPayload)), None).sample.value
       val mockRepository = mock[VatReturnRepository]
 
-      when(mockRepository.insert(any(), any())) thenReturn Future.successful(insertResult)
+      when(mockRepository.insert(any(), any())) `thenReturn` Future.successful(insertResult)
 
       val request = arbitrary[VatReturnWithCorrectionRequest].sample.value
       val service = new VatReturnService(mockRepository, coreVatReturnService, auditService, coreVatReturnConnector, appConfig, stubClock)
@@ -91,9 +91,9 @@ class VatReturnServiceSpec extends SpecBase {
       val eisErrorResponse = EisErrorResponse(coreErrorResponse)
       val mockRepository = mock[VatReturnRepository]
 
-      when(appConfig.coreVatReturnsEnabled) thenReturn true
-      when(coreVatReturnConnector.submit(any())) thenReturn Future.successful(Left(eisErrorResponse))
-      when(coreVatReturnService.toCore(any(), any())(any())) thenReturn Future.successful(coreVatReturn)
+      when(appConfig.coreVatReturnsEnabled) `thenReturn` true
+      when(coreVatReturnConnector.submit(any())) `thenReturn` Future.successful(Left(eisErrorResponse))
+      when(coreVatReturnService.toCore(any(), any())(any())) `thenReturn` Future.successful(coreVatReturn)
 
       val request = arbitrary[VatReturnWithCorrectionRequest].sample.value
       val service = new VatReturnService(mockRepository, coreVatReturnService, auditService, coreVatReturnConnector, appConfig, stubClock)
@@ -108,9 +108,9 @@ class VatReturnServiceSpec extends SpecBase {
       val eisErrorResponse = EisErrorResponse(coreErrorResponse)
       val mockRepository = mock[VatReturnRepository]
 
-      when(appConfig.coreVatReturnsEnabled) thenReturn true
-      when(coreVatReturnConnector.submit(any())) thenReturn Future.successful(Left(eisErrorResponse))
-      when(coreVatReturnService.toCore(any(), any())(any())) thenReturn Future.successful(coreVatReturn)
+      when(appConfig.coreVatReturnsEnabled) `thenReturn` true
+      when(coreVatReturnConnector.submit(any())) `thenReturn` Future.successful(Left(eisErrorResponse))
+      when(coreVatReturnService.toCore(any(), any())(any())) `thenReturn` Future.successful(coreVatReturn)
 
       val request = arbitrary[VatReturnWithCorrectionRequest].sample.value
       val service = new VatReturnService(mockRepository, coreVatReturnService, auditService, coreVatReturnConnector, appConfig, stubClock)

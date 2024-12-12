@@ -17,7 +17,7 @@
 package controllers
 
 import connectors.{RegistrationConnector, VatReturnConnector}
-import controllers.actions.{AuthAction, AuthenticatedControllerComponents}
+import controllers.actions.AuthAction
 import models.requests.{VatReturnRequest, VatReturnWithCorrectionRequest}
 import models.Period
 import models.core.CoreErrorResponse
@@ -35,7 +35,6 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class VatReturnController @Inject()(
                                      cc: ControllerComponents,
-                                     ac: AuthenticatedControllerComponents,
                                      vatReturnService: VatReturnService,
                                      coreVatReturnConnector: VatReturnConnector,
                                      registrationConnector: RegistrationConnector,

@@ -54,9 +54,9 @@ class CorrectionControllerSpec
         Gen
           .nonEmptyListOf(arbitrary[CorrectionPayload])
           .sample.value
-          .map(r => r copy (vrn = vrn))
+          .map(r => r.copy(vrn = vrn))
 
-      when(mockService.get(any())) thenReturn Future.successful(corrections)
+      when(mockService.get(any())) `thenReturn` Future.successful(corrections)
 
       val app =
         applicationBuilder
@@ -74,7 +74,7 @@ class CorrectionControllerSpec
     "must respond with NOT FOUND when no returns exist for this user" in {
 
       val mockService = mock[CorrectionService]
-      when(mockService.get(any())) thenReturn Future.successful(Seq.empty)
+      when(mockService.get(any())) `thenReturn` Future.successful(Seq.empty)
 
       val app =
         applicationBuilder
@@ -114,9 +114,9 @@ class CorrectionControllerSpec
         Gen
           .nonEmptyListOf(arbitrary[CorrectionPayload])
           .sample.value
-          .map(r => r copy (vrn = vrn)).head
+          .map(r => r.copy(vrn = vrn)).head
 
-      when(mockService.get(any(), any())) thenReturn Future.successful(Some(correction))
+      when(mockService.get(any(), any())) `thenReturn` Future.successful(Some(correction))
 
       val app =
         applicationBuilder
@@ -134,7 +134,7 @@ class CorrectionControllerSpec
     "must respond with NOT FOUND when specified return doesn't exist" in {
 
       val mockService = mock[CorrectionService]
-      when(mockService.get(any(), any())) thenReturn Future.successful(None)
+      when(mockService.get(any(), any())) `thenReturn` Future.successful(None)
 
       val app =
         applicationBuilder
@@ -174,9 +174,9 @@ class CorrectionControllerSpec
         Gen
           .nonEmptyListOf(arbitrary[CorrectionPayload])
           .sample.value
-          .map(r => r copy (vrn = vrn)).head
+          .map(r => r.copy(vrn = vrn)).head
 
-      when(mockService.getByCorrectionPeriod(any(), any())) thenReturn Future.successful(List(correction))
+      when(mockService.getByCorrectionPeriod(any(), any())) `thenReturn` Future.successful(List(correction))
 
       val app =
         applicationBuilder
@@ -194,7 +194,7 @@ class CorrectionControllerSpec
     "must respond with NOT FOUND when specified return doesn't exist" in {
 
       val mockService = mock[CorrectionService]
-      when(mockService.getByCorrectionPeriod(any(), any())) thenReturn Future.successful(List.empty)
+      when(mockService.getByCorrectionPeriod(any(), any())) `thenReturn` Future.successful(List.empty)
 
       val app =
         applicationBuilder
@@ -234,7 +234,7 @@ class CorrectionControllerSpec
 
     "must return OK and a valid response payload when connector returns Right" in {
 
-      when(mockReturnCorrectionConnector.getMaximumCorrectionValue(any(), any(), any())) thenReturn Future.successful(Right(returnCorrectionValue))
+      when(mockReturnCorrectionConnector.getMaximumCorrectionValue(any(), any(), any())) `thenReturn` Future.successful(Right(returnCorrectionValue))
 
       val application = applicationBuilder
         .overrides(bind[CorrectionService].toInstance(mockCorrectionService))
@@ -251,7 +251,7 @@ class CorrectionControllerSpec
 
     "must return InternalServerError when connector returns an error" in {
 
-      when(mockReturnCorrectionConnector.getMaximumCorrectionValue(any(), any(), any())) thenReturn Future.successful(Left(ServerError))
+      when(mockReturnCorrectionConnector.getMaximumCorrectionValue(any(), any(), any())) `thenReturn` Future.successful(Left(ServerError))
 
       val application = applicationBuilder
         .overrides(bind[CorrectionService].toInstance(mockCorrectionService))

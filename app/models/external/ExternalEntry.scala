@@ -33,7 +33,7 @@ object ExternalEntry {
       (__ \ "userId").read[String] and
         (__ \ "returnUrl").read[String] and
         (__ \ "lastUpdated").read(MongoJavatimeFormats.instantFormat)
-      )(ExternalEntry.apply _)
+      )(ExternalEntry.apply)
   }
 
   val writes: OWrites[ExternalEntry] = {

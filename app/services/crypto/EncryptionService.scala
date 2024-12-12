@@ -24,7 +24,7 @@ import javax.inject.{Inject, Singleton}
 @Singleton
 class EncryptionService @Inject()(configuration: Configuration) {
 
-  protected lazy val crypto: Encrypter with Decrypter = SymmetricCryptoFactory.aesGcmCryptoFromConfig(
+  protected lazy val crypto: Encrypter & Decrypter = SymmetricCryptoFactory.aesGcmCryptoFromConfig(
     baseConfigKey = "mongodb.encryption",
     config = configuration.underlying
   )

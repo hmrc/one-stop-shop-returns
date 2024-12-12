@@ -43,5 +43,5 @@ object VatRateType extends Enumerable.Implicits {
   val values: Seq[VatRateType] = Seq(Standard, Reduced)
 
   implicit val enumerable: Enumerable[VatRateType] =
-    Enumerable(values.map(v => v.toString -> v): _*)
+    Enumerable(values.map(v => v.toString -> v)*)
 }

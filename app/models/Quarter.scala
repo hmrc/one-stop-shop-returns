@@ -34,7 +34,7 @@ object Quarter extends Enumerable.Implicits {
   val values: Seq[Quarter] = Seq(Q1, Q2, Q3, Q4)
 
   implicit val enumerable: Enumerable[Quarter] =
-    Enumerable(values.map(v => v.toString -> v): _*)
+    Enumerable(values.map(v => v.toString -> v)*)
 
   def fromString(string: String): Try[Quarter] = string match {
     case Q1.toString => Success(Q1)

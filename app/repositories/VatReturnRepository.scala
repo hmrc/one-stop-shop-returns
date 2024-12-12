@@ -113,7 +113,7 @@ class VatReturnRepository @Inject()(
   def getByPeriods(periods: Seq[Period]): Future[Seq[VatReturn]] = {
     collection
       .find(
-        Filters.in("period", periods.map(toBson(_)):_*))
+        Filters.in("period", periods.map(toBson(_))*))
       .toFuture()
       .map(_.map {
         vatReturn =>

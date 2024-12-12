@@ -76,7 +76,7 @@ class FinancialDataControllerSpec
           .overrides(bind[FinancialDataService].to(financialDataService))
           .build()
 
-      when(financialDataService.getCharge(any(), any())) thenReturn Future.successful(Some(charge))
+      when(financialDataService.getCharge(any(), any())) `thenReturn` Future.successful(Some(charge))
 
       running(app) {
 
@@ -95,7 +95,7 @@ class FinancialDataControllerSpec
           .overrides(bind[FinancialDataService].to(financialDataService))
           .build()
 
-      when(financialDataService.getCharge(any(), any())) thenReturn Future.successful(None)
+      when(financialDataService.getCharge(any(), any())) `thenReturn` Future.successful(None)
 
       running(app) {
 
@@ -113,7 +113,7 @@ class FinancialDataControllerSpec
           .overrides(bind[FinancialDataService].to(financialDataService))
           .build()
 
-      when(financialDataService.getCharge(any(), any())) thenReturn Future.failed(DesException("Some exception"))
+      when(financialDataService.getCharge(any(), any())) `thenReturn` Future.failed(DesException("Some exception"))
 
       running(app) {
 
@@ -141,7 +141,7 @@ class FinancialDataControllerSpec
           .overrides(bind[FinancialDataService].to(financialDataService))
           .build()
 
-      when(financialDataService.getOutstandingAmounts(any())) thenReturn Future.successful(Seq(outstandingPayment))
+      when(financialDataService.getOutstandingAmounts(any())) `thenReturn` Future.successful(Seq(outstandingPayment))
 
       running(app) {
 
@@ -160,7 +160,7 @@ class FinancialDataControllerSpec
           .overrides(bind[FinancialDataService].to(financialDataService))
           .build()
 
-      when(financialDataService.getOutstandingAmounts(any())) thenReturn Future.failed(DesException("Some exception"))
+      when(financialDataService.getOutstandingAmounts(any())) `thenReturn` Future.failed(DesException("Some exception"))
 
       running(app) {
 
@@ -196,10 +196,10 @@ class FinancialDataControllerSpec
       val payment1 = Payment.fromVatReturnWithFinancialData(vatReturnWithFinancialData1, None, stubClock)
       val payment2 = Payment.fromVatReturnWithFinancialData(vatReturnWithFinancialData2, None, stubClock)
 
-      when(mockFinancialDataService.getVatReturnWithFinancialData(any(), any())) thenReturn Future.successful(Seq(vatReturnWithFinancialData1, vatReturnWithFinancialData2))
-      when(mockFinancialDataService.filterIfPaymentIsOutstanding(any())) thenReturn Seq(vatReturnWithFinancialData1, vatReturnWithFinancialData2)
-      when(mockVatReturnSalesService.getTotalVatOnSalesAfterCorrection(any(), any())) thenReturn BigDecimal(0)
-      when(mockRegistrationConnector.getRegistration(any())(any())) thenReturn Future.successful(Some(RegistrationData.registration))
+      when(mockFinancialDataService.getVatReturnWithFinancialData(any(), any())) `thenReturn` Future.successful(Seq(vatReturnWithFinancialData1, vatReturnWithFinancialData2))
+      when(mockFinancialDataService.filterIfPaymentIsOutstanding(any())) `thenReturn` Seq(vatReturnWithFinancialData1, vatReturnWithFinancialData2)
+      when(mockVatReturnSalesService.getTotalVatOnSalesAfterCorrection(any(), any())) `thenReturn` BigDecimal(0)
+      when(mockRegistrationConnector.getRegistration(any())(any())) `thenReturn` Future.successful(Some(RegistrationData.registration))
       val app =
         applicationBuilder
           .overrides(bind[FinancialDataService].to(mockFinancialDataService))
@@ -230,10 +230,10 @@ class FinancialDataControllerSpec
 
       val payment = Payment.fromVatReturnWithFinancialData(vatReturnWithFinancialData, None, stubClock)
 
-      when(mockFinancialDataService.getVatReturnWithFinancialData(any(), any())) thenReturn Future.successful(Seq(vatReturnWithFinancialData))
-      when(mockFinancialDataService.filterIfPaymentIsOutstanding(any())) thenReturn Seq(vatReturnWithFinancialData)
-      when(mockVatReturnSalesService.getTotalVatOnSalesAfterCorrection(any(), any())) thenReturn BigDecimal(0)
-      when(mockRegistrationConnector.getRegistration(any())(any())) thenReturn Future.successful(Some(RegistrationData.registration))
+      when(mockFinancialDataService.getVatReturnWithFinancialData(any(), any())) `thenReturn` Future.successful(Seq(vatReturnWithFinancialData))
+      when(mockFinancialDataService.filterIfPaymentIsOutstanding(any())) `thenReturn` Seq(vatReturnWithFinancialData)
+      when(mockVatReturnSalesService.getTotalVatOnSalesAfterCorrection(any(), any())) `thenReturn` BigDecimal(0)
+      when(mockRegistrationConnector.getRegistration(any())(any())) `thenReturn` Future.successful(Some(RegistrationData.registration))
 
       val app =
         applicationBuilder
@@ -271,10 +271,10 @@ class FinancialDataControllerSpec
       val payment2 = Payment.fromVatReturnWithFinancialData(vatReturnWithFinancialData2, None, stubClock)
       val total = payment1.amountOwed + payment2.amountOwed
 
-      when(mockFinancialDataService.getVatReturnWithFinancialData(any(), any())) thenReturn Future.successful(Seq(vatReturnWithFinancialData1, vatReturnWithFinancialData2))
-      when(mockFinancialDataService.filterIfPaymentIsOutstanding(any())) thenReturn Seq(vatReturnWithFinancialData1, vatReturnWithFinancialData2)
-      when(mockVatReturnSalesService.getTotalVatOnSalesAfterCorrection(any(), any())) thenReturn BigDecimal(0)
-      when(mockRegistrationConnector.getRegistration(any())(any())) thenReturn Future.successful(Some(RegistrationData.registration))
+      when(mockFinancialDataService.getVatReturnWithFinancialData(any(), any())) `thenReturn` Future.successful(Seq(vatReturnWithFinancialData1, vatReturnWithFinancialData2))
+      when(mockFinancialDataService.filterIfPaymentIsOutstanding(any())) `thenReturn` Seq(vatReturnWithFinancialData1, vatReturnWithFinancialData2)
+      when(mockVatReturnSalesService.getTotalVatOnSalesAfterCorrection(any(), any())) `thenReturn` BigDecimal(0)
+      when(mockRegistrationConnector.getRegistration(any())(any())) `thenReturn` Future.successful(Some(RegistrationData.registration))
 
       val app =
         applicationBuilder
@@ -323,10 +323,10 @@ class FinancialDataControllerSpec
 
       val total = expectedPayment1.amountOwed + expectedExcludedPayment2.amountOwed
 
-      when(mockFinancialDataService.getVatReturnWithFinancialData(any(), any())) thenReturn Future.successful(Seq(vatReturnWithFinancialData1, vatReturnWithFinancialData2))
-      when(mockFinancialDataService.filterIfPaymentIsOutstanding(any())) thenReturn Seq(vatReturnWithFinancialData1, vatReturnWithFinancialData2)
-      when(mockVatReturnSalesService.getTotalVatOnSalesAfterCorrection(any(), any())) thenReturn BigDecimal(0)
-      when(mockRegistrationConnector.getRegistration(any())(any())) thenReturn Future.successful(Some(RegistrationData.registration.copy(excludedTrader = Some(excludedTrader))))
+      when(mockFinancialDataService.getVatReturnWithFinancialData(any(), any())) `thenReturn` Future.successful(Seq(vatReturnWithFinancialData1, vatReturnWithFinancialData2))
+      when(mockFinancialDataService.filterIfPaymentIsOutstanding(any())) `thenReturn` Seq(vatReturnWithFinancialData1, vatReturnWithFinancialData2)
+      when(mockVatReturnSalesService.getTotalVatOnSalesAfterCorrection(any(), any())) `thenReturn` BigDecimal(0)
+      when(mockRegistrationConnector.getRegistration(any())(any())) `thenReturn` Future.successful(Some(RegistrationData.registration.copy(excludedTrader = Some(excludedTrader))))
 
       val app =
         applicationBuilder
@@ -353,7 +353,7 @@ class FinancialDataControllerSpec
 
     "must return Not Found if no registration is found for VRN" in {
 
-      when(mockRegistrationConnector.getRegistration(any())(any())) thenReturn Future.successful(None)
+      when(mockRegistrationConnector.getRegistration(any())(any())) `thenReturn` Future.successful(None)
 
       val app =
         applicationBuilder

@@ -53,7 +53,7 @@ class SaveForLaterServiceSpec
       val insertResult   = answers
       val mockRepository = mock[SaveForLaterRepository]
 
-      when(mockRepository.set(any())) thenReturn Future.successful(insertResult)
+      when(mockRepository.set(any())) `thenReturn` Future.successful(insertResult)
 
       val request = arbitrary[SaveForLaterRequest].sample.value
       val service = new SaveForLaterService(mockRepository, stubClock)
@@ -74,7 +74,7 @@ class SaveForLaterServiceSpec
       val mockRepository = mock[SaveForLaterRepository]
       val vrn = arbitrary[Vrn].sample.value
 
-      when(mockRepository.get(any())) thenReturn Future.successful(Seq(answers))
+      when(mockRepository.get(any())) `thenReturn` Future.successful(Seq(answers))
       val service = new SaveForLaterService(mockRepository, stubClock)
 
       val result = service.get(vrn).futureValue
@@ -93,7 +93,7 @@ class SaveForLaterServiceSpec
       val vrn = arbitrary[Vrn].sample.value
       val period = arbitrary[Period].sample.value
 
-      when(mockRepository.clear(any(), any())) thenReturn Future.successful(true)
+      when(mockRepository.clear(any(), any())) `thenReturn` Future.successful(true)
       val service = new SaveForLaterService(mockRepository, stubClock)
 
       val result = service.delete(vrn, period).futureValue

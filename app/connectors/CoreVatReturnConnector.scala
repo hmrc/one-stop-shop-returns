@@ -52,7 +52,7 @@ class CoreVatReturnConnector @Inject()(
 
     logger.info(s"Sending request to core with headers $headersWithoutAuth")
 
-    httpClientV2.post(url).withBody(Json.toJson(coreVatReturn)).setHeader(headersWithCorrelationId: _*).execute[CoreVatReturnResponse].recover {
+    httpClientV2.post(url).withBody(Json.toJson(coreVatReturn)).setHeader(headersWithCorrelationId*).execute[CoreVatReturnResponse].recover {
       case e: HttpException =>
         logger.error(s"Unexpected error response from core $url, received status ${e.responseCode}, body of response was: ${e.message}")
         Left(

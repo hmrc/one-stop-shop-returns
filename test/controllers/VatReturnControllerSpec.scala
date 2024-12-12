@@ -63,8 +63,7 @@ class VatReturnControllerSpec
     "must save a VAT return and respond with Created" in {
       val mockService = mock[VatReturnService]
 
-      when(mockService.createVatReturn(any())(any(), any()))
-        .thenReturn(Future.successful(Right(Some(vatReturn))))
+      when(mockService.createVatReturn(any())(any(), any())) `thenReturn` Future.successful(Right(Some(vatReturn)))
 
       val app =
         applicationBuilder
@@ -252,7 +251,7 @@ class VatReturnControllerSpec
           .sample.value
           .map(r => r.copy(vrn = vrn, reference = ReturnReference(vrn, r.period)))
 
-      when(mockService.get(any())) thenReturn Future.successful(returns)
+      when(mockService.get(any())) `thenReturn` Future.successful(returns)
 
       val app =
         applicationBuilder
@@ -270,7 +269,7 @@ class VatReturnControllerSpec
     "must respond with NOT FOUND when no returns exist for this user" in {
 
       val mockService = mock[VatReturnService]
-      when(mockService.get(any())) thenReturn Future.successful(Seq.empty)
+      when(mockService.get(any())) `thenReturn` Future.successful(Seq.empty)
 
       val app =
         applicationBuilder
@@ -312,7 +311,7 @@ class VatReturnControllerSpec
           .sample.value
           .map(r => r.copy(vrn = vrn, reference = ReturnReference(vrn, r.period))).head
 
-      when(mockService.get(any(), any())) thenReturn Future.successful(Some(vatReturn))
+      when(mockService.get(any(), any())) `thenReturn` Future.successful(Some(vatReturn))
 
       val app =
         applicationBuilder
@@ -330,7 +329,7 @@ class VatReturnControllerSpec
     "must respond with NOT FOUND when specified return doesn't exist" in {
 
       val mockService = mock[VatReturnService]
-      when(mockService.get(any(), any())) thenReturn Future.successful(None)
+      when(mockService.get(any(), any())) `thenReturn` Future.successful(None)
 
       val app =
         applicationBuilder
@@ -369,8 +368,8 @@ class VatReturnControllerSpec
 
     "must respond with OK and return a valid response" in {
 
-      when(mockCoreVatReturnConnector.getObligations(any(), any())) thenReturn Future.successful(Right(etmpObligations))
-      when(mockRegistrationConnector.getRegistration(any())(any())) thenReturn Future.successful(Some(RegistrationData.registration))
+      when(mockCoreVatReturnConnector.getObligations(any(), any())) `thenReturn` Future.successful(Right(etmpObligations))
+      when(mockRegistrationConnector.getRegistration(any())(any())) `thenReturn` Future.successful(Some(RegistrationData.registration))
 
       val app =
         applicationBuilder
@@ -388,8 +387,8 @@ class VatReturnControllerSpec
 
     "must respond with and error when the connector responds with an error" in {
 
-      when(mockCoreVatReturnConnector.getObligations(any(), any())) thenReturn Future.successful(Left(ServerError))
-      when(mockRegistrationConnector.getRegistration(any())(any())) thenReturn Future.successful(Some(RegistrationData.registration))
+      when(mockCoreVatReturnConnector.getObligations(any(), any())) `thenReturn` Future.successful(Left(ServerError))
+      when(mockRegistrationConnector.getRegistration(any())(any())) `thenReturn` Future.successful(Some(RegistrationData.registration))
 
       val app =
         applicationBuilder

@@ -32,7 +32,6 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import repositories.CorrectionRepository
 import uk.gov.hmrc.domain.Vrn
 
-import java.time.{Clock, Instant, ZoneId}
 import scala.concurrent.Future
 
 class CorrectionServiceSpec
@@ -53,7 +52,7 @@ class CorrectionServiceSpec
       val mockRepository = mock[CorrectionRepository]
       val correctionPayloads = Gen.listOfN(2, arbitrary[CorrectionPayload]).sample.value
 
-      when(mockRepository.get(any())) thenReturn Future.successful(correctionPayloads)
+      when(mockRepository.get(any()))`thenReturn` Future.successful(correctionPayloads)
 
       val service = new CorrectionService(mockRepository)
 
@@ -75,7 +74,7 @@ class CorrectionServiceSpec
       val mockRepository = mock[CorrectionRepository]
       val correctionPayload = arbitrary[CorrectionPayload].sample.value
 
-      when(mockRepository.get(any(), any())) thenReturn Future.successful(Some(correctionPayload))
+      when(mockRepository.get(any(), any()))`thenReturn` Future.successful(Some(correctionPayload))
 
       val service = new CorrectionService(mockRepository)
 
@@ -97,7 +96,7 @@ class CorrectionServiceSpec
       val mockRepository = mock[CorrectionRepository]
       val correctionPayload = arbitrary[CorrectionPayload].sample.value
 
-      when(mockRepository.getByCorrectionPeriod(any(), any())) thenReturn Future.successful(List(correctionPayload))
+      when(mockRepository.getByCorrectionPeriod(any(), any()))`thenReturn` Future.successful(List(correctionPayload))
 
       val service = new CorrectionService(mockRepository)
 
@@ -116,7 +115,7 @@ class CorrectionServiceSpec
       val mockRepository = mock[CorrectionRepository]
       val correctionPayloads = Gen.listOfN(2, arbitrary[CorrectionPayload]).sample.value
 
-      when(mockRepository.get()) thenReturn Future.successful(correctionPayloads)
+      when(mockRepository.get())`thenReturn` Future.successful(correctionPayloads)
 
       val service = new CorrectionService(mockRepository)
 
@@ -136,7 +135,7 @@ class CorrectionServiceSpec
       val mockRepository = mock[CorrectionRepository]
       val correctionPayload = Gen.listOfN(2, arbitrary[CorrectionPayload]).sample.value
 
-      when(mockRepository.getByPeriods(any())) thenReturn Future.successful(List(correctionPayload))
+      when(mockRepository.getByPeriods(any()))`thenReturn` Future.successful(List(correctionPayload))
 
       val service = new CorrectionService(mockRepository)
 

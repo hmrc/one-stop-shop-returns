@@ -35,7 +35,7 @@ class CorrectionRepositorySpec
   private val secretKey = "VqmXp7yigDFxbCUdDdNZVIvbW6RgPNJsliv6swQNCL8="
   private val appConfig = mock[AppConfig]
 
-  when(appConfig.encryptionKey) thenReturn secretKey
+  when(appConfig.encryptionKey) `thenReturn` secretKey
 
   override protected val repository: CorrectionRepository =
     new CorrectionRepository(

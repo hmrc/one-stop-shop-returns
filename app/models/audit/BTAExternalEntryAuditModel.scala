@@ -39,7 +39,7 @@ case class BTAExternalEntryAuditModel(
 
 object BTAExternalEntryAuditModel {
 
-  def build(redirectUrl: String)(implicit request: AuthorisedRequest[_]): BTAExternalEntryAuditModel =
+  def build(redirectUrl: String)(implicit request: AuthorisedRequest[?]): BTAExternalEntryAuditModel =
     BTAExternalEntryAuditModel(
       userId = request.userId,
       userAgent = request.headers.get("user-agent").getOrElse(""),

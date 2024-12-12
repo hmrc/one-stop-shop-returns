@@ -53,23 +53,23 @@ class ExclusionServiceSpec extends SpecBase with BeforeAndAfterEach {
   ".hasSubmittedFinalReturn" - {
 
     "must return true if final return completed" in {
-      when(mockRegistrationRequest.registration) thenReturn mockRegistration
+      when(mockRegistrationRequest.registration) `thenReturn` mockRegistration
 
-      when(mockRegistration.excludedTrader) thenReturn
+      when(mockRegistration.excludedTrader) `thenReturn`
         Some(ExcludedTrader(Vrn("123456789"), exclusionReason, exclusionPeriod.firstDay))
 
-      when(vatReturnService.get(any(), any())) thenReturn Future.successful(Some(completeVatReturn))
+      when(vatReturnService.get(any(), any())) `thenReturn` Future.successful(Some(completeVatReturn))
 
       exclusionService.hasSubmittedFinalReturn()(ec, mockRegistrationRequest).futureValue mustBe true
     }
 
     "must return false if final return not completed" in {
-      when(mockRegistrationRequest.registration) thenReturn mockRegistration
+      when(mockRegistrationRequest.registration) `thenReturn` mockRegistration
 
-      when(mockRegistration.excludedTrader) thenReturn
+      when(mockRegistration.excludedTrader) `thenReturn`
         Some(ExcludedTrader(Vrn("123456789"), exclusionReason, exclusionPeriod.firstDay))
 
-      when(vatReturnService.get(any(),any())) thenReturn Future.successful(None)
+      when(vatReturnService.get(any(),any())) `thenReturn` Future.successful(None)
 
       exclusionService.hasSubmittedFinalReturn()(ec, mockRegistrationRequest).futureValue mustBe false
     }

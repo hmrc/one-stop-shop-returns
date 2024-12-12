@@ -21,7 +21,7 @@ class SavedUserAnswersEncryptorSpec extends SpecBase {
 
     "must encrypt and return a EncryptedSavedUserAnswers" in {
 
-      when(mockEncryptionService.encryptField(any())) thenReturn encryptedValue
+      when(mockEncryptionService.encryptField(any())) `thenReturn` encryptedValue
 
       val service = new SavedUserAnswersEncryptor(mockAppConfig, mockSecureGCMCipher, mockEncryptionService)
 
@@ -33,7 +33,7 @@ class SavedUserAnswersEncryptorSpec extends SpecBase {
 
     "must decrypt and return a SavedUserAnswers" in {
 
-      when(mockEncryptionService.decryptField(any())) thenReturn Json.parse(savedUserAnswers.data.toString()).toString()
+      when(mockEncryptionService.decryptField(any())) `thenReturn` Json.parse(savedUserAnswers.data.toString()).toString()
 
       val service = new SavedUserAnswersEncryptor(mockAppConfig, mockSecureGCMCipher, mockEncryptionService)
 
@@ -47,7 +47,7 @@ class SavedUserAnswersEncryptorSpec extends SpecBase {
 
     "must decrypt a LegacyEncryptedSavedUserAnswers and return a SavedUserAnswers" in {
 
-      when(mockSecureGCMCipher.decrypt(any(), any(), any())) thenReturn Json.parse(savedUserAnswers.data.toString()).toString()
+      when(mockSecureGCMCipher.decrypt(any(), any(), any())) `thenReturn` Json.parse(savedUserAnswers.data.toString()).toString()
 
       val service = new SavedUserAnswersEncryptor(mockAppConfig, mockSecureGCMCipher, mockEncryptionService)
 

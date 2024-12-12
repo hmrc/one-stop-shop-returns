@@ -55,7 +55,7 @@ object CoreVatReturnAuditModel {
              coreVatReturn: CoreVatReturn,
              result: SubmissionResult,
              errorResponse: Option[CoreErrorResponse]
-           )(implicit request: AuthorisedRequest[_]): CoreVatReturnAuditModel =
+           )(implicit request: AuthorisedRequest[?]): CoreVatReturnAuditModel =
     CoreVatReturnAuditModel(
       userId = request.userId,
       userAgent = request.headers.get("user-agent").getOrElse(""),
