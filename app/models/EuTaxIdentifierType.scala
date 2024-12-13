@@ -29,7 +29,7 @@ object EuTaxIdentifierType extends Enumerable.Implicits {
     Seq(Vat, Other)
 
   implicit val enumerable: Enumerable[EuTaxIdentifierType] =
-    Enumerable(values.map(v => v.toString -> v): _*)
+    Enumerable(values.map(v => v.toString -> v)*)
 
   implicit def reads: Reads[EuTaxIdentifierType] = Reads[EuTaxIdentifierType] {
     case JsString(Vat.toString)   => JsSuccess(Vat)

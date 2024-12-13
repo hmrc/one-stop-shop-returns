@@ -27,6 +27,7 @@ import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.mongo.transaction.{TransactionConfiguration, Transactions}
+import org.mongodb.scala.ObservableFuture
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -112,7 +113,7 @@ class VatReturnRepository @Inject()(
   def getByPeriods(periods: Seq[Period]): Future[Seq[VatReturn]] = {
     collection
       .find(
-        Filters.in("period", periods.map(toBson(_)):_*))
+        Filters.in("period", periods.map(toBson(_))*))
       .toFuture()
       .map(_.map {
         vatReturn =>

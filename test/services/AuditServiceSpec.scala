@@ -44,7 +44,7 @@ class AuditServiceSpec extends AnyFreeSpec with MockitoSugar with ScalaFutures w
   ".audit" - {
 
     "must send Extended Event" in {
-      when(auditConnector.sendExtendedEvent(any())(any(), any())) thenReturn Future.successful(AuditResult.Success)
+      when(auditConnector.sendExtendedEvent(any())(any(), any())) `thenReturn` Future.successful(AuditResult.Success)
 
       val service = new AuditService(mockAppConfig, auditConnector)
 

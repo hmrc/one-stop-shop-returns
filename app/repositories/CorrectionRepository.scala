@@ -25,6 +25,7 @@ import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.Codecs.toBson
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
+import org.mongodb.scala.ObservableFuture
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -62,7 +63,7 @@ class CorrectionRepository @Inject()(
   def getByPeriods(periods: Seq[Period]): Future[Seq[CorrectionPayload]] =
     collection
       .find(
-        Filters.in("period", periods.map(toBson(_)):_*))
+        Filters.in("period", periods.map(toBson(_))*))
       .toFuture()
       .map(_.map { correction =>
         correctionEncryptor.decryptCorrectionPayload(correction, correction.vrn, encryptionKey)

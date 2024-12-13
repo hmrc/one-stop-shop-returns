@@ -50,17 +50,16 @@ object CoreSupply {
 
 trait CoreEuTraderId
 
-  object CoreEuTraderId {
-
+object CoreEuTraderId {
     implicit val reads: Reads[CoreEuTraderId] =
-      CoreEuTraderVatId.format.widen[CoreEuTraderId] orElse
-        CoreEuTraderTaxId.format.widen[CoreEuTraderId]
+        CoreEuTraderVatId.format.widen[CoreEuTraderId] orElse
+            CoreEuTraderTaxId.format.widen[CoreEuTraderId]
 
     implicit val writes: Writes[CoreEuTraderId] = Writes {
-      case vatId: CoreEuTraderVatId => Json.toJson(vatId)(CoreEuTraderVatId.format)
-      case taxId: CoreEuTraderTaxId => Json.toJson(taxId)(CoreEuTraderTaxId.format)
-    }
-  }
+        case vatId: CoreEuTraderVatId => Json.toJson(vatId)(CoreEuTraderVatId.format)
+        case taxId: CoreEuTraderTaxId => Json.toJson(taxId)(CoreEuTraderTaxId.format)
+        }
+}
 
 case class CoreEuTraderVatId(vatIdNumber: String, issuedBy: String) extends CoreEuTraderId
 

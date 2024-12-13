@@ -19,6 +19,7 @@ import org.mongodb.scala.model.Filters
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import repositories.{CorrectionRepository, VatReturnRepository}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+import org.mongodb.scala.SingleObservableFuture
 
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext

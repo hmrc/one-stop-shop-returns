@@ -4,7 +4,6 @@ import base.SpecBase
 import models.external.{ExternalEntryUrlResponse, ExternalRequest, ExternalResponse}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{doNothing, times, verify, when}
-import play.api.http.Status.{BAD_REQUEST, OK}
 import play.api.inject
 import play.api.libs.json.{JsNull, Json}
 import play.api.test.FakeRequest
@@ -30,7 +29,7 @@ class ExternalEntryControllerSpec extends SpecBase {
         val mockExternalService = mock[ExternalEntryService]
         val mockAuditService = mock[AuditService]
 
-        when(mockExternalService.getExternalResponse(any(), any(), any(), any(), any())) thenReturn Right(ExternalResponse("url"))
+        when(mockExternalService.getExternalResponse(any(), any(), any(), any(), any())) `thenReturn` Right(ExternalResponse("url"))
         doNothing().when(mockAuditService).audit(any())(any(), any())
 
         val application = applicationBuilder
@@ -54,7 +53,7 @@ class ExternalEntryControllerSpec extends SpecBase {
         val mockExternalService = mock[ExternalEntryService]
         val mockAuditService = mock[AuditService]
 
-        when(mockExternalService.getExternalResponse(any(), any(), any(), any(), any())) thenReturn Right(ExternalResponse("url"))
+        when(mockExternalService.getExternalResponse(any(), any(), any(), any(), any())) `thenReturn` Right(ExternalResponse("url"))
         doNothing().when(mockAuditService).audit(any())(any(), any())
 
         val application = applicationBuilder
@@ -81,7 +80,7 @@ class ExternalEntryControllerSpec extends SpecBase {
           val mockExternalService = mock[ExternalEntryService]
           val mockAuditService = mock[AuditService]
 
-          when(mockExternalService.getExternalResponse(any(), any(), any(), any(), any())) thenReturn Left(ErrorResponse(500, "Unknown external entry"))
+          when(mockExternalService.getExternalResponse(any(), any(), any(), any(), any())) `thenReturn` Left(ErrorResponse(500, "Unknown external entry"))
           doNothing().when(mockAuditService).audit(any())(any(), any())
 
           val application = applicationBuilder
@@ -136,7 +135,7 @@ class ExternalEntryControllerSpec extends SpecBase {
         val mockExternalService = mock[ExternalEntryService]
         val url = "/pay-vat-on-goods-sold-to-eu/northern-ireland-register"
 
-        when(mockExternalService.getSavedResponseUrl(any())) thenReturn
+        when(mockExternalService.getSavedResponseUrl(any())) `thenReturn`
           Future.successful(Some(url))
 
         val application = applicationBuilder
@@ -154,7 +153,7 @@ class ExternalEntryControllerSpec extends SpecBase {
       "must respond with none when no url present" in {
         val mockExternalService = mock[ExternalEntryService]
 
-        when(mockExternalService.getSavedResponseUrl(any())) thenReturn
+        when(mockExternalService.getSavedResponseUrl(any())) `thenReturn`
           Future.successful(None)
 
         val application = applicationBuilder

@@ -44,8 +44,8 @@ class FinancialDataConnector @Inject()(
     val url: URL = financialDataUrl(vrn)
 
     httpClientV2.get(url).transform(_
-      .withQueryStringParameters(queryParameters.toSeqQueryParams: _*)
-      .withHttpHeaders(headers: _*)
+      .withQueryStringParameters(queryParameters.toSeqQueryParams*)
+      .withHttpHeaders(headers*)
     ).execute[FinancialDataResponse].recover {
       case e: HttpException =>
         logger.error(s"Unexpected error response getting financial data from $url, received status ${e.responseCode}, body of response was: ${e.message}")

@@ -44,7 +44,7 @@ class VatReturnService @Inject()(
                                 (implicit ec: ExecutionContext) extends Logging {
 
   def createVatReturn(vatReturnRequest: VatReturnRequest)
-                     (implicit hc: HeaderCarrier, request: AuthorisedRequest[_]): Future[Either[EisErrorResponse, Option[VatReturn]]] = {
+                     (implicit hc: HeaderCarrier, request: AuthorisedRequest[?]): Future[Either[EisErrorResponse, Option[VatReturn]]] = {
     val vatReturn = VatReturn(
       vrn = vatReturnRequest.vrn,
       period = vatReturnRequest.period,
@@ -70,7 +70,7 @@ class VatReturnService @Inject()(
   }
 
   private def sendToCoreIfEnabled[A](vatReturn: VatReturn, correctionPayload: CorrectionPayload, block: => Future[A])
-                                    (implicit hc: HeaderCarrier, request: AuthorisedRequest[_]): Future[Either[EisErrorResponse, A]] = {
+                                    (implicit hc: HeaderCarrier, request: AuthorisedRequest[?]): Future[Either[EisErrorResponse, A]] = {
     if (appConfig.coreVatReturnsEnabled) {
 
       for {
@@ -98,7 +98,7 @@ class VatReturnService @Inject()(
   }
 
   def createVatReturnWithCorrection(vatReturnWithCorrectionRequest: VatReturnWithCorrectionRequest)
-                                   (implicit hc: HeaderCarrier, request: AuthorisedRequest[_]): Future[Either[EisErrorResponse, Option[(VatReturn, CorrectionPayload)]]] = {
+                                   (implicit hc: HeaderCarrier, request: AuthorisedRequest[?]): Future[Either[EisErrorResponse, Option[(VatReturn, CorrectionPayload)]]] = {
     val vatReturn = VatReturn(
       vrn = vatReturnWithCorrectionRequest.vatReturnRequest.vrn,
       period = vatReturnWithCorrectionRequest.vatReturnRequest.period,

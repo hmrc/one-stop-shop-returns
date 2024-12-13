@@ -1,6 +1,7 @@
 package models.etmp
 
 import base.SpecBase
+import models.Period
 import play.api.libs.json.{JsSuccess, Json}
 
 class EtmpObligationsSpec extends SpecBase {
@@ -93,6 +94,51 @@ class EtmpObligationsSpec extends SpecBase {
 
     expectedInternalJson mustBe Json.toJson(expectedResult)
     json.validate[EtmpObligations] mustBe JsSuccess(expectedResult)
+  }
+
+  "getFulfilledPeriods" - {
+
+    "must return fulfilled periods correctly" in {
+      val fulfilledDetails = Seq(
+        EtmpObligationDetails(EtmpObligationsFulfilmentStatus.Fulfilled, "23Q1"),
+        EtmpObligationDetails(EtmpObligationsFulfilmentStatus.Fulfilled, "23Q2")
+      )
+      val openDetails = Seq(
+        EtmpObligationDetails(EtmpObligationsFulfilmentStatus.Open, "23Q3")
+      )
+
+      val obligations = EtmpObligations(
+        obligations = Seq(
+          EtmpObligation(obligationDetails = fulfilledDetails ++ openDetails)
+        )
+      )
+
+      val expectedPeriods = Seq(
+        Period.fromKey("23Q1"),
+        Period.fromKey("23Q2")
+      )
+
+      obligations.getFulfilledPeriods mustBe expectedPeriods
+    }
+
+    "must return an empty sequence when there are no fulfilled obligations" in {
+      val obligations = EtmpObligations(
+        obligations = Seq(
+          EtmpObligation(obligationDetails = Seq(
+            EtmpObligationDetails(EtmpObligationsFulfilmentStatus.Open, "23Q1"),
+            EtmpObligationDetails(EtmpObligationsFulfilmentStatus.Open, "23Q2")
+          ))
+        )
+      )
+
+      obligations.getFulfilledPeriods mustBe Seq.empty
+    }
+
+    "must handle an empty obligations list gracefully" in {
+      val obligations = EtmpObligations(obligations = Seq.empty)
+
+      obligations.getFulfilledPeriods mustBe Seq.empty
+    }
   }
 
 }

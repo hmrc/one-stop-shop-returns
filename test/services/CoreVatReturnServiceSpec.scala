@@ -276,7 +276,7 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach with Pri
         when(vatReturnSalesService.getTotalVatOnSalesAfterCorrection(vatReturn, Some(correctionPayload))).thenReturn(
           expectedTotal
         )
-        when(registrationConnector.getRegistration()(any())) thenReturn Future.successful(Some(RegistrationData.registration))
+        when(registrationConnector.getRegistration()(any())) `thenReturn` Future.successful(Some(RegistrationData.registration))
 
         val result = service.toCore(vatReturn, correctionPayload).futureValue
 
@@ -287,7 +287,7 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach with Pri
         when(vatReturnSalesService.getTotalVatOnSalesAfterCorrection(vatReturn2, Some(correctionPayload))).thenReturn(
           expectedTotal2
         )
-        when(registrationConnector.getRegistration()(any())) thenReturn Future.successful(Some(RegistrationData.registration))
+        when(registrationConnector.getRegistration()(any())) `thenReturn` Future.successful(Some(RegistrationData.registration))
 
         val result = service.toCore(vatReturn2, correctionPayload).futureValue
 
@@ -298,7 +298,7 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach with Pri
         when(vatReturnSalesService.getTotalVatOnSalesAfterCorrection(vatReturn, Some(correctionPayload))).thenReturn(
           expectedTotal
         )
-        when(registrationConnector.getRegistration()(any())) thenReturn Future.successful(None)
+        when(registrationConnector.getRegistration()(any())) `thenReturn` Future.successful(None)
 
         val result = service.toCore(vatReturn, correctionPayload)
 
@@ -416,7 +416,7 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach with Pri
         changeDate = registration.adminUse.changeDate
       )
 
-      when(registrationConnector.getRegistration()(any())) thenReturn Future.successful(Some(RegistrationData.registration))
+      when(registrationConnector.getRegistration()(any())) `thenReturn` Future.successful(Some(RegistrationData.registration))
 
       service.toCore(vatReturn, correctionPayload).futureValue mustBe expectedResultCoreVatReturn
     }
@@ -473,7 +473,7 @@ class CoreVatReturnServiceSpec extends SpecBase with BeforeAndAfterEach with Pri
         changeDate = registration.adminUse.changeDate
       )
 
-      when(registrationConnector.getRegistration()(any())) thenReturn Future.successful(Some(RegistrationData.registration))
+      when(registrationConnector.getRegistration()(any())) `thenReturn` Future.successful(Some(RegistrationData.registration))
 
       service.toCore(nilVatReturn, correctionPayload).futureValue mustBe expectedResultCoreVatReturn
     }

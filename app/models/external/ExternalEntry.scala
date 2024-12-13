@@ -33,7 +33,7 @@ object ExternalEntry {
       (__ \ "userId").read[String] and
         (__ \ "returnUrl").read[String] and
         (__ \ "lastUpdated").read(MongoJavatimeFormats.instantFormat)
-      )(ExternalEntry.apply _)
+      )(ExternalEntry.apply)
   }
 
   val writes: OWrites[ExternalEntry] = {
@@ -44,7 +44,7 @@ object ExternalEntry {
       (__ \ "userId").write[String] and
         (__ \ "returnUrl").write[String] and
         (__ \ "lastUpdated").write(MongoJavatimeFormats.instantFormat)
-      )(unlift(ExternalEntry.unapply))
+      )(externalEntry => Tuple.fromProductTyped(externalEntry))
   }
 
   implicit val format: OFormat[ExternalEntry] = OFormat(reads, writes)

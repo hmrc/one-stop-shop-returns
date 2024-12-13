@@ -29,5 +29,5 @@ object SubmissionResult extends Enumerable.Implicits {
   val values: Seq[SubmissionResult] = Seq(Success, Failure)
 
   implicit val enumerable: Enumerable[SubmissionResult] =
-    Enumerable(values.map(v => v.toString -> v): _*)
+    Enumerable(values.map(v => v.toString -> v)*)
 }

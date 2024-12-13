@@ -44,7 +44,7 @@ class QuarterSpec extends AnyFreeSpec with Matchers with ScalaCheckPropertyCheck
 
           whenever(!Quarter.values.map(_.toString).contains(string)) {
 
-            Quarter.fromString(string) mustBe a[Failure[_]]
+            Quarter.fromString(string) mustBe a[Failure[?]]
           }
       }
     }

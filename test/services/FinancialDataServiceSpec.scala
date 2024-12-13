@@ -9,7 +9,7 @@ import models.corrections.{CorrectionPayload, CorrectionToCountry, PeriodWithCor
 import models.des.{DesException, UnexpectedResponseStatus}
 import models.VatReturn
 import org.mockito.ArgumentMatchers.{any, eq => equalTo}
-import org.mockito.ArgumentMatchersSugar.eqTo
+import org.mockito.ArgumentMatchers.{eq => eqTo}
 import org.mockito.Mockito
 import org.mockito.Mockito.{times, verify, when}
 import org.scalacheck.Arbitrary
@@ -87,10 +87,8 @@ class FinancialDataServiceSpec extends SpecBase
       val financialData =
         FinancialData(Some("VRN"), Some("123456789"), Some("ECOM"), ZonedDateTime.now(), Option(financialTransactions))
 
-      when(periodService.getPeriodYears(any())) thenReturn Seq(periodYear2021)
-      when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters2021))).thenReturn(
-        Future.successful(Right(Some(financialData)))
-      )
+      when(periodService.getPeriodYears(any())) `thenReturn` Seq(periodYear2021)
+      when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters2021))) `thenReturn` Future.successful(Right(Some(financialData)))
 
       financialDataService.getFinancialData(Vrn("123456789"), commencementDate).futureValue mustBe Some(financialData)
     }
@@ -169,12 +167,10 @@ class FinancialDataServiceSpec extends SpecBase
         )
         val queryParameters = FinancialDataQueryParameters(fromDate = Some(period.firstDay), toDate = Some(period.lastDay))
 
-        when(periodService.getPeriodYears(any())) thenReturn Seq(periodYear2021)
-        when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters))).thenReturn(
+        when(periodService.getPeriodYears(any())) `thenReturn` Seq(periodYear2021)
+        when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters)))`thenReturn`
           Future.successful(Right(Some(FinancialData(
-            Some("VRN"), Some("123456789"), Some("ECOM"), ZonedDateTime.now(), Option(financialTransactions)
-          ))))
-        )
+            Some("VRN"), Some("123456789"), Some("ECOM"), ZonedDateTime.now(), Option(financialTransactions)))))
 
         val response = financialDataService.getCharge(Vrn("123456789"), period).futureValue
 
@@ -214,11 +210,10 @@ class FinancialDataServiceSpec extends SpecBase
 
         val queryParameters = FinancialDataQueryParameters(fromDate = Some(period.firstDay), toDate = Some(period.lastDay))
 
-        when(periodService.getPeriodYears(any())) thenReturn Seq(periodYear2021)
-        when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters))).thenReturn(
+        when(periodService.getPeriodYears(any())) `thenReturn` Seq(periodYear2021)
+        when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters))) `thenReturn`
           Future.successful(Right(Some(FinancialData(
-            Some("VRN"), Some("123456789"), Some("ECOM"), ZonedDateTime.now(), Option(financialTransactions))
-          ))))
+            Some("VRN"), Some("123456789"), Some("ECOM"), ZonedDateTime.now(), Option(financialTransactions)))))
 
         val response = financialDataService.getCharge(Vrn("123456789"), period).futureValue
 
@@ -277,12 +272,10 @@ class FinancialDataServiceSpec extends SpecBase
 
         val queryParameters = FinancialDataQueryParameters(fromDate = Some(period.firstDay), toDate = Some(period.lastDay))
 
-        when(periodService.getPeriodYears(any())) thenReturn Seq(periodYear2021)
-        when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters))).thenReturn(
+        when(periodService.getPeriodYears(any())) `thenReturn` Seq(periodYear2021)
+        when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters))) `thenReturn`
           Future.successful(Right(Some(FinancialData(
-            Some("VRN"), Some("123456789"), Some("ECOM"), ZonedDateTime.now(), Option(financialTransactions)
-          ))))
-        )
+            Some("VRN"), Some("123456789"), Some("ECOM"), ZonedDateTime.now(), Option(financialTransactions)))))
 
         val response = financialDataService.getCharge(Vrn("123456789"), period).futureValue
 
@@ -301,7 +294,7 @@ class FinancialDataServiceSpec extends SpecBase
         val period = StandardPeriod(2021, Q3)
         val queryParameters = FinancialDataQueryParameters(fromDate = Some(period.firstDay), toDate = Some(period.lastDay))
 
-        when(periodService.getPeriodYears(any())) thenReturn Seq(periodYear2021)
+        when(periodService.getPeriodYears(any())) `thenReturn` Seq(periodYear2021)
         when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters)))
           .thenReturn(Future.successful(Right(None)))
 
@@ -337,11 +330,11 @@ class FinancialDataServiceSpec extends SpecBase
             fromDate = None, toDate = None, onlyOpenItems = Some(true)
           )
 
-        when(vatReturnService.get(any())) thenReturn Future.successful(Seq(vatReturn))
-        when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters))).thenReturn(
+        when(vatReturnService.get(any())) `thenReturn` Future.successful(Seq(vatReturn))
+        when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters))) `thenReturn`
           Future.successful(Right(Some(FinancialData(
             Some("VRN"), Some("123456789"), Some("ECOM"), ZonedDateTime.now(), Option(financialTransactions))
-          ))))
+          )))
 
         financialDataService.getOutstandingAmounts(Vrn("123456789")).futureValue
           .mustBe(Seq(PeriodWithOutstandingAmount(period, BigDecimal(1000))))
@@ -383,11 +376,10 @@ class FinancialDataServiceSpec extends SpecBase
             fromDate = None, toDate = None, onlyOpenItems = Some(true)
           )
 
-        when(vatReturnService.get(any())) thenReturn Future.successful(Seq(vatReturn))
-        when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters))).thenReturn(
-          Future.successful(Right(Some(FinancialData(
-            Some("VRN"), Some("123456789"), Some("ECOM"), ZonedDateTime.now(), Option(financialTransactions))
-          ))))
+        when(vatReturnService.get(any())) `thenReturn` Future.successful(Seq(vatReturn))
+        when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters))) `thenReturn`
+            Future.successful(Right(Some(FinancialData(
+            Some("VRN"), Some("123456789"), Some("ECOM"), ZonedDateTime.now(), Option(financialTransactions)))))
 
         financialDataService.getOutstandingAmounts(Vrn("123456789")).futureValue
           .mustBe(Seq(PeriodWithOutstandingAmount(period2, BigDecimal(2000)), PeriodWithOutstandingAmount(period, BigDecimal(1000))))
@@ -408,12 +400,11 @@ class FinancialDataServiceSpec extends SpecBase
             fromDate = None, toDate = None, onlyOpenItems = Some(true)
           )
 
-        when(vatReturnService.get(any())) thenReturn Future.successful(Seq(vatReturn))
-        when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters))).thenReturn(
+        when(vatReturnService.get(any())) `thenReturn` Future.successful(Seq(vatReturn))
+        when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters)))`thenReturn`
           Future.successful(Right(Some(FinancialData(
-            Some("VRN"), Some("123456789"), Some("ECOM"), ZonedDateTime.now(), Option(financialTransactions)
-          ))))
-        )
+            Some("VRN"), Some("123456789"), Some("ECOM"), ZonedDateTime.now(), Option(financialTransactions)))))
+
 
         financialDataService.getOutstandingAmounts(Vrn("123456789")).futureValue mustBe Seq.empty
       }
@@ -441,11 +432,10 @@ class FinancialDataServiceSpec extends SpecBase
           fromDate = None, toDate = None, onlyOpenItems = Some(true)
         )
 
-      when(vatReturnService.get(any())) thenReturn Future.successful(Seq(vatReturn))
-      when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters))).thenReturn(
+      when(vatReturnService.get(any())) `thenReturn` Future.successful(Seq(vatReturn))
+      when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters))) `thenReturn`
         Future.successful(Right(Some(FinancialData(
-          Some("VRN"), Some("123456789"), Some("ECOM"), ZonedDateTime.now(), Option(financialTransactions))
-        ))))
+          Some("VRN"), Some("123456789"), Some("ECOM"), ZonedDateTime.now(), Option(financialTransactions)))))
       whenReady(financialDataService.getOutstandingAmounts(Vrn("123456789")).failed) { exp =>
         exp mustBe DesException("An error occurred while getting financial Data - periodStart was None")
       }
@@ -478,12 +468,11 @@ class FinancialDataServiceSpec extends SpecBase
           ZonedDateTime.now(),
           Option(financialTransactions)
         )
-      when(periodService.getPeriodYears(any())) thenReturn Seq(periodYear2021)
-      when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters2021))).thenReturn(
-        Future.successful(Right(Some(financialData)))
-      )
-      when(vatReturnService.get(any())) thenReturn Future.successful(Seq(vatReturn))
-      when(correctionsService.get(any(), any())) thenReturn Future.successful(None)
+      when(periodService.getPeriodYears(any())) `thenReturn` Seq(periodYear2021)
+      when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters2021)))`thenReturn`
+          Future.successful(Right(Some(financialData)))
+      when(vatReturnService.get(any())) `thenReturn` Future.successful(Seq(vatReturn))
+      when(correctionsService.get(any(), any())) `thenReturn` Future.successful(None)
 
 
       val response = financialDataService.getVatReturnWithFinancialData(Vrn("123456789"), commencementDate).futureValue
@@ -503,12 +492,12 @@ class FinancialDataServiceSpec extends SpecBase
     "must return one VatReturnWithFinancialData with no charge when there is one vatReturn and no charge" in {
       val commencementDate = LocalDate.now()
 
-      when(periodService.getPeriodYears(any())) thenReturn Seq(periodYear2021)
-      when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters2021)))
-        .thenReturn(Future.successful(Right(None)))
-      when(vatReturnService.get(any())) thenReturn Future.successful(Seq(vatReturn))
-      when(correctionsService.get(any(), any())) thenReturn Future.successful(None)
-      when(vatReturnSalesService.getTotalVatOnSalesAfterCorrection(any(), any())) thenReturn BigDecimal(0)
+      when(periodService.getPeriodYears(any())) `thenReturn` Seq(periodYear2021)
+      when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters2021))) `thenReturn`
+          Future.successful(Right(None))
+      when(vatReturnService.get(any())) `thenReturn` Future.successful(Seq(vatReturn))
+      when(correctionsService.get(any(), any())) `thenReturn` Future.successful(None)
+      when(vatReturnSalesService.getTotalVatOnSalesAfterCorrection(any(), any())) `thenReturn` BigDecimal(0)
 
       val response = financialDataService.getVatReturnWithFinancialData(Vrn("123456789"), commencementDate).futureValue
       val expectedResponse =
@@ -525,14 +514,12 @@ class FinancialDataServiceSpec extends SpecBase
     "must return one VatReturnWithFinancialData when there is one vatReturn and financialDataConnector call fails" in {
       val commencementDate = LocalDate.now()
 
-      when(periodService.getPeriodYears(any())) thenReturn Seq(periodYear2021)
-      when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters2021))).thenReturn(
+      when(periodService.getPeriodYears(any())) `thenReturn` Seq(periodYear2021)
+      when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters2021))) `thenReturn`
         Future.successful(Left(UnexpectedResponseStatus(400, "Error")))
-      )
-      when(vatReturnService.get(any())) thenReturn Future.successful(Seq(vatReturn))
-      when(correctionsService.get(any(), any())) thenReturn Future.successful(None)
-      when(vatReturnSalesService.getTotalVatOnSalesAfterCorrection(any(), any())) thenReturn BigDecimal(0)
-
+      when(vatReturnService.get(any())) `thenReturn` Future.successful(Seq(vatReturn))
+      when(correctionsService.get(any(), any())) `thenReturn` Future.successful(None)
+      when(vatReturnSalesService.getTotalVatOnSalesAfterCorrection(any(), any())) `thenReturn` BigDecimal(0)
       val response = financialDataService.getVatReturnWithFinancialData(Vrn("123456789"), commencementDate).futureValue
       val expectedResponse = Seq(VatReturnWithFinancialData(vatReturn, None, 0, None))
 
@@ -548,11 +535,10 @@ class FinancialDataServiceSpec extends SpecBase
     "must return Seq.empty when there are no vatReturns" in {
       val commencementDate = LocalDate.now()
 
-      when(periodService.getPeriodYears(any())) thenReturn Seq(periodYear2021)
-      when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters2021))).thenReturn(
+      when(periodService.getPeriodYears(any())) `thenReturn` Seq(periodYear2021)
+      when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters2021))) `thenReturn`
         Future.successful(Right(None))
-      )
-      when(vatReturnService.get(any())).thenReturn(Future.successful(Seq.empty))
+      when(vatReturnService.get(any())) `thenReturn` Future.successful(Seq.empty)
 
       val response = financialDataService.getVatReturnWithFinancialData(Vrn("123456789"), commencementDate).futureValue
 
@@ -565,15 +551,12 @@ class FinancialDataServiceSpec extends SpecBase
     "must return something when there are vat returns but 404 financial data" in {
       val commencementDate = LocalDate.of(2021, 7, 1)
 
-      when(periodService.getPeriodYears(any())) thenReturn Seq(periodYear2021)
-      when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters2021))).thenReturn(
-        Future.successful(Right(None))
-      )
-      when(vatReturnService.get(any())).thenReturn(
-        Future.successful(Seq(vatReturn))
-      )
-      when(correctionsService.get(any(), any())) thenReturn Future.successful(None)
-      when(vatReturnSalesService.getTotalVatOnSalesAfterCorrection(any(), any())) thenReturn BigDecimal(1000)
+      when(periodService.getPeriodYears(any())) `thenReturn` Seq(periodYear2021)
+      when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters2021))) `thenReturn`
+          Future.successful(Right(None))
+      when(vatReturnService.get(any()))`thenReturn` Future.successful(Seq(vatReturn))
+      when(correctionsService.get(any(), any())) `thenReturn` Future.successful(None)
+      when(vatReturnSalesService.getTotalVatOnSalesAfterCorrection(any(), any())) `thenReturn` BigDecimal(1000)
       val response = financialDataService.getVatReturnWithFinancialData(Vrn("123456789"), commencementDate).futureValue
 
       val expectedResponse =
@@ -616,8 +599,8 @@ class FinancialDataServiceSpec extends SpecBase
 
       val vatReturn = arbitrary[VatReturn].sample.value.copy(vrn, period = period)
 
-      when(periodService.getPeriodYears(any())) thenReturn Seq(periodYear2021)
-      when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters2021))).thenReturn(
+      when(periodService.getPeriodYears(any())) `thenReturn` Seq(periodYear2021)
+      when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters2021))) `thenReturn`
         Future.successful(
           Right(Some(FinancialData(
             Some("VRN"),
@@ -627,11 +610,9 @@ class FinancialDataServiceSpec extends SpecBase
             Option(financialTransactions)
           )))
         )
-      )
-      when(vatReturnService.get(any())).thenReturn(
+      when(vatReturnService.get(any()))`thenReturn`
         Future.successful(Seq(vatReturn, vatReturn.copy(period = period2)))
-      )
-      when(correctionsService.get(any(), any())) thenReturn Future.successful(None)
+      when(correctionsService.get(any(), any())) `thenReturn` Future.successful(None)
 
       val response = financialDataService.getVatReturnWithFinancialData(Vrn("123456789"), commencementDate).futureValue
       val expectedResponse =
@@ -685,7 +666,7 @@ class FinancialDataServiceSpec extends SpecBase
       val queryParameters2 =
         FinancialDataQueryParameters(fromDate = Some(periodYear2.startOfYear), toDate = Some(periodYear2.endOfYear))
 
-      when(periodService.getPeriodYears(any())) thenReturn Seq(periodYear2021, periodYear2)
+      when(periodService.getPeriodYears(any())) `thenReturn` Seq(periodYear2021, periodYear2)
       when(financialDataConnector.getFinancialData(any(), any()))
         .thenReturn(
           Future.successful(
@@ -708,10 +689,9 @@ class FinancialDataServiceSpec extends SpecBase
           )))
         )
       )
-      when(vatReturnService.get(any())).thenReturn(
+      when(vatReturnService.get(any())) `thenReturn`
         Future.successful(Seq(vatReturn, vatReturn.copy(period = period2)))
-      )
-      when(correctionsService.get(any(), any())) thenReturn Future.successful(None)
+      when(correctionsService.get(any(), any())) `thenReturn` Future.successful(None)
 
       val response = financialDataService.getVatReturnWithFinancialData(Vrn("123456789"), commencementDate).futureValue
       val expectedResponse =
@@ -738,11 +718,11 @@ class FinancialDataServiceSpec extends SpecBase
     "must return one VatReturnWithFinancialData with no charge when there is one vatReturn and no charge with correction" in {
       val commencementDate = LocalDate.now()
 
-      when(financialDataConnector.getFinancialData(any(), eqTo(queryParameters2021))).thenReturn(Future.successful(Right(None)))
-      when(vatReturnService.get(any())) thenReturn Future.successful(Seq(vatReturn))
-      when(periodService.getPeriodYears(any())) thenReturn Seq(periodYear2021)
-      when(correctionsService.get(any(), any())) thenReturn Future.successful(Some(correctionPayload))
-      when(vatReturnSalesService.getTotalVatOnSalesAfterCorrection(any(), any())) thenReturn BigDecimal(100)
+      when(financialDataConnector.getFinancialData(any(), eqTo(queryParameters2021)))`thenReturn`Future.successful(Right(None))
+      when(vatReturnService.get(any())) `thenReturn` Future.successful(Seq(vatReturn))
+      when(periodService.getPeriodYears(any())) `thenReturn` Seq(periodYear2021)
+      when(correctionsService.get(any(), any())) `thenReturn` Future.successful(Some(correctionPayload))
+      when(vatReturnSalesService.getTotalVatOnSalesAfterCorrection(any(), any())) `thenReturn` BigDecimal(100)
       val expectedResponse =
         Seq(VatReturnWithFinancialData(vatReturn, None, 100, Some(correctionPayload)))
 

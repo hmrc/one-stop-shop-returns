@@ -67,7 +67,7 @@ class ReturnStatusControllerSpec
 
     "must respond with OK and a sequence of periods with statuses" in {
 
-      when(mockRegistrationConnector.getRegistration(any())(any())) thenReturn
+      when(mockRegistrationConnector.getRegistration(any())(any())) `thenReturn`
         Future.successful(Some(RegistrationData.registration))
 
       val mockVatReturnService = mock[VatReturnService]
@@ -80,10 +80,10 @@ class ReturnStatusControllerSpec
           .sample.value
           .map(r => r.copy(vrn = vrn, reference = ReturnReference(vrn, r.period))).head
 
-      when(mockVatReturnService.get(any())) thenReturn Future.successful(Seq(vatReturn.copy(period = period)))
-      when(mockPeriodService.getReturnPeriods(any())) thenReturn Seq(period)
-      when(mockPeriodService.getAllPeriods(any())) thenReturn Seq(period)
-      when(mockPeriodService.getNextPeriod(any())) thenReturn nextPeriod
+      when(mockVatReturnService.get(any())) `thenReturn` Future.successful(Seq(vatReturn.copy(period = period)))
+      when(mockPeriodService.getReturnPeriods(any())) `thenReturn` Seq(period)
+      when(mockPeriodService.getAllPeriods(any())) `thenReturn` Seq(period)
+      when(mockPeriodService.getNextPeriod(any())) `thenReturn` nextPeriod
 
       val app =
         applicationBuilder
@@ -105,7 +105,7 @@ class ReturnStatusControllerSpec
 
     "must respond with OK and a sequence of periods with statuses and trader is excluded" in {
 
-      when(mockRegistrationConnector.getRegistration(any())(any())) thenReturn
+      when(mockRegistrationConnector.getRegistration(any())(any())) `thenReturn`
         Future.successful(Some(RegistrationData.registration.copy(excludedTrader = Some(excludedTrader))))
 
       val mockVatReturnService = mock[VatReturnService]
@@ -120,10 +120,10 @@ class ReturnStatusControllerSpec
           .sample.value
           .map(r => r.copy(vrn = vrn, reference = ReturnReference(vrn, r.period))).head
 
-      when(mockVatReturnService.get(any())) thenReturn Future.successful(Seq(vatReturn.copy(period = period)))
-      when(mockPeriodService.getReturnPeriods(any())) thenReturn Seq(period, period2021Q4, period2022Q1)
-      when(mockPeriodService.getAllPeriods(any())) thenReturn Seq(period, period2021Q4, period2022Q1)
-      when(mockPeriodService.getNextPeriod(any())) thenReturn nextPeriod
+      when(mockVatReturnService.get(any())) `thenReturn` Future.successful(Seq(vatReturn.copy(period = period)))
+      when(mockPeriodService.getReturnPeriods(any())) `thenReturn` Seq(period, period2021Q4, period2022Q1)
+      when(mockPeriodService.getAllPeriods(any())) `thenReturn` Seq(period, period2021Q4, period2022Q1)
+      when(mockPeriodService.getNextPeriod(any())) `thenReturn` nextPeriod
 
       val app =
         applicationBuilder
@@ -165,13 +165,13 @@ class ReturnStatusControllerSpec
         val mockS4LaterRepository = mock[SaveForLaterRepository]
         val mockRegConnector = mock[RegistrationConnector]
 
-        when(mockVatReturnService.get(any())) thenReturn Future.successful(Seq.empty)
-        when(mockPeriodService.getReturnPeriods(any())) thenReturn Seq.empty
-        when(mockPeriodService.getAllPeriods(any())) thenReturn Seq(period)
-        when(mockPeriodService.getNextPeriod(any())) thenReturn period
-        when(mockS4LaterRepository.get(any())) thenReturn Future.successful(Seq.empty)
-        when(mockRegConnector.getRegistration(any())(any())) thenReturn Future.successful(Some(RegistrationData.registration))
-        when(mockPeriodService.getRunningPeriod(any())) thenReturn period
+        when(mockVatReturnService.get(any())) `thenReturn` Future.successful(Seq.empty)
+        when(mockPeriodService.getReturnPeriods(any())) `thenReturn` Seq.empty
+        when(mockPeriodService.getAllPeriods(any())) `thenReturn` Seq(period)
+        when(mockPeriodService.getNextPeriod(any())) `thenReturn` period
+        when(mockS4LaterRepository.get(any())) `thenReturn` Future.successful(Seq.empty)
+        when(mockRegConnector.getRegistration(any())(any())) `thenReturn` Future.successful(Some(RegistrationData.registration))
+        when(mockPeriodService.getRunningPeriod(any())) `thenReturn` period
 
         val app =
           applicationBuilder
@@ -197,13 +197,13 @@ class ReturnStatusControllerSpec
         val mockS4LaterRepository = mock[SaveForLaterRepository]
         val mockRegConnector = mock[RegistrationConnector]
 
-        when(mockVatReturnService.get(any())) thenReturn Future.successful(Seq.empty)
-        when(mockPeriodService.getReturnPeriods(any())) thenReturn Seq.empty
-        when(mockPeriodService.getAllPeriods(any())) thenReturn Seq(period)
-        when(mockPeriodService.getNextPeriod(any())) thenReturn period0
-        when(mockS4LaterRepository.get(any())) thenReturn Future.successful(Seq.empty)
-        when(mockRegConnector.getRegistration(any())(any())) thenReturn Future.successful(Some(RegistrationData.registration))
-        when(mockPeriodService.getRunningPeriod(any())) thenReturn period0
+        when(mockVatReturnService.get(any())) `thenReturn` Future.successful(Seq.empty)
+        when(mockPeriodService.getReturnPeriods(any())) `thenReturn` Seq.empty
+        when(mockPeriodService.getAllPeriods(any())) `thenReturn` Seq(period)
+        when(mockPeriodService.getNextPeriod(any())) `thenReturn` period0
+        when(mockS4LaterRepository.get(any())) `thenReturn` Future.successful(Seq.empty)
+        when(mockRegConnector.getRegistration(any())(any())) `thenReturn` Future.successful(Some(RegistrationData.registration))
+        when(mockPeriodService.getRunningPeriod(any())) `thenReturn` period0
 
         val app =
           applicationBuilder
@@ -235,13 +235,13 @@ class ReturnStatusControllerSpec
             .sample.value
             .map(r => r.copy(vrn = vrn, reference = ReturnReference(vrn, r.period))).head
 
-        when(mockVatReturnService.get(any())) thenReturn Future.successful(Seq(vatReturn.copy(period = period)))
-        when(mockPeriodService.getReturnPeriods(any())) thenReturn Seq(period)
-        when(mockPeriodService.getAllPeriods(any())) thenReturn Seq(period)
-        when(mockPeriodService.getNextPeriod(any())) thenReturn period
-        when(mockS4LaterRepository.get(any())) thenReturn Future.successful(Seq.empty)
-        when(mockRegConnector.getRegistration(any())(any())) thenReturn Future.successful(Some(RegistrationData.registration))
-        when(mockPeriodService.getRunningPeriod(any())) thenReturn period
+        when(mockVatReturnService.get(any())) `thenReturn` Future.successful(Seq(vatReturn.copy(period = period)))
+        when(mockPeriodService.getReturnPeriods(any())) `thenReturn` Seq(period)
+        when(mockPeriodService.getAllPeriods(any())) `thenReturn` Seq(period)
+        when(mockPeriodService.getNextPeriod(any())) `thenReturn` period
+        when(mockS4LaterRepository.get(any())) `thenReturn` Future.successful(Seq.empty)
+        when(mockRegConnector.getRegistration(any())(any())) `thenReturn` Future.successful(Some(RegistrationData.registration))
+        when(mockPeriodService.getRunningPeriod(any())) `thenReturn` period
 
         val app =
           applicationBuilder
@@ -267,13 +267,13 @@ class ReturnStatusControllerSpec
         val mockS4LaterRepository = mock[SaveForLaterRepository]
         val mockRegConnector = mock[RegistrationConnector]
 
-        when(mockVatReturnService.get(any())) thenReturn Future.successful(Seq.empty)
-        when(mockPeriodService.getReturnPeriods(any())) thenReturn Seq(period)
-        when(mockS4LaterRepository.get(any())) thenReturn Future.successful(Seq.empty)
-        when(mockRegConnector.getRegistration(any())(any())) thenReturn Future.successful(Some(RegistrationData.registration))
-        when(mockPeriodService.getNextPeriod(any())) thenReturn period
-        when(mockPeriodService.getAllPeriods(any())) thenReturn Seq(period)
-        when(mockPeriodService.getRunningPeriod(any())) thenReturn period
+        when(mockVatReturnService.get(any())) `thenReturn` Future.successful(Seq.empty)
+        when(mockPeriodService.getReturnPeriods(any())) `thenReturn` Seq(period)
+        when(mockS4LaterRepository.get(any())) `thenReturn` Future.successful(Seq.empty)
+        when(mockRegConnector.getRegistration(any())(any())) `thenReturn` Future.successful(Some(RegistrationData.registration))
+        when(mockPeriodService.getNextPeriod(any())) `thenReturn` period
+        when(mockPeriodService.getAllPeriods(any())) `thenReturn` Seq(period)
+        when(mockPeriodService.getRunningPeriod(any())) `thenReturn` period
 
         val app =
           applicationBuilder
@@ -303,13 +303,13 @@ class ReturnStatusControllerSpec
           Return.fromPeriod(period, Overdue, false, true),
           Return.fromPeriod(period0, Overdue, false, false),
           Return.fromPeriod(period2, Overdue, false, false))
-        when(mockVatReturnService.get(any())) thenReturn Future.successful(Seq.empty)
-        when(mockPeriodService.getReturnPeriods(any())) thenReturn periods
-        when(mockS4LaterRepository.get(any())) thenReturn Future.successful(Seq.empty)
-        when(mockRegConnector.getRegistration(any())(any())) thenReturn Future.successful(Some(RegistrationData.registration))
-        when(mockPeriodService.getNextPeriod(any())) thenReturn period
-        when(mockPeriodService.getAllPeriods(any())) thenReturn Seq(period)
-        when(mockPeriodService.getRunningPeriod(any())) thenReturn period
+        when(mockVatReturnService.get(any())) `thenReturn` Future.successful(Seq.empty)
+        when(mockPeriodService.getReturnPeriods(any())) `thenReturn` periods
+        when(mockS4LaterRepository.get(any())) `thenReturn` Future.successful(Seq.empty)
+        when(mockRegConnector.getRegistration(any())(any())) `thenReturn` Future.successful(Some(RegistrationData.registration))
+        when(mockPeriodService.getNextPeriod(any())) `thenReturn` period
+        when(mockPeriodService.getAllPeriods(any())) `thenReturn` Seq(period)
+        when(mockPeriodService.getRunningPeriod(any())) `thenReturn` period
 
         val app =
           applicationBuilder
@@ -335,13 +335,13 @@ class ReturnStatusControllerSpec
         val mockS4LaterRepository = mock[SaveForLaterRepository]
         val mockRegConnector = mock[RegistrationConnector]
 
-        when(mockVatReturnService.get(any())) thenReturn Future.successful(Seq.empty)
-        when(mockPeriodService.getReturnPeriods(any())) thenReturn periods
-        when(mockS4LaterRepository.get(any())) thenReturn Future.successful(Seq.empty)
-        when(mockRegConnector.getRegistration(any())(any())) thenReturn Future.successful(Some(RegistrationData.registration))
-        when(mockPeriodService.getNextPeriod(any())) thenReturn period
-        when(mockPeriodService.getAllPeriods(any())) thenReturn Seq(period)
-        when(mockPeriodService.getRunningPeriod(any())) thenReturn period
+        when(mockVatReturnService.get(any())) `thenReturn` Future.successful(Seq.empty)
+        when(mockPeriodService.getReturnPeriods(any())) `thenReturn` periods
+        when(mockS4LaterRepository.get(any())) `thenReturn` Future.successful(Seq.empty)
+        when(mockRegConnector.getRegistration(any())(any())) `thenReturn` Future.successful(Some(RegistrationData.registration))
+        when(mockPeriodService.getNextPeriod(any())) `thenReturn` period
+        when(mockPeriodService.getAllPeriods(any())) `thenReturn` Seq(period)
+        when(mockPeriodService.getRunningPeriod(any())) `thenReturn` period
         val app =
           applicationBuilder
             .overrides(bind[VatReturnService].toInstance(mockVatReturnService))
@@ -377,13 +377,13 @@ class ReturnStatusControllerSpec
         val mockRegConnector = mock[RegistrationConnector]
         val answers = arbitrary[SavedUserAnswers].sample.value.copy(period = period)
 
-        when(mockVatReturnService.get(any())) thenReturn Future.successful(Seq.empty)
-        when(mockPeriodService.getReturnPeriods(any())) thenReturn Seq(period)
-        when(mockPeriodService.getNextPeriod(any())) thenReturn period
-        when(mockS4LaterRepository.get(any())) thenReturn Future.successful(Seq(answers))
-        when(mockRegConnector.getRegistration(any())(any())) thenReturn Future.successful(Some(RegistrationData.registration))
-        when(mockPeriodService.getAllPeriods(any())) thenReturn Seq(period)
-        when(mockPeriodService.getRunningPeriod(any())) thenReturn period
+        when(mockVatReturnService.get(any())) `thenReturn` Future.successful(Seq.empty)
+        when(mockPeriodService.getReturnPeriods(any())) `thenReturn` Seq(period)
+        when(mockPeriodService.getNextPeriod(any())) `thenReturn` period
+        when(mockS4LaterRepository.get(any())) `thenReturn` Future.successful(Seq(answers))
+        when(mockRegConnector.getRegistration(any())(any())) `thenReturn` Future.successful(Some(RegistrationData.registration))
+        when(mockPeriodService.getAllPeriods(any())) `thenReturn` Seq(period)
+        when(mockPeriodService.getRunningPeriod(any())) `thenReturn` period
 
         val app =
           applicationBuilder
@@ -414,13 +414,13 @@ class ReturnStatusControllerSpec
         val mockPeriodService = mock[PeriodService]
         val mockS4LaterRepository = mock[SaveForLaterRepository]
         val mockRegConnector = mock[RegistrationConnector]
-
-        when(mockVatReturnService.get(any())) thenReturn Future.successful(Seq.empty)
-        when(mockVatReturnService.get(any(), any())) thenReturn Future.successful(None)
-        when(mockPeriodService.getReturnPeriods(any())) thenReturn Seq(periodQ2, periodQ3)
-        when(mockPeriodService.getNextPeriod(any())) thenReturn periodQ3
-        when(mockS4LaterRepository.get(any())) thenReturn Future.successful(Seq.empty)
-        when(mockRegConnector.getRegistration(any())(any())) thenReturn
+        
+        when(mockVatReturnService.get(any())) `thenReturn` Future.successful(Seq.empty)
+        when(mockVatReturnService.get(any(), any())) `thenReturn` Future.successful(None)
+        when(mockPeriodService.getReturnPeriods(any())) `thenReturn` Seq(periodQ2, periodQ3)
+        when(mockPeriodService.getNextPeriod(any())) `thenReturn` periodQ3
+        when(mockS4LaterRepository.get(any())) `thenReturn` Future.successful(Seq.empty)
+        when(mockRegConnector.getRegistration(any())(any())) `thenReturn`
           Future.successful(Some(RegistrationData.registration.copy(excludedTrader = Some(excludedTrader.copy(effectiveDate = periodQ2.firstDay)))))
 
         val app =
@@ -456,12 +456,12 @@ class ReturnStatusControllerSpec
         val mockRegConnector = mock[RegistrationConnector]
 
 
-        when(mockVatReturnService.get(any())) thenReturn Future.successful(Seq(completeVatReturn.copy(period = periodQ2)))
-        when(mockVatReturnService.get(any(), any())) thenReturn Future.successful(Some(completeVatReturn.copy(period = periodQ2)))
-        when(mockPeriodService.getReturnPeriods(any())) thenReturn Seq(periodQ2, periodQ3)
-        when(mockPeriodService.getNextPeriod(any())) thenReturn periodQ3
-        when(mockS4LaterRepository.get(any())) thenReturn Future.successful(Seq.empty)
-        when(mockRegConnector.getRegistration(any())(any())) thenReturn
+        when(mockVatReturnService.get(any())) `thenReturn` Future.successful(Seq(completeVatReturn.copy(period = periodQ2)))
+        when(mockVatReturnService.get(any(), any())) `thenReturn` Future.successful(Some(completeVatReturn.copy(period = periodQ2)))
+        when(mockPeriodService.getReturnPeriods(any())) `thenReturn` Seq(periodQ2, periodQ3)
+        when(mockPeriodService.getNextPeriod(any())) `thenReturn` periodQ3
+        when(mockS4LaterRepository.get(any())) `thenReturn` Future.successful(Seq.empty)
+        when(mockRegConnector.getRegistration(any())(any())) `thenReturn`
           Future.successful(Some(RegistrationData.registration.copy(excludedTrader = Some(excludedTrader.copy(effectiveDate = periodQ2.firstDay)))))
 
         val app =
@@ -496,12 +496,12 @@ class ReturnStatusControllerSpec
         val mockS4LaterRepository = mock[SaveForLaterRepository]
         val mockRegConnector = mock[RegistrationConnector]
 
-        when(mockVatReturnService.get(any())) thenReturn Future.successful(Seq.empty)
-        when(mockVatReturnService.get(any(), any())) thenReturn Future.successful(None)
-        when(mockPeriodService.getReturnPeriods(any())) thenReturn Seq(periodQ2, periodQ3, oldPeriod)
-        when(mockPeriodService.getNextPeriod(any())) thenReturn periodQ3
-        when(mockS4LaterRepository.get(any())) thenReturn Future.successful(Seq.empty)
-        when(mockRegConnector.getRegistration(any())(any())) thenReturn
+        when(mockVatReturnService.get(any())) `thenReturn` Future.successful(Seq.empty)
+        when(mockVatReturnService.get(any(), any())) `thenReturn` Future.successful(None)
+        when(mockPeriodService.getReturnPeriods(any())) `thenReturn` Seq(periodQ2, periodQ3, oldPeriod)
+        when(mockPeriodService.getNextPeriod(any())) `thenReturn` periodQ3
+        when(mockS4LaterRepository.get(any())) `thenReturn` Future.successful(Seq.empty)
+        when(mockRegConnector.getRegistration(any())(any())) `thenReturn`
           Future.successful(Some(RegistrationData.registration.copy(excludedTrader = Some(excludedTrader.copy(effectiveDate = periodQ2.firstDay)))))
 
         val app =
@@ -536,7 +536,7 @@ class ReturnStatusControllerSpec
 
       val mockRegConnector = mock[RegistrationConnector]
 
-      when(mockRegConnector.getRegistration(any())(any())) thenReturn Future.successful(None)
+      when(mockRegConnector.getRegistration(any())(any())) `thenReturn` Future.successful(None)
 
       val app =
         applicationBuilder

@@ -35,9 +35,9 @@ class CorrectionRepositorySpec
   private val secretKey = "VqmXp7yigDFxbCUdDdNZVIvbW6RgPNJsliv6swQNCL8="
   private val appConfig = mock[AppConfig]
 
-  when(appConfig.encryptionKey) thenReturn secretKey
+  when(appConfig.encryptionKey) `thenReturn` secretKey
 
-  override protected val repository =
+  override protected val repository: CorrectionRepository =
     new CorrectionRepository(
       mongoComponent = mongoComponent,
       appConfig = appConfig,
@@ -48,7 +48,7 @@ class CorrectionRepositorySpec
     "must return all records for the given VRN" in {
 
       val correctionPayload1 = arbitrary[CorrectionPayload].sample.value
-      val correctionPayload2Period = correctionPayload1.period.asInstanceOf[StandardPeriod] copy (year = correctionPayload1.period.year + 1)
+      val correctionPayload2Period = correctionPayload1.period.asInstanceOf[StandardPeriod].copy(year = correctionPayload1.period.year + 1)
       val correctionPayload2 = correctionPayload1.copy(
         period = correctionPayload2Period
       )
@@ -80,8 +80,8 @@ class CorrectionRepositorySpec
     "must return all records for the given periods" in {
 
       val correctionPayload1 = arbitrary[CorrectionPayload].sample.value
-      val correctionPayload2Period = correctionPayload1.period.asInstanceOf[StandardPeriod] copy (year = correctionPayload1.period.year + 1)
-      val correctionPayload3Period = correctionPayload1.period.asInstanceOf[StandardPeriod] copy (year = correctionPayload1.period.year + 2)
+      val correctionPayload2Period = correctionPayload1.period.asInstanceOf[StandardPeriod].copy(year = correctionPayload1.period.year + 1)
+      val correctionPayload3Period = correctionPayload1.period.asInstanceOf[StandardPeriod].copy(year = correctionPayload1.period.year + 2)
       val correctionPayload2 = correctionPayload1.copy(
         period = correctionPayload2Period
       )
@@ -115,7 +115,7 @@ class CorrectionRepositorySpec
     "must return all records" in {
 
       val correctionPayload1 = arbitrary[CorrectionPayload].sample.value
-      val correctionPayload2Period = correctionPayload1.period.asInstanceOf[StandardPeriod] copy (year = correctionPayload1.period.year + 1)
+      val correctionPayload2Period = correctionPayload1.period.asInstanceOf[StandardPeriod].copy(year = correctionPayload1.period.year + 1)
       val correctionPayload2 = correctionPayload1.copy(
         period = correctionPayload2Period
       )

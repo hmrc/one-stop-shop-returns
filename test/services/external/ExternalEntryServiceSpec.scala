@@ -29,7 +29,7 @@ class ExternalEntryServiceSpec extends SpecBase {
                 val service = new ExternalEntryService(mockExternalEntryRepository, stubClock)
                 val externalEntry = ExternalEntry(userId, externalRequest.returnUrl, Instant.now(stubClock))
 
-                when(mockExternalEntryRepository.set(any())) thenReturn Future.successful(externalEntry)
+                when(mockExternalEntryRepository.set(any())) `thenReturn` Future.successful(externalEntry)
                 val result = service.getExternalResponse(externalRequest, userId, entryPage.name, None, Some("cy"))
 
                 result mustBe Right(
@@ -47,7 +47,7 @@ class ExternalEntryServiceSpec extends SpecBase {
                 val service = new ExternalEntryService(mockExternalEntryRepository, stubClock)
                 val externalEntry = ExternalEntry(userId, externalRequest.returnUrl, Instant.now(stubClock))
 
-                when(mockExternalEntryRepository.set(any())) thenReturn Future.successful(externalEntry)
+                when(mockExternalEntryRepository.set(any())) `thenReturn` Future.successful(externalEntry)
                 val result = service.getExternalResponse(externalRequest, userId, entryPage.name, None, None)
 
                 result mustBe Right(
@@ -65,7 +65,7 @@ class ExternalEntryServiceSpec extends SpecBase {
                 val service = new ExternalEntryService(mockExternalEntryRepository, stubClock)
                 val externalEntry = ExternalEntry(userId, externalRequest.returnUrl, Instant.now(stubClock))
 
-                when(mockExternalEntryRepository.set(any())) thenReturn Future.successful(externalEntry)
+                when(mockExternalEntryRepository.set(any())) `thenReturn` Future.successful(externalEntry)
                 val result = service.getExternalResponse(externalRequest, userId, entryPage.name, Some(period), None)
 
                 result mustBe Left(ErrorResponse(500, s"Unknown external entry ${entryPage.name}"))
@@ -87,7 +87,7 @@ class ExternalEntryServiceSpec extends SpecBase {
                 val service = new ExternalEntryService(mockExternalEntryRepository, stubClock)
                 val externalEntry = ExternalEntry(userId, externalRequest.returnUrl, Instant.now(stubClock))
 
-                when(mockExternalEntryRepository.set(any())) thenReturn Future.successful(externalEntry)
+                when(mockExternalEntryRepository.set(any())) `thenReturn` Future.successful(externalEntry)
                 val result = service.getExternalResponse(externalRequest, userId, entryPage.name, Some(currentPeriod), Some("cy"))
 
                 result mustBe Right(
@@ -106,7 +106,7 @@ class ExternalEntryServiceSpec extends SpecBase {
                 val service = new ExternalEntryService(mockExternalEntryRepository, stubClock)
                 val externalEntry = ExternalEntry(userId, externalRequest.returnUrl, Instant.now(stubClock))
 
-                when(mockExternalEntryRepository.set(any())) thenReturn Future.successful(externalEntry)
+                when(mockExternalEntryRepository.set(any())) `thenReturn` Future.successful(externalEntry)
                 val result = service.getExternalResponse(externalRequest, userId, entryPage.name, Some(currentPeriod), None)
 
                 result mustBe Right(
@@ -125,7 +125,7 @@ class ExternalEntryServiceSpec extends SpecBase {
               val service = new ExternalEntryService(mockExternalEntryRepository, stubClock)
               val externalEntry = ExternalEntry(userId, externalRequest.returnUrl, Instant.now(stubClock))
 
-              when(mockExternalEntryRepository.set(any())) thenReturn Future.successful(externalEntry)
+              when(mockExternalEntryRepository.set(any())) `thenReturn` Future.successful(externalEntry)
               val result = service.getExternalResponse(externalRequest, userId, entryPage.name, None, None)
 
               result mustBe Left(ErrorResponse(500, s"Unknown external entry ${entryPage.name}"))
@@ -139,7 +139,7 @@ class ExternalEntryServiceSpec extends SpecBase {
       val mockExternalEntryRepository = mock[ExternalEntryRepository]
       val service = new ExternalEntryService(mockExternalEntryRepository, stubClock)
 
-      when(mockExternalEntryRepository.set(any())) thenReturn Future.failed(new Exception("Error saving in session"))
+      when(mockExternalEntryRepository.set(any())) `thenReturn` Future.failed(new Exception("Error saving in session"))
       val result = service.getExternalResponse(externalRequest, userId, YourAccount.name, None, None)
 
       result mustBe Right(

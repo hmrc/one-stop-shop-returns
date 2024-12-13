@@ -18,7 +18,6 @@ package connectors
 
 import config.ReturnCorrectionConfig
 import connectors.ReturnCorrectionHttpParser.{ReturnCorrectionReads, ReturnCorrectionResponse}
-import models.Period
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.http.{HeaderCarrier, HttpErrorFunctions, StringContextOps}
 import uk.gov.hmrc.http.client.HttpClientV2
@@ -43,7 +42,7 @@ class ReturnCorrectionConnector @Inject()(
     val headersWithCorrelationId = headers(correlationId)
 
     httpClientV2.get(url"$baseUrl/$vrn/$countryCode/$period")
-      .setHeader(headersWithCorrelationId: _*)
+      .setHeader(headersWithCorrelationId*)
       .execute[ReturnCorrectionResponse]
   }
 }

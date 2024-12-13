@@ -25,7 +25,7 @@ import models.SubmissionStatus.{Complete, Excluded, Expired}
 import models.etmp.EtmpObligationsQueryParameters
 import models.exclusions.ExcludedTrader
 import models.yourAccount._
-import models.{Period, PeriodWithStatus, StandardPeriod, SubmissionStatus}
+import models.{Period, PeriodWithStatus, SubmissionStatus}
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent}
 import repositories.SaveForLaterRepository
