@@ -49,7 +49,7 @@ class ExternalEntryRepositorySpec
     "must insert entry for different user ids" in {
       val answers1 = arbitrary[ExternalEntry].sample.value
       val userId2 = arbitrary[String].sample.value
-      val answers2 = answers1 copy (
+      val answers2 = answers1.copy (
         userId = userId2
       )
 

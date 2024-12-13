@@ -30,7 +30,7 @@ object ReturnReference {
   def apply(vrn: Vrn, period: Period): ReturnReference =
     ReturnReference(s"XI/XI${vrn.vrn}/${period.quarter.toString}.${period.year}")
 
-  def fromString(string: String): Option[ReturnReference] =
+  private[models] def fromString(string: String): Option[ReturnReference] =
     string match {
       case pattern(vrn, quarter, year) =>
         Period(year, quarter)

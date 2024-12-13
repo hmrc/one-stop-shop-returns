@@ -61,8 +61,8 @@ class SaveForLaterRepositorySpec
     "must insert returns for the same VRN but different periods" in {
 
       val answers    = arbitrary[SavedUserAnswers].sample.value
-      val answers1    = answers copy (lastUpdated = Instant.now(stubClock).truncatedTo(ChronoUnit.MILLIS))
-      val answers2Period = answers1.period.asInstanceOf[StandardPeriod] copy (year = answers1.period.year + 1)
+      val answers1    = answers.copy(lastUpdated = Instant.now(stubClock).truncatedTo(ChronoUnit.MILLIS))
+      val answers2Period = answers1.period.asInstanceOf[StandardPeriod].copy(year = answers1.period.year + 1)
       val answers2    = answers1.copy (
         period      = answers2Period,
         lastUpdated = Instant.now(stubClock).truncatedTo(ChronoUnit.MILLIS)
@@ -81,7 +81,7 @@ class SaveForLaterRepositorySpec
 
     "must insert saved answers for different VRNs in the same period" in {
       val answers    = arbitrary[SavedUserAnswers].sample.value
-      val answers1    = answers copy (lastUpdated = Instant.now(stubClock).truncatedTo(ChronoUnit.MILLIS))
+      val answers1    = answers. copy(lastUpdated = Instant.now(stubClock).truncatedTo(ChronoUnit.MILLIS))
       val vrn2       = Vrn(StringUtils.rotateDigitsInString(answers1.vrn.vrn).mkString)
       val answers2    = answers1.copy (
         vrn         = vrn2,
@@ -122,14 +122,14 @@ class SaveForLaterRepositorySpec
 
       val answers    = arbitrary[SavedUserAnswers].sample.value
       val answers1 = answers.copy(lastUpdated = Instant.now(stubClock).truncatedTo(ChronoUnit.MILLIS))
-      val answers2Period = answers1.period.asInstanceOf[StandardPeriod] copy (year = answers1.period.year + 1)
+      val answers2Period = answers1.period.asInstanceOf[StandardPeriod].copy(year = answers1.period.year + 1)
       val answers2    = answers1.copy (
         period      = answers2Period,
         lastUpdated = Instant.now(stubClock).truncatedTo(ChronoUnit.MILLIS)
         )
 
       val vrn3       = Vrn(StringUtils.rotateDigitsInString(answers1.vrn.vrn).mkString)
-      val answers3 = answers1 copy (
+      val answers3 = answers1.copy(
         vrn         = vrn3
       )
 

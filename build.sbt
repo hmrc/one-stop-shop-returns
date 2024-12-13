@@ -1,5 +1,4 @@
 
-import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin.publishingSettings
 import scoverage.ScoverageKeys
 import play.sbt.routes.RoutesKeys
 
