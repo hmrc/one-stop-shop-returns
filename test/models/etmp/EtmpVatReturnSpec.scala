@@ -5,7 +5,6 @@ import play.api.libs.json.{JsSuccess, Json}
 
 class EtmpVatReturnSpec extends SpecBase {
 
-
   private val etmpVatReturn: EtmpVatReturn = arbitraryEtmpVatReturn.arbitrary.sample.value
 
   "EtmpVatReturn" - {

@@ -6,7 +6,6 @@ import org.scalacheck.Gen
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.libs.json.{JsError, JsString, Json}
 
-
 class EtmpVatRateTypeSpec extends SpecBase with ScalaCheckPropertyChecks {
 
   "EtmpVatRateType" - {
