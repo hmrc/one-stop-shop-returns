@@ -16,7 +16,7 @@
 
 package models.etmp
 
-import play.api.libs.functional.syntax.{toFunctionalBuilderOps, unlift}
+import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.json.{Format, Reads, Writes, __}
 
 import java.time.{LocalDate, LocalDateTime}
@@ -57,7 +57,7 @@ object EtmpVatReturn {
         (__ \ "balanceOfVATDueForMS").readWithDefault[Seq[EtmpVatReturnBalanceOfVatDue]](Seq.empty) and
         (__ \ "totalVATAmountDueForAllMSGBP").read[BigDecimal] and
         (__ \ "paymentReference").read[String]
-      )(EtmpVatReturn.apply _)
+      )(EtmpVatReturn.apply)
   }
 
   implicit val writes: Writes[EtmpVatReturn] = {
@@ -76,7 +76,7 @@ object EtmpVatReturn {
         (__ \ "balanceOfVATDueForMS").write[Seq[EtmpVatReturnBalanceOfVatDue]] and
         (__ \ "totalVATAmountDueForAllMSGBP").write[BigDecimal] and
         (__ \ "paymentReference").write[String]
-      )(unlift(EtmpVatReturn.unapply))
+      )(etmpVatReturn => Tuple.fromProductTyped(etmpVatReturn))
   }
 
   implicit val format: Format[EtmpVatReturn] = Format(reads, writes)

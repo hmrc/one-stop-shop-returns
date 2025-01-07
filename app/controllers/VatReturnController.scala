@@ -64,6 +64,7 @@ class VatReturnController @Inject()(
       }
   }
 
+  // TODO -> Remove via VEOSS-1998
   def list(): Action[AnyContent] = auth.async {
     implicit request =>
       vatReturnService.get(request.vrn).map {
