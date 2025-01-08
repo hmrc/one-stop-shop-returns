@@ -16,14 +16,13 @@
 
 package models.financialdata
 
-import models.VatReturn
+import models.{Period, VatReturn}
 import models.corrections.CorrectionPayload
 import play.api.libs.json.{Format, Json}
 
-case class VatReturnWithFinancialData(vatReturn: VatReturn,
+case class VatReturnWithFinancialData(period: Period,
                                       charge: Option[Charge],
-                                      vatOwed: BigDecimal,
-                                      corrections: Option[CorrectionPayload]
+                                      vatOwed: BigDecimal
                                      )
 
 object VatReturnWithFinancialData {
