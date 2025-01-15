@@ -16,7 +16,7 @@
 
 package controllers
 
-import connectors.{CoreVatReturnConnector, RegistrationConnector, VatReturnConnector}
+import connectors.{RegistrationConnector, VatReturnConnector}
 import controllers.actions.AuthAction
 import models.Period
 import models.core.CoreErrorResponse
@@ -36,7 +36,6 @@ import scala.concurrent.{ExecutionContext, Future}
 class VatReturnController @Inject()(
                                      cc: ControllerComponents,
                                      vatReturnService: VatReturnService,
-                                     coreVatReturnConnector: CoreVatReturnConnector,
                                      vatReturnConnector: VatReturnConnector,
                                      registrationConnector: RegistrationConnector,
                                      auth: AuthAction,
@@ -83,7 +82,7 @@ class VatReturnController @Inject()(
 
   def getEtmpVatReturn(period: Period): Action[AnyContent] = auth.async {
     implicit request =>
-      coreVatReturnConnector.get(request.vrn, period).map {
+      vatReturnConnector.get(request.vrn, period).map {
         case Right(etmpVatReturn) => Ok(Json.toJson(etmpVatReturn))
         case Left(errorResponse) => InternalServerError(Json.toJson(errorResponse.body))
       }

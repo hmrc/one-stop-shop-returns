@@ -18,10 +18,8 @@ package connectors
 
 import logging.Logging
 import models.core.{CoreErrorResponse, EisErrorResponse}
-import models.etmp.EtmpVatReturn
-import models.responses.{ErrorResponse, InvalidJson, UnexpectedResponseStatus}
-import play.api.http.Status._
-import play.api.libs.json.{JsError, JsSuccess}
+import play.api.http.Status.*
+import play.api.libs.json.JsSuccess
 import uk.gov.hmrc.http.{HttpReads, HttpResponse}
 
 import java.time.Instant
@@ -29,7 +27,6 @@ import java.time.Instant
 object CoreVatReturnHttpParser extends Logging {
 
   type CoreVatReturnResponse = Either[EisErrorResponse, Unit]
-  type DisplayVatReturnResponse = Either[ErrorResponse, EtmpVatReturn]
 
   implicit object CoreVatReturnReads extends HttpReads[CoreVatReturnResponse] {
     override def read(method: String, url: String, response: HttpResponse): CoreVatReturnResponse =
@@ -58,22 +55,5 @@ object CoreVatReturnHttpParser extends Logging {
           }
       }
   }
-
-  implicit object EtmpVatReturnReads extends HttpReads[DisplayVatReturnResponse] {
-    override def read(method: String, url: String, response: HttpResponse): DisplayVatReturnResponse =
-      response.status match {
-        case OK =>
-          response.json.validate[EtmpVatReturn] match {
-            case JsSuccess(etmpVatReturn, _) =>
-              Right(etmpVatReturn)
-            case JsError(errors) =>
-              logger.error(s"There was an error parsing the JSON response from ETMP with errors: $errors")
-              Left(InvalidJson)
-          }
-
-        case status =>
-          logger.error(s"Received unexpected response status: $status from url: $url whilst retrieving from ETMP Display VAT Return with response body: ${response.body}")
-          Left(UnexpectedResponseStatus(status, s"Unexpected response form Display VAT Return with status: $status and response body: ${response.body}"))
-      }
-  }
 }
+

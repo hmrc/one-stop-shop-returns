@@ -48,7 +48,7 @@ class FinancialDataService @Inject()(
 
   def getVatReturnWithFinancialData(vrn: Vrn, commencementDate: LocalDate): Future[Seq[VatReturnWithFinancialData]] = {
     (for {
-      vatReturns <- vatReturnService.get(vrn) // TODO -> Can't use anympre, need obligations call
+      vatReturns <- vatReturnService.get(vrn)
       maybeFinancialDataResponse <- getFinancialData(vrn, commencementDate).recover {
         case e: Exception =>
           logger.error(s"Error while getting vat return with financial data: ${e.getMessage}", e)

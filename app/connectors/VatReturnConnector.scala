@@ -16,14 +16,16 @@
 
 package connectors
 
-import config.EtmpListObligationsConfig
+import config.{EtmpDisplayVatReturnConfig, EtmpListObligationsConfig}
 import connectors.EtmpListObligationsHttpParser.{EtmpListObligationsReads, EtmpListObligationsResponse}
+import connectors.VatReturnHttpParser.{DisplayVatReturnResponse, EtmpVatReturnReads}
 import models.etmp.EtmpObligationsQueryParameters
-import models.GatewayTimeout
+import models.{GatewayTimeout, Period}
 import play.api.Logging
 import play.api.http.HeaderNames.AUTHORIZATION
-import uk.gov.hmrc.http.{HeaderCarrier, HttpException, StringContextOps}
+import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http.{HeaderCarrier, HttpException, StringContextOps}
 
 import java.net.URL
 import java.util.UUID
@@ -32,12 +34,15 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class VatReturnConnector @Inject()(
                                     httpClientV2: HttpClientV2,
-                                    etmpListObligationsConfig: EtmpListObligationsConfig
+                                    etmpListObligationsConfig: EtmpListObligationsConfig,
+                                    etmpDisplayVatReturnConfig: EtmpDisplayVatReturnConfig
                                   )(implicit ec: ExecutionContext) extends Logging {
 
   private implicit val emptyHc: HeaderCarrier = HeaderCarrier()
 
   private def obligationsHeaders(correlationId: String): Seq[(String, String)] = etmpListObligationsConfig.headers(correlationId)
+
+  private def etmpDisplayHeaders(correlationId: String): Seq[(String, String)] = etmpDisplayVatReturnConfig.headers(correlationId)
 
   private def getObligationsUrl(vrn: String): URL =
     url"${etmpListObligationsConfig.baseUrl}enterprise/obligation-data/${etmpListObligationsConfig.idType}/$vrn/${etmpListObligationsConfig.regimeType}"
@@ -56,9 +61,9 @@ class VatReturnConnector @Inject()(
     logger.info(s"Sending getObligations request to ETMP with headers $headersWithoutAuth")
 
     httpClientV2.get(url)
-      .setHeader(headersWithCorrelationId*)
-      .transform(_.withQueryStringParameters(queryParameters.toSeqQueryParams*))
-      .execute[EtmpListObligationsResponse].recover( {
+      .setHeader(headersWithCorrelationId *)
+      .transform(_.withQueryStringParameters(queryParameters.toSeqQueryParams *))
+      .execute[EtmpListObligationsResponse].recover({
         case e: HttpException =>
           logger.error(s"Unexpected error response from ETMP $url, received status ${e.responseCode}, body of response was: ${e.message}")
           Left(GatewayTimeout)
@@ -66,5 +71,26 @@ class VatReturnConnector @Inject()(
       })
   }
 
+  def get(vrn: Vrn, period: Period): Future[DisplayVatReturnResponse] = {
 
+    val correlationId = UUID.randomUUID().toString
+    val headersWithCorrelationId = etmpDisplayHeaders(correlationId)
+
+    val headersWithoutAuth = headersWithCorrelationId.filterNot {
+      case (key, _) => key.matches(AUTHORIZATION)
+    }
+
+    val url: URL = url"${etmpDisplayVatReturnConfig.baseUrl}/$vrn/$period"
+
+    logger.info(s"Sending get request to ETMP with headers $headersWithoutAuth")
+
+    httpClientV2.get(url)
+      .setHeader(headersWithCorrelationId *)
+      .execute[DisplayVatReturnResponse]
+      .recover {
+        case e: HttpException =>
+          logger.error(s"Unexpected error response from core $url, received status ${e.responseCode} with body: ${e.message}")
+          Left(GatewayTimeout)
+      }
+  }
 }
