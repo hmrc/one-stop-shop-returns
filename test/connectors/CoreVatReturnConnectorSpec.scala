@@ -1,7 +1,7 @@
 package connectors
 
 import base.SpecBase
-import com.github.tomakehurst.wiremock.client.WireMock._
+import com.github.tomakehurst.wiremock.client.WireMock.*
 import models.core.{CoreErrorResponse, EisErrorResponse}
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
 import org.scalatest.time.{Seconds, Span}
@@ -14,19 +14,19 @@ import java.util.UUID
 
 class CoreVatReturnConnectorSpec extends SpecBase with WireMockHelper {
 
-  private val url = "/one-stop-shop-returns-stub/vec/submitvatreturn/v1/oss"
-
   private def application: Application =
     new GuiceApplicationBuilder()
       .configure(
         "microservice.services.if.host" -> "127.0.0.1",
         "microservice.services.if.port" -> server.port,
         "microservice.services.if.authorizationToken" -> "auth-token",
-        "microservice.services.if.environment" -> "test-environment",
-      )
-      .build()
+        "microservice.services.if.environment" -> "test-environment"
+      ).build()
 
   "submit" - {
+
+    val url = "/one-stop-shop-returns-stub/vec/submitvatreturn/v1/oss"
+
     "when the server returns ACCEPTED" - {
       "must return gracefully" in {
         val app = application
@@ -55,11 +55,11 @@ class CoreVatReturnConnectorSpec extends SpecBase with WireMockHelper {
 
         val errorResponseJson =
           s"""{"errorDetail": {
-            |  "timestamp": "$timestamp",
-            |  "transactionId": "$uuid",
-            |  "errorCode": "OSS_405",
-            |  "errorMessage": "Method Not Allowed"
-            |}}""".stripMargin
+             |  "timestamp": "$timestamp",
+             |  "transactionId": "$uuid",
+             |  "errorCode": "OSS_405",
+             |  "errorMessage": "Method Not Allowed"
+             |}}""".stripMargin
 
         server.stubFor(
           post(urlEqualTo(url))
@@ -73,7 +73,7 @@ class CoreVatReturnConnectorSpec extends SpecBase with WireMockHelper {
           val connector = app.injector.instanceOf[CoreVatReturnConnector]
           val result = connector.submit(coreVatReturn).futureValue
 
-          val expectedResponse = EisErrorResponse(CoreErrorResponse(Instant.parse(timestamp),  Some(UUID.fromString(uuid)), "OSS_405", "Method Not Allowed"))
+          val expectedResponse = EisErrorResponse(CoreErrorResponse(Instant.parse(timestamp), Some(UUID.fromString(uuid)), "OSS_405", "Method Not Allowed"))
 
           result mustBe Left(expectedResponse)
         }
@@ -152,3 +152,5 @@ class CoreVatReturnConnectorSpec extends SpecBase with WireMockHelper {
 
   }
 }
+
+

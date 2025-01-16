@@ -14,18 +14,19 @@
  * limitations under the License.
  */
 
-package config
+package models.etmp
 
-import com.google.inject.AbstractModule
-import controllers.actions.{AuthAction, AuthActionImpl, AuthenticatedControllerComponents, DefaultAuthenticatedControllerComponents}
+import play.api.libs.json.{Format, Json}
 
-import java.time.{Clock, ZoneOffset}
+case class EtmpVatReturnGoodsSupplied(
+                                       msOfConsumption: String,
+                                       msOfEstablishment: String,
+                                       vatRateType: EtmpVatRateType,
+                                       taxableAmountGBP: BigDecimal,
+                                       vatAmountGBP: BigDecimal
+                                     )
 
-class Module extends AbstractModule {
+object EtmpVatReturnGoodsSupplied {
 
-  override def configure(): Unit = {
-    bind(classOf[AuthAction]).to(classOf[AuthActionImpl]).asEagerSingleton()
-    bind(classOf[Clock]).toInstance(Clock.systemDefaultZone.withZone(ZoneOffset.UTC))
-    bind(classOf[AuthenticatedControllerComponents]).to(classOf[DefaultAuthenticatedControllerComponents]).asEagerSingleton()
-  }
+  implicit val format: Format[EtmpVatReturnGoodsSupplied] = Json.format[EtmpVatReturnGoodsSupplied]
 }

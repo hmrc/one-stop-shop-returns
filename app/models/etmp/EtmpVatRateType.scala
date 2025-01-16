@@ -14,18 +14,24 @@
  * limitations under the License.
  */
 
-package config
+package models.etmp
 
-import com.google.inject.AbstractModule
-import controllers.actions.{AuthAction, AuthActionImpl, AuthenticatedControllerComponents, DefaultAuthenticatedControllerComponents}
+import models.{Enumerable, WithName}
 
-import java.time.{Clock, ZoneOffset}
 
-class Module extends AbstractModule {
+sealed trait EtmpVatRateType
 
-  override def configure(): Unit = {
-    bind(classOf[AuthAction]).to(classOf[AuthActionImpl]).asEagerSingleton()
-    bind(classOf[Clock]).toInstance(Clock.systemDefaultZone.withZone(ZoneOffset.UTC))
-    bind(classOf[AuthenticatedControllerComponents]).to(classOf[DefaultAuthenticatedControllerComponents]).asEagerSingleton()
-  }
+object EtmpVatRateType extends Enumerable.Implicits {
+
+  case object StandardVatRate extends WithName("STANDARD") with EtmpVatRateType
+
+  case object ReducedVatRate extends WithName("REDUCED") with EtmpVatRateType
+
+  val values: Seq[EtmpVatRateType] = Seq(
+    StandardVatRate,
+    ReducedVatRate
+  )
+
+  implicit val enumerable: Enumerable[EtmpVatRateType] =
+    Enumerable(values.map(v => v.toString -> v) *)
 }

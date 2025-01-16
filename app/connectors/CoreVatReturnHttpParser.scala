@@ -18,7 +18,7 @@ package connectors
 
 import logging.Logging
 import models.core.{CoreErrorResponse, EisErrorResponse}
-import play.api.http.Status._
+import play.api.http.Status.*
 import play.api.libs.json.JsSuccess
 import uk.gov.hmrc.http.{HttpReads, HttpResponse}
 
@@ -35,7 +35,7 @@ object CoreVatReturnHttpParser extends Logging {
           Right(())
         case status =>
           logger.info(s"Response received from core vat returns ${response.status} with body ${response.body}")
-          if(response.body.isEmpty) {
+          if (response.body.isEmpty) {
             Left(
               EisErrorResponse(
                 CoreErrorResponse(Instant.now(), None, s"UNEXPECTED_$status", "The response body was empty")
@@ -54,7 +54,6 @@ object CoreVatReturnHttpParser extends Logging {
             }
           }
       }
-
   }
-
 }
+

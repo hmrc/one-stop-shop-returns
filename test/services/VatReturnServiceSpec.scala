@@ -63,7 +63,7 @@ class VatReturnServiceSpec extends SpecBase {
 
       val result = service.createVatReturn(request).futureValue
 
-      result mustEqual Right(insertResult)
+      result mustBe Right(insertResult)
       verify(mockRepository, times(1)).insert(any())
     }
   }
@@ -71,6 +71,7 @@ class VatReturnServiceSpec extends SpecBase {
   ".createVatReturnWithCorrection" - {
 
     "must create a VAT return and correction, attempt to save it to the repositories, and respond with the result of saving" in {
+
       val correctionPayload = arbitrary[CorrectionPayload].sample.value
       val insertResult = Gen.oneOf(Some((vatReturn, correctionPayload)), None).sample.value
       val mockRepository = mock[VatReturnRepository]
@@ -82,11 +83,12 @@ class VatReturnServiceSpec extends SpecBase {
 
       val result = service.createVatReturnWithCorrection(request).futureValue
 
-      result mustEqual Right(insertResult)
+      result mustBe Right(insertResult)
       verify(mockRepository, times(1)).insert(any(), any())
     }
 
     "must error when core enabled and fails to send to core" in {
+
       val coreErrorResponse = CoreErrorResponse(Instant.now(), None, "ERROR", "There was an error")
       val eisErrorResponse = EisErrorResponse(coreErrorResponse)
       val mockRepository = mock[VatReturnRepository]
@@ -104,6 +106,7 @@ class VatReturnServiceSpec extends SpecBase {
     }
 
     "must error when core enabled and registration is not present in core" in {
+
       val coreErrorResponse = CoreErrorResponse(Instant.now(), None, REGISTRATION_NOT_FOUND, "There was an error")
       val eisErrorResponse = EisErrorResponse(coreErrorResponse)
       val mockRepository = mock[VatReturnRepository]
@@ -117,8 +120,6 @@ class VatReturnServiceSpec extends SpecBase {
 
       val result = service.createVatReturnWithCorrection(request).futureValue
       result mustBe Left(eisErrorResponse)
-
     }
-
   }
 }
