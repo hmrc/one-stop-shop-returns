@@ -38,11 +38,11 @@ object Payment {
     }
   }
 
-  def fromVatReturnWithFinancialData(vatReturnWithFinancialData: VatReturnWithFinancialData,
+  def fromVatReturnWithFinancialData(vatReturnWithFinancialData: PeriodWithFinancialData,
                                      maybeExclusion: Option[ExcludedTrader],
                                      clock: Clock): Payment = {
 
-    val period = vatReturnWithFinancialData.vatReturn.period
+    val period = vatReturnWithFinancialData.period
 
     val paymentStatus: PaymentStatus =
       vatReturnWithFinancialData.charge
@@ -64,9 +64,9 @@ object Payment {
         }
 
     Payment(
-      vatReturnWithFinancialData.vatReturn.period,
+      vatReturnWithFinancialData.period,
       vatReturnWithFinancialData.vatOwed,
-      vatReturnWithFinancialData.vatReturn.period.paymentDeadline,
+      vatReturnWithFinancialData.period.paymentDeadline,
       paymentStatus
     )
   }

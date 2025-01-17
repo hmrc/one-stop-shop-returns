@@ -188,9 +188,9 @@ class FinancialDataControllerSpec
       val charge1 = Charge(periodDue, 1000, 1000, 0)
       val charge2 = Charge(periodOverdue, 1000, 500, 500)
 
-      val vatReturnWithFinancialData1 = VatReturnWithFinancialData(
+      val vatReturnWithFinancialData1 = PeriodWithFinancialData(
         completeVatReturn.copy(period = periodDue), Some(charge1), 1000L, None)
-      val vatReturnWithFinancialData2 = VatReturnWithFinancialData(
+      val vatReturnWithFinancialData2 = PeriodWithFinancialData(
         completeVatReturn.copy(period = periodOverdue), Some(charge2), 1000L, None)
 
       val payment1 = Payment.fromVatReturnWithFinancialData(vatReturnWithFinancialData1, None, stubClock)
@@ -225,7 +225,7 @@ class FinancialDataControllerSpec
       val periodDue = StandardPeriod(2021, Q4)
       val charge1 = Charge(periodDue, 1000, 1000, 0)
 
-      val vatReturnWithFinancialData = VatReturnWithFinancialData(
+      val vatReturnWithFinancialData = PeriodWithFinancialData(
         completeVatReturn.copy(period = periodDue), Some(charge1), 1000L, None)
 
       val payment = Payment.fromVatReturnWithFinancialData(vatReturnWithFinancialData, None, stubClock)
@@ -262,9 +262,9 @@ class FinancialDataControllerSpec
       val charge1 = Charge(periodOverdue1, 1000, 1000, 0)
       val charge2 = Charge(periodOverdue2, 1000, 1000, 0)
 
-      val vatReturnWithFinancialData1 = VatReturnWithFinancialData(
+      val vatReturnWithFinancialData1 = PeriodWithFinancialData(
         completeVatReturn.copy(period = periodOverdue1), Some(charge1), 1000L, None)
-      val vatReturnWithFinancialData2 = VatReturnWithFinancialData(
+      val vatReturnWithFinancialData2 = PeriodWithFinancialData(
         completeVatReturn.copy(period = periodOverdue2), Some(charge2), 1000L, None)
 
       val payment1 = Payment.fromVatReturnWithFinancialData(vatReturnWithFinancialData1, None, stubClock)
@@ -312,10 +312,10 @@ class FinancialDataControllerSpec
       val charge1 = Charge(periodOverdue1, 1000, 1000, 0)
       val charge2 = Charge(periodOverdue2, 1000, 1000, 0)
 
-      val vatReturnWithFinancialData1 = VatReturnWithFinancialData(
+      val vatReturnWithFinancialData1 = PeriodWithFinancialData(
         completeVatReturn.copy(period = periodOverdue1), Some(charge1), 1000L, None)
 
-      val vatReturnWithFinancialData2 = VatReturnWithFinancialData(
+      val vatReturnWithFinancialData2 = PeriodWithFinancialData(
         completeVatReturn.copy(period = periodOverdue2), Some(charge2), 1000L, None)
 
       val expectedPayment1 = Payment.fromVatReturnWithFinancialData(vatReturnWithFinancialData1, Some(excludedTrader), stubClock)
