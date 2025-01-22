@@ -65,10 +65,10 @@ class FinancialDataController @Inject()(
           .filterIfPaymentIsOutstanding(vatReturnsWithFinancialData)
 
         val duePeriodsWithOutstandingAmounts =
-          filteredPeriodsWithOutstandingAmounts.filterNot(_.vatReturn.period.isOverdue(clock))
+          filteredPeriodsWithOutstandingAmounts.filterNot(_.period.isOverdue(clock))
 
         val overduePeriodsWithOutstandingAmounts =
-          filteredPeriodsWithOutstandingAmounts.filter(_.vatReturn.period.isOverdue(clock))
+          filteredPeriodsWithOutstandingAmounts.filter(_.period.isOverdue(clock))
 
         val duePayments = duePeriodsWithOutstandingAmounts.map(
           duePeriods =>

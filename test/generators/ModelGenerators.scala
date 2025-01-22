@@ -336,7 +336,7 @@ trait ModelGenerators {
         totalVATAmountFromCorrectionGBP <- arbitrary[BigDecimal]
         amountOfBalanceOfVATDueForMS <- Gen.oneOf(List(1, 2, 3))
         balanceOfVATDueForMS <- Gen.listOfN(amountOfBalanceOfVATDueForMS, arbitrary[EtmpVatReturnBalanceOfVatDue])
-        totalVATAmountDueForAllMSGBP <- arbitrary[BigDecimal]
+        totalVATAmountDueForAllMSGBP <- arbitrary[BigDecimal].retryUntil(x => x > 0 && x < 100000000)
         paymentReference <- arbitrary[String]
       } yield EtmpVatReturn(
         returnReference = returnReference,

@@ -91,10 +91,8 @@ class FinancialDataService @Inject()(
           logger.error(s"Error while getting vat return with financial data: ${e.getMessage}", e)
           None
       }
-    } yield {
-
-      getChargesForFulfilledPeriods(vrn, fulfilledPeriods, maybeFinancialDataResponse)
-    }
+      chargesWithFulfilledPeriods <- getChargesForFulfilledPeriods(vrn, fulfilledPeriods, maybeFinancialDataResponse)
+    } yield chargesWithFulfilledPeriods
   }
 
   private def getChargesForFulfilledPeriods(
@@ -120,22 +118,40 @@ class FinancialDataService @Inject()(
             )
           )
         case None =>
-          vatReturnService.get(vrn, period).flatMap {
-            case Some(vatReturn) =>
-              correctionService.get(vrn, period).map { maybeCorrectionPayload =>
-                val vatOwed = vatReturnSalesService.getTotalVatOnSalesAfterCorrection(vatReturn, maybeCorrectionPayload)
+          if(config.strategicReturnApiEnabled) {
+            vatReturnConnector.get(vrn, period).map {
+              case Right(etmpVatReturn) =>
+                val vatOwed = etmpVatReturn.totalVATAmountDueForAllMSGBP
                 PeriodWithFinancialData(
                   period = period,
                   charge = None,
                   vatOwed = vatOwed,
                   expectedCharge = vatOwed > 0
                 )
-              }
-            case None =>
-              val message = s"VAT Return not found for VRN $vrn and period $period"
-              val exception = Exception(message)
-              logger.error(exception.getMessage, exception)
-              throw exception
+              case Left(error) =>
+                val message = s"There was an error with getting vat return during a missing charge ${error.body}"
+                val exception = Exception(message)
+                logger.error(exception.getMessage, exception)
+                throw exception
+            }
+          } else {
+            vatReturnService.get(vrn, period).flatMap {
+              case Some(vatReturn) =>
+                correctionService.get(vrn, period).map { maybeCorrectionPayload =>
+                  val vatOwed = vatReturnSalesService.getTotalVatOnSalesAfterCorrection(vatReturn, maybeCorrectionPayload)
+                  PeriodWithFinancialData(
+                    period = period,
+                    charge = None,
+                    vatOwed = vatOwed,
+                    expectedCharge = vatOwed > 0
+                  )
+                }
+              case None =>
+                val message = s"VAT Return not found for VRN $vrn and period $period"
+                val exception = Exception(message)
+                logger.error(exception.getMessage, exception)
+                throw exception
+            }
           }
       }
     }
