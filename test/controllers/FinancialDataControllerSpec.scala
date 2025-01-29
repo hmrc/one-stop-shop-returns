@@ -187,17 +187,22 @@ class FinancialDataControllerSpec
       val periodOverdue = StandardPeriod(2021, Q3)
       val charge1 = Charge(periodDue, 1000, 1000, 0)
       val charge2 = Charge(periodOverdue, 1000, 500, 500)
+      val completedCharge = Charge(periodOverdue.getPreviousPeriod, 1000, 0, 1000)
 
       val vatReturnWithFinancialData1 = PeriodWithFinancialData(
         periodDue, Some(charge1), 1000L, true)
       val vatReturnWithFinancialData2 = PeriodWithFinancialData(
         periodOverdue, Some(charge2), 1000L, true)
+      val completedVatReturnWithFinancialData = PeriodWithFinancialData(
+        periodOverdue.getPreviousPeriod, Some(completedCharge), 0, true)
 
       val payment1 = Payment.fromVatReturnWithFinancialData(vatReturnWithFinancialData1, None, stubClock)
       val payment2 = Payment.fromVatReturnWithFinancialData(vatReturnWithFinancialData2, None, stubClock)
+      val completedPayment = Payment.fromVatReturnWithFinancialData(completedVatReturnWithFinancialData, None, stubClock)
 
       when(mockFinancialDataService.getVatReturnWithFinancialData(any(), any())) `thenReturn` Future.successful(Seq(vatReturnWithFinancialData1, vatReturnWithFinancialData2))
       when(mockFinancialDataService.filterIfPaymentIsOutstanding(any())) `thenReturn` Seq(vatReturnWithFinancialData1, vatReturnWithFinancialData2)
+      when(mockFinancialDataService.filterIfPaymentIsComplete(any())) `thenReturn` Seq(completedVatReturnWithFinancialData)
       when(mockVatReturnSalesService.getTotalVatOnSalesAfterCorrection(any(), any())) `thenReturn` BigDecimal(0)
       when(mockRegistrationConnector.getRegistration(any())(any())) `thenReturn` Future.successful(Some(RegistrationData.registration))
       val app =
@@ -213,7 +218,7 @@ class FinancialDataControllerSpec
         val result = route(app, request).value
 
         status(result) mustBe OK
-        contentAsJson(result) mustBe Json.toJson(CurrentPayments(Seq(payment1), Seq(payment2), Seq.empty, payment1.amountOwed + payment2.amountOwed, payment1.amountOwed))
+        contentAsJson(result) mustBe Json.toJson(CurrentPayments(Seq(payment1), Seq(payment2), Seq.empty, Seq(completedPayment), payment1.amountOwed + payment2.amountOwed, payment1.amountOwed))
       }
     }
 
@@ -232,6 +237,7 @@ class FinancialDataControllerSpec
 
       when(mockFinancialDataService.getVatReturnWithFinancialData(any(), any())) `thenReturn` Future.successful(Seq(vatReturnWithFinancialData))
       when(mockFinancialDataService.filterIfPaymentIsOutstanding(any())) `thenReturn` Seq(vatReturnWithFinancialData)
+      when(mockFinancialDataService.filterIfPaymentIsComplete(any())) `thenReturn` Seq.empty
       when(mockVatReturnSalesService.getTotalVatOnSalesAfterCorrection(any(), any())) `thenReturn` BigDecimal(0)
       when(mockRegistrationConnector.getRegistration(any())(any())) `thenReturn` Future.successful(Some(RegistrationData.registration))
 
@@ -248,7 +254,7 @@ class FinancialDataControllerSpec
         val result = route(app, request).value
 
         status(result) mustBe OK
-        contentAsJson(result) mustBe Json.toJson(CurrentPayments(Seq(payment), Seq.empty, Seq.empty, payment.amountOwed, BigDecimal(0)))
+        contentAsJson(result) mustBe Json.toJson(CurrentPayments(Seq(payment), Seq.empty, Seq.empty, Seq.empty, payment.amountOwed, BigDecimal(0)))
       }
     }
 
@@ -273,6 +279,7 @@ class FinancialDataControllerSpec
 
       when(mockFinancialDataService.getVatReturnWithFinancialData(any(), any())) `thenReturn` Future.successful(Seq(vatReturnWithFinancialData1, vatReturnWithFinancialData2))
       when(mockFinancialDataService.filterIfPaymentIsOutstanding(any())) `thenReturn` Seq(vatReturnWithFinancialData1, vatReturnWithFinancialData2)
+      when(mockFinancialDataService.filterIfPaymentIsComplete(any())) `thenReturn` Seq.empty
       when(mockVatReturnSalesService.getTotalVatOnSalesAfterCorrection(any(), any())) `thenReturn` BigDecimal(0)
       when(mockRegistrationConnector.getRegistration(any())(any())) `thenReturn` Future.successful(Some(RegistrationData.registration))
 
@@ -289,7 +296,7 @@ class FinancialDataControllerSpec
         val result = route(app, request).value
 
         status(result) mustBe OK
-        contentAsJson(result) mustBe Json.toJson(CurrentPayments(Seq.empty, Seq(payment1, payment2), Seq.empty, total, total))
+        contentAsJson(result) mustBe Json.toJson(CurrentPayments(Seq.empty, Seq(payment1, payment2), Seq.empty, Seq.empty, total, total))
       }
     }
 
@@ -325,6 +332,7 @@ class FinancialDataControllerSpec
 
       when(mockFinancialDataService.getVatReturnWithFinancialData(any(), any())) `thenReturn` Future.successful(Seq(vatReturnWithFinancialData1, vatReturnWithFinancialData2))
       when(mockFinancialDataService.filterIfPaymentIsOutstanding(any())) `thenReturn` Seq(vatReturnWithFinancialData1, vatReturnWithFinancialData2)
+      when(mockFinancialDataService.filterIfPaymentIsComplete(any())) `thenReturn` Seq.empty
       when(mockVatReturnSalesService.getTotalVatOnSalesAfterCorrection(any(), any())) `thenReturn` BigDecimal(0)
       when(mockRegistrationConnector.getRegistration(any())(any())) `thenReturn` Future.successful(Some(RegistrationData.registration.copy(excludedTrader = Some(excludedTrader))))
 
@@ -345,6 +353,7 @@ class FinancialDataControllerSpec
           duePayments = Seq.empty,
           overduePayments = Seq(expectedPayment1),
           excludedPayments = Seq(expectedExcludedPayment2),
+          completedPayments = Seq.empty,
           total,
           total
         ))

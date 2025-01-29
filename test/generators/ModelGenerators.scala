@@ -16,9 +16,9 @@
 
 package generators
 
-import models._
+import models.*
 import models.corrections.{CorrectionPayload, CorrectionToCountry, PeriodWithCorrections, ReturnCorrectionValue}
-import models.etmp._
+import models.etmp.*
 import models.exclusions.{ExcludedTrader, ExclusionReason}
 import models.financialdata.Charge
 import models.requests.{CorrectionRequest, SaveForLaterRequest, VatReturnRequest, VatReturnWithCorrectionRequest}
@@ -27,11 +27,20 @@ import org.scalacheck.{Arbitrary, Gen}
 import play.api.libs.json.{JsObject, Json}
 import uk.gov.hmrc.domain.Vrn
 
+import java.math.MathContext
 import java.time.{Instant, LocalDate, LocalDateTime}
 import scala.math.BigDecimal.RoundingMode
 
 trait ModelGenerators {
   self: Generators =>
+
+  implicit val arbitraryBigDecimal: Arbitrary[BigDecimal] =
+    Arbitrary {
+      for {
+        nonDecimalNumber <- arbitrary[Int].retryUntil(_ > 0)
+        decimalNumber <- arbitrary[Int].retryUntil(_ > 0).retryUntil(_.toString.reverse.head.toString != "0")
+      } yield BigDecimal(s"$nonDecimalNumber.$decimalNumber")
+    }
 
   implicit val arbitraryPeriod: Arbitrary[Period] =
     Arbitrary {
@@ -309,7 +318,7 @@ trait ModelGenerators {
     Arbitrary {
       for {
         msOfConsumption <- arbitrary[String]
-        totalVATDueGBP <- arbitrary[BigDecimal]
+        totalVATDueGBP <- arbitrary[BigDecimal].retryUntil(x => x > 0 && x < 100000000).map(_.round(MathContext(4)))
         totalVATEUR <- arbitrary[BigDecimal]
       } yield EtmpVatReturnBalanceOfVatDue(
         msOfConsumption = msOfConsumption,
@@ -336,7 +345,7 @@ trait ModelGenerators {
         totalVATAmountFromCorrectionGBP <- arbitrary[BigDecimal]
         amountOfBalanceOfVATDueForMS <- Gen.oneOf(List(1, 2, 3))
         balanceOfVATDueForMS <- Gen.listOfN(amountOfBalanceOfVATDueForMS, arbitrary[EtmpVatReturnBalanceOfVatDue])
-        totalVATAmountDueForAllMSGBP <- arbitrary[BigDecimal].retryUntil(x => x > 0 && x < 100000000)
+        totalVATAmountDueForAllMSGBP <- arbitrary[BigDecimal].retryUntil(x => x > 0 && x < 100000000).map(_.round(MathContext(2)))
         paymentReference <- arbitrary[String]
       } yield EtmpVatReturn(
         returnReference = returnReference,
