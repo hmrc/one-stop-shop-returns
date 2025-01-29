@@ -92,8 +92,6 @@ class FinancialDataController @Inject()(
         val totalAmountOverdue = overduePayments.map(_.amountOwed).sum
         val totalAmountOwed = duePayments.map(_.amountOwed).sum + totalAmountOverdue
 
-        println(s"?????????????? $vatReturnsWithFinancialData $duePayments, $overduePaymentsNotExcluded, $excludedPayments, $completedPayments, $totalAmountOwed, $totalAmountOverdue")
-
         Ok(Json.toJson(CurrentPayments(
           duePayments, overduePaymentsNotExcluded, excludedPayments, completedPayments, totalAmountOwed, totalAmountOverdue
         )))
