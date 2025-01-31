@@ -261,4 +261,14 @@ class FinancialDataService @Inject()(
         hasChargeWithOutstanding || expectingCharge
     }
   }
+
+  def filterIfPaymentIsComplete(
+                                    periodsWithFinancialData: Seq[PeriodWithFinancialData]
+                                  ): Seq[PeriodWithFinancialData] = {
+    periodsWithFinancialData.filter { vatReturnWithFinancialData =>
+
+      vatReturnWithFinancialData.vatOwed == 0
+
+    }
+  }
 }
