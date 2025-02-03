@@ -62,7 +62,6 @@ object Payment {
             PaymentStatus.Excluded
           } else if (paymentCharge.outstandingAmount == 0) {
             if(paymentCharge.originalAmount == 0) {
-              // TODO is this right?
               PaymentStatus.NilReturn
             } else {
               PaymentStatus.Paid
