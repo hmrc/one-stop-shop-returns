@@ -16,14 +16,17 @@
 
 package services
 
-import connectors.FinancialDataConnector
+import config.AppConfig
+import connectors.{FinancialDataConnector, VatReturnConnector}
 import logging.Logging
 import models.des.DesException
-import models.financialdata._
+import models.etmp.{EtmpObligationsFulfilmentStatus, EtmpObligationsQueryParameters}
+import models.financialdata.*
 import models.{Period, Quarter, StandardPeriod}
 import uk.gov.hmrc.domain.Vrn
+import utils.Formatters.etmpDateFormatter
 
-import java.time.LocalDate
+import java.time.{Clock, LocalDate}
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -31,8 +34,11 @@ class FinancialDataService @Inject()(
                                       financialDataConnector: FinancialDataConnector,
                                       vatReturnService: VatReturnService,
                                       vatReturnSalesService: VatReturnSalesService,
+                                      vatReturnConnector: VatReturnConnector,
                                       periodService: PeriodService,
-                                      correctionService: CorrectionService
+                                      correctionService: CorrectionService,
+                                      clock: Clock,
+                                      config: AppConfig
                                     )(implicit ec: ExecutionContext) extends Logging {
 
   def getCharge(vrn: Vrn, period: Period): Future[Option[Charge]] = {
@@ -46,33 +52,111 @@ class FinancialDataService @Inject()(
     }
   }
 
-  def getVatReturnWithFinancialData(vrn: Vrn, commencementDate: LocalDate): Future[Seq[VatReturnWithFinancialData]] = {
-    (for {
-      vatReturns <- vatReturnService.get(vrn)
+  private def getFulfilledPeriods(vrn: Vrn, commencementDate: LocalDate): Future[Seq[Period]] = {
+
+    if (config.strategicReturnApiEnabled) {
+      val queryParameters = EtmpObligationsQueryParameters(
+        fromDate = commencementDate.format(etmpDateFormatter),
+        toDate = LocalDate.now(clock).plusMonths(1).withDayOfMonth(1).minusDays(1).format(etmpDateFormatter),
+        status = None
+      )
+
+      vatReturnConnector.getObligations(vrn.vrn, queryParameters).map {
+        case Right(obligations) =>
+
+          obligations.obligations.flatMap { obligation =>
+            obligation.obligationDetails
+              .filter(_.status == EtmpObligationsFulfilmentStatus.Fulfilled)
+              .map(detail => Period.fromKey(detail.periodKey))
+          }
+        case Left(errorResponse) =>
+          val message = s"Failed to retrieve obligations for VRN $vrn, error: ${errorResponse.body}"
+          val exception = new Exception(message)
+          logger.error(exception.getMessage, exception)
+          throw exception
+      }
+
+    } else {
+      vatReturnService.get(vrn).map(_.map(_.period))
+    }
+
+
+  }
+
+  def getVatReturnWithFinancialData(vrn: Vrn, commencementDate: LocalDate): Future[Seq[PeriodWithFinancialData]] = {
+    for {
+      fulfilledPeriods <- getFulfilledPeriods(vrn, commencementDate)
       maybeFinancialDataResponse <- getFinancialData(vrn, commencementDate).recover {
         case e: Exception =>
           logger.error(s"Error while getting vat return with financial data: ${e.getMessage}", e)
           None
       }
-    } yield {
-      Future.sequence(vatReturns.map { vatReturn =>
-        val charge = maybeFinancialDataResponse.flatMap {
-          _.financialTransactions.flatMap {
-            transactions => getChargeForPeriod(vatReturn.period, transactions)
-          }
-        }
+      chargesWithFulfilledPeriods <- getChargesForFulfilledPeriods(vrn, fulfilledPeriods, maybeFinancialDataResponse)
+    } yield chargesWithFulfilledPeriods
+  }
 
-        correctionService.get(vatReturn.vrn, vatReturn.period).map {
-          maybeCorrectionPayload =>
-          VatReturnWithFinancialData(
-            vatReturn,
-            charge,
-            charge.map(c => c.outstandingAmount)
-            .getOrElse(vatReturnSalesService.getTotalVatOnSalesAfterCorrection(vatReturn, maybeCorrectionPayload)),
-            maybeCorrectionPayload)
+  private def getChargesForFulfilledPeriods(
+                                             vrn: Vrn,
+                                             fulfilledPeriods: Seq[Period],
+                                             maybeFinancialDataResponse: Option[FinancialData]
+                                           ): Future[Seq[PeriodWithFinancialData]] = {
+    val allCharges = fulfilledPeriods.map { period =>
+      val maybeCharge = maybeFinancialDataResponse.flatMap {
+        _.financialTransactions.flatMap { transactions =>
+          getChargeForPeriod(period, transactions)
         }
-      })
-    }).flatten
+      }
+
+      maybeCharge match {
+        case Some(charge) =>
+          Future.successful(
+            PeriodWithFinancialData(
+              period = period,
+              charge = Some(charge),
+              vatOwed = charge.outstandingAmount,
+              expectedCharge = true
+            )
+          )
+        case None =>
+          if(config.strategicReturnApiEnabled) {
+            vatReturnConnector.get(vrn, period).map {
+              case Right(etmpVatReturn) =>
+                val vatOwed = etmpVatReturn.totalVATAmountDueForAllMSGBP
+                PeriodWithFinancialData(
+                  period = period,
+                  charge = None,
+                  vatOwed = vatOwed,
+                  expectedCharge = vatOwed > 0
+                )
+              case Left(error) =>
+                val message = s"There was an error with getting vat return during a missing charge ${error.body}"
+                val exception = Exception(message)
+                logger.error(exception.getMessage, exception)
+                throw exception
+            }
+          } else {
+            vatReturnService.get(vrn, period).flatMap {
+              case Some(vatReturn) =>
+                correctionService.get(vrn, period).map { maybeCorrectionPayload =>
+                  val vatOwed = vatReturnSalesService.getTotalVatOnSalesAfterCorrection(vatReturn, maybeCorrectionPayload)
+                  PeriodWithFinancialData(
+                    period = period,
+                    charge = None,
+                    vatOwed = vatOwed,
+                    expectedCharge = vatOwed > 0
+                  )
+                }
+              case None =>
+                val message = s"VAT Return not found for VRN $vrn and period $period"
+                val exception = Exception(message)
+                logger.error(exception.getMessage, exception)
+                throw exception
+            }
+          }
+      }
+    }
+    
+    Future.sequence(allCharges)
   }
 
   private def getChargeForPeriod(period: Period, transactions: Seq[FinancialTransaction]): Option[Charge] = {
@@ -163,22 +247,28 @@ class FinancialDataService @Inject()(
   }
 
   def filterIfPaymentIsOutstanding(
-                                    vatReturnsWithFinancialData: Seq[VatReturnWithFinancialData]
-                                  ): Seq[VatReturnWithFinancialData] = {
-    vatReturnsWithFinancialData.filter {
+                                    periodsWithFinancialData: Seq[PeriodWithFinancialData]
+                                  ): Seq[PeriodWithFinancialData] = {
+    periodsWithFinancialData.filter {
       vatReturnWithFinancialData =>
 
         val hasChargeWithOutstanding =
           vatReturnWithFinancialData.charge.exists(_.outstandingAmount > 0)
 
         val expectingCharge =
-          vatReturnWithFinancialData.charge.isEmpty &&
-            vatReturnSalesService.getTotalVatOnSalesAfterCorrection(
-              vatReturnWithFinancialData.vatReturn,
-              vatReturnWithFinancialData.corrections
-            ) > 0
+          vatReturnWithFinancialData.charge.isEmpty && vatReturnWithFinancialData.expectedCharge
 
         hasChargeWithOutstanding || expectingCharge
+    }
+  }
+
+  def filterIfPaymentIsComplete(
+                                    periodsWithFinancialData: Seq[PeriodWithFinancialData]
+                                  ): Seq[PeriodWithFinancialData] = {
+    periodsWithFinancialData.filter { vatReturnWithFinancialData =>
+
+      vatReturnWithFinancialData.vatOwed == 0
+
     }
   }
 }

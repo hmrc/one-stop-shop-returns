@@ -38,35 +38,45 @@ object Payment {
     }
   }
 
-  def fromVatReturnWithFinancialData(vatReturnWithFinancialData: VatReturnWithFinancialData,
+  def fromVatReturnWithFinancialData(vatReturnWithFinancialData: PeriodWithFinancialData,
                                      maybeExclusion: Option[ExcludedTrader],
                                      clock: Clock): Payment = {
 
-    val period = vatReturnWithFinancialData.vatReturn.period
+    val period = vatReturnWithFinancialData.period
 
     val paymentStatus: PaymentStatus =
       vatReturnWithFinancialData.charge
         .fold {
-          if(maybeExclusion.exists(_.isExcludedNotReversed) && isPeriodExcluded(maybeExclusion, period, clock)) {
+          if (maybeExclusion.exists(_.isExcludedNotReversed) && isPeriodExcluded(maybeExclusion, period, clock)) {
             PaymentStatus.Excluded
           } else {
-            PaymentStatus.Unknown
+            if(vatReturnWithFinancialData.vatOwed == 0) {
+              PaymentStatus.NilReturn
+            } else {
+              PaymentStatus.Unknown
+            }
           }
         } { paymentCharge =>
 
-          if(maybeExclusion.exists(_.isExcludedNotReversed) && isPeriodExcluded(maybeExclusion, period, clock)) {
+          if (maybeExclusion.exists(_.isExcludedNotReversed) && isPeriodExcluded(maybeExclusion, period, clock)) {
             PaymentStatus.Excluded
-          } else if(paymentCharge.outstandingAmount == paymentCharge.originalAmount) {
-              PaymentStatus.Unpaid
+          } else if (paymentCharge.outstandingAmount == 0) {
+            if(paymentCharge.originalAmount == 0) {
+              PaymentStatus.NilReturn
             } else {
+              PaymentStatus.Paid
+            }
+          } else if (paymentCharge.outstandingAmount == paymentCharge.originalAmount) {
+            PaymentStatus.Unpaid
+          } else {
             PaymentStatus.Partial
           }
         }
 
     Payment(
-      vatReturnWithFinancialData.vatReturn.period,
+      vatReturnWithFinancialData.period,
       vatReturnWithFinancialData.vatOwed,
-      vatReturnWithFinancialData.vatReturn.period.paymentDeadline,
+      vatReturnWithFinancialData.period.paymentDeadline,
       paymentStatus
     )
   }

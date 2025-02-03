@@ -65,10 +65,10 @@ class FinancialDataController @Inject()(
           .filterIfPaymentIsOutstanding(vatReturnsWithFinancialData)
 
         val duePeriodsWithOutstandingAmounts =
-          filteredPeriodsWithOutstandingAmounts.filterNot(_.vatReturn.period.isOverdue(clock))
+          filteredPeriodsWithOutstandingAmounts.filterNot(_.period.isOverdue(clock))
 
         val overduePeriodsWithOutstandingAmounts =
-          filteredPeriodsWithOutstandingAmounts.filter(_.vatReturn.period.isOverdue(clock))
+          filteredPeriodsWithOutstandingAmounts.filter(_.period.isOverdue(clock))
 
         val duePayments = duePeriodsWithOutstandingAmounts.map(
           duePeriods =>
@@ -83,11 +83,17 @@ class FinancialDataController @Inject()(
         val excludedPayments = overduePayments.filter(_.paymentStatus == PaymentStatus.Excluded)
         val overduePaymentsNotExcluded = overduePayments.filterNot(_.paymentStatus == PaymentStatus.Excluded)
 
+        val completedAmounts = service.filterIfPaymentIsComplete(vatReturnsWithFinancialData)
+        val completedPayments = completedAmounts.map(
+          completedAmount =>
+            Payment.fromVatReturnWithFinancialData(completedAmount, request.registration.excludedTrader, clock)
+        )
+
         val totalAmountOverdue = overduePayments.map(_.amountOwed).sum
         val totalAmountOwed = duePayments.map(_.amountOwed).sum + totalAmountOverdue
 
         Ok(Json.toJson(CurrentPayments(
-          duePayments, overduePaymentsNotExcluded, excludedPayments, totalAmountOwed, totalAmountOverdue,
+          duePayments, overduePaymentsNotExcluded, excludedPayments, completedPayments, totalAmountOwed, totalAmountOverdue
         )))
       }
 
