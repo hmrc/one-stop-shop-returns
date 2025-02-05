@@ -22,9 +22,10 @@ import controllers.actions.FakeFailingAuthConnector
 import generators.Generators
 import models.Quarter.{Q1, Q2, Q3, Q4}
 import models.SubmissionStatus.{Due, Excluded, Expired, Next, Overdue}
-import models._
+import models.*
 import models.exclusions.{ExcludedTrader, ExclusionReason}
-import models.yourAccount._
+import models.exclusions.ExclusionReason.Reversal
+import models.yourAccount.*
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
@@ -34,7 +35,7 @@ import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import repositories.SaveForLaterRepository
 import services.{PeriodService, VatReturnService}
 import testutils.RegistrationData
@@ -51,7 +52,7 @@ class ReturnStatusControllerSpec
 
   private val authorisedVrn = Vrn("123456789")
   private val notAuthorisedVrn = arbitraryVrn.arbitrary.retryUntil(_ != authorisedVrn).sample.value
-  private val exclusionReason = Gen.oneOf(ExclusionReason.values).sample.value
+  private val exclusionReason = Gen.oneOf(ExclusionReason.values).retryUntil(_ != Reversal).sample.value
   private val excludedTrader: ExcludedTrader = ExcludedTrader(
     RegistrationData.registration.vrn,
     exclusionReason,

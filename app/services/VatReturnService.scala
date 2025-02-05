@@ -67,7 +67,13 @@ class VatReturnService @Inject()(
       lastUpdated = Instant.now(clock)
     )
 
-    sendToCoreIfEnabled(vatReturn, emptyCorrectionPayload, repository.insert(vatReturn))
+    val insertToDbIfTactical: Future[Option[VatReturn]] = if(appConfig.strategicReturnApiEnabled) {
+      Some(vatReturn).toFuture
+    } else {
+      repository.insert(vatReturn)
+    }
+
+    sendToCoreIfEnabled(vatReturn, emptyCorrectionPayload, insertToDbIfTactical)
   }
 
   private def sendToCoreIfEnabled[A](vatReturn: VatReturn, correctionPayload: CorrectionPayload, block: => Future[A])
@@ -121,7 +127,13 @@ class VatReturnService @Inject()(
       lastUpdated = Instant.now(clock)
     )
 
-    sendToCoreIfEnabled(vatReturn, correctionPayload, repository.insert(vatReturn, correctionPayload))
+    val insertToDbIfTactical: Future[Option[(VatReturn, CorrectionPayload)]] = if (appConfig.strategicReturnApiEnabled) {
+      Some(vatReturn, correctionPayload).toFuture
+    } else {
+      repository.insert(vatReturn, correctionPayload)
+    }
+
+    sendToCoreIfEnabled(vatReturn, correctionPayload, insertToDbIfTactical)
   }
 
   def get(vrn: Vrn): Future[Seq[VatReturn]] =
