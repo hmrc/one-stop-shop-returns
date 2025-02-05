@@ -109,8 +109,6 @@ class ReturnStatusControllerSpec
       when(mockRegistrationConnector.getRegistration(any())(any())) `thenReturn`
         Future.successful(Some(RegistrationData.registration.copy(excludedTrader = Some(excludedTrader))))
 
-      println(s"today is ${stubClock}")
-
       val mockVatReturnService = mock[VatReturnService]
       val mockPeriodService = mock[PeriodService]
 
