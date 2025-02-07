@@ -5,6 +5,7 @@ import com.github.tomakehurst.wiremock.client.WireMock.*
 import com.github.tomakehurst.wiremock.matching.EqualToPattern
 import models.etmp.{EtmpObligations, EtmpObligationsQueryParameters, EtmpVatReturn}
 import models.*
+import models.Period.toEtmpPeriodString
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
@@ -188,7 +189,7 @@ class VatReturnConnectorSpec extends SpecBase with WireMockHelper {
 
   ".get" - {
 
-    val url: String = s"/one-stop-shop-returns-stub/vec/ossreturns/viewreturns/v1/$vrn/$period"
+    val url: String = s"/one-stop-shop-returns-stub/vec/ossreturns/viewreturns/v1/$vrn/${toEtmpPeriodString(period)}"
 
     "must return Right(VatReturn) when the server returns OK with a valid payload" in {
 

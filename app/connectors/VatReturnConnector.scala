@@ -21,6 +21,7 @@ import connectors.EtmpListObligationsHttpParser.{EtmpListObligationsReads, EtmpL
 import connectors.VatReturnHttpParser.{DisplayVatReturnResponse, EtmpVatReturnReads}
 import models.etmp.EtmpObligationsQueryParameters
 import models.{GatewayTimeout, Period}
+import models.Period.toEtmpPeriodString
 import play.api.Logging
 import play.api.http.HeaderNames.AUTHORIZATION
 import uk.gov.hmrc.domain.Vrn
@@ -80,7 +81,7 @@ class VatReturnConnector @Inject()(
       case (key, _) => key.matches(AUTHORIZATION)
     }
 
-    val url: URL = url"${etmpDisplayVatReturnConfig.baseUrl}/$vrn/$period"
+    val url: URL = url"${etmpDisplayVatReturnConfig.baseUrl}/$vrn/${toEtmpPeriodString(period)}"
 
     logger.info(s"Sending get request to ETMP with headers $headersWithoutAuth")
 
