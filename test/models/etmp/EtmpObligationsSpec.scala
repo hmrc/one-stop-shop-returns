@@ -100,11 +100,11 @@ class EtmpObligationsSpec extends SpecBase {
 
     "must return fulfilled periods correctly" in {
       val fulfilledDetails = Seq(
-        EtmpObligationDetails(EtmpObligationsFulfilmentStatus.Fulfilled, "23Q1"),
-        EtmpObligationDetails(EtmpObligationsFulfilmentStatus.Fulfilled, "23Q2")
+        EtmpObligationDetails(EtmpObligationsFulfilmentStatus.Fulfilled, "23C1"),
+        EtmpObligationDetails(EtmpObligationsFulfilmentStatus.Fulfilled, "23C2")
       )
       val openDetails = Seq(
-        EtmpObligationDetails(EtmpObligationsFulfilmentStatus.Open, "23Q3")
+        EtmpObligationDetails(EtmpObligationsFulfilmentStatus.Open, "23C3")
       )
 
       val obligations = EtmpObligations(
@@ -114,8 +114,8 @@ class EtmpObligationsSpec extends SpecBase {
       )
 
       val expectedPeriods = Seq(
-        Period.fromKey("23Q1"),
-        Period.fromKey("23Q2")
+        Period.fromKey("23C1"),
+        Period.fromKey("23C2")
       )
 
       obligations.getFulfilledPeriods mustBe expectedPeriods
@@ -125,8 +125,8 @@ class EtmpObligationsSpec extends SpecBase {
       val obligations = EtmpObligations(
         obligations = Seq(
           EtmpObligation(obligationDetails = Seq(
-            EtmpObligationDetails(EtmpObligationsFulfilmentStatus.Open, "23Q1"),
-            EtmpObligationDetails(EtmpObligationsFulfilmentStatus.Open, "23Q2")
+            EtmpObligationDetails(EtmpObligationsFulfilmentStatus.Open, "23C1"),
+            EtmpObligationDetails(EtmpObligationsFulfilmentStatus.Open, "23C2")
           ))
         )
       )

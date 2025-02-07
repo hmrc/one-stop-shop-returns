@@ -103,8 +103,10 @@ object Period {
     val year = standardPeriod.year
     val quarter = standardPeriod.quarter
     val lastYearDigits = year.toString.substring(2)
+    
+    val etmpQuarter = quarter.toString.replace("Q", "C")
 
-    s"$lastYearDigits$quarter"
+    s"$lastYearDigits$etmpQuarter"
   }
 
   implicit def orderingByPeriod[A <: Period]: Ordering[A] =
@@ -167,10 +169,12 @@ object Period {
 
   def fromKey(key: String): Period = {
     val yearLast2 = key.take(2)
-    val quarterString = key.drop(2)
-    val quarter = Quarter.fromString(quarterString) match {
+    val etmpQuarterString = key.drop(2)
+    val logicalQuarterString = etmpQuarterString.replace("C", "Q")
+    
+    val quarter = Quarter.fromString(logicalQuarterString) match {
       case Success(q) => q
-      case Failure(_) => throw new IllegalArgumentException(s"Invalid quarter string: $quarterString")
+      case Failure(_) => throw new IllegalArgumentException(s"Invalid quarter string: $logicalQuarterString")
     }
 
     StandardPeriod(s"20$yearLast2".toInt, quarter)
