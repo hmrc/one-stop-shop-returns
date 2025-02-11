@@ -67,7 +67,7 @@ class VatReturnService @Inject()(
       lastUpdated = Instant.now(clock)
     )
 
-    val insertToDbIfTactical: Future[Option[VatReturn]] = if(appConfig.strategicReturnApiEnabled) {
+    lazy val insertToDbIfTactical: Future[Option[VatReturn]] = if(appConfig.strategicReturnApiEnabled) {
       Some(vatReturn).toFuture
     } else {
       repository.insert(vatReturn)
@@ -127,7 +127,7 @@ class VatReturnService @Inject()(
       lastUpdated = Instant.now(clock)
     )
 
-    val insertToDbIfTactical: Future[Option[(VatReturn, CorrectionPayload)]] = if (appConfig.strategicReturnApiEnabled) {
+    lazy val insertToDbIfTactical: Future[Option[(VatReturn, CorrectionPayload)]] = if (appConfig.strategicReturnApiEnabled) {
       Some(vatReturn, correctionPayload).toFuture
     } else {
       repository.insert(vatReturn, correctionPayload)
