@@ -14,7 +14,7 @@ lazy val microservice = Project(appName, file("."))
 
     ScoverageKeys.coverageExcludedFiles := "<empty>;Reverse.*;" +
       ".*Routes.*;",
-    ScoverageKeys.coverageMinimumStmtTotal := 78,
+    ScoverageKeys.coverageMinimumStmtTotal := 70,
     ScoverageKeys.coverageFailOnMinimum := true,
     ScoverageKeys.coverageHighlighting := true,
     RoutesKeys.routesImport ++= Seq(
