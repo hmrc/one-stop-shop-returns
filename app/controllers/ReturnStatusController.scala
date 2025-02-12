@@ -111,7 +111,9 @@ class ReturnStatusController @Inject()(
     val futureFulfilledPeriods: Future[Seq[Period]] = if (config.strategicReturnApiEnabled) {
       vatReturnConnector.getObligations(vrn.vrn, etmpObligationsQueryParameters).map {
         case Right(obligations) =>
-          obligations.getFulfilledPeriods
+          val g = obligations.getFulfilledPeriods
+          println(s"g $g")
+          g
         case x =>
           logger.error(s"Error when getting obligations for return status' $x")
           throw new Exception("Error getting obligations for status")
@@ -142,6 +144,7 @@ class ReturnStatusController @Inject()(
       }
       fulfilledPeriods <- futureFulfilledPeriods
     } yield {
+
       val currentPeriods = periods.map {
         period =>
           if (fulfilledPeriods.contains(period)) {
@@ -158,6 +161,11 @@ class ReturnStatusController @Inject()(
             }
           }
       }
+      println(s"fulfilledPeriods $fulfilledPeriods")
+      println(s"periods $periods")
+      println(s"runningPeriod $runningPeriod")
+      println(s"nextPeriod $nextPeriod")
+      println(s"currentPeriods $currentPeriods")
       if (currentPeriods.forall(_.status == Complete)) {
         currentPeriods ++ Seq(PeriodWithStatus(nextPeriod, SubmissionStatus.Next))
       } else {
