@@ -127,6 +127,7 @@ class PeriodServiceSpec extends SpecBase with ScalaCheckPropertyChecks {
       service.getAllPeriods(LocalDate.of(2021, 7, 1)) must contain theSameElementsAs expectedPeriods
     }
   }
+
   ".getNextPeriod" - {
     "when current period is Q1" in {
       val year = 2021
@@ -166,6 +167,48 @@ class PeriodServiceSpec extends SpecBase with ScalaCheckPropertyChecks {
       val stubClock: Clock = Clock.fixed(instant, ZoneId.systemDefault)
       val service = new PeriodService(stubClock)
       service.getNextPeriod(current) mustBe expected
+    }
+  }
+
+  ".getRunningPeriod" - {
+    "when current period is Q1" in {
+      val year = 2021
+      val current = LocalDate.of(2021,1,1)
+      val expected = StandardPeriod(year, Q1)
+      val instant = Instant.parse("2022-01-11T12:00:00Z")
+      val stubClock: Clock = Clock.fixed(instant, ZoneId.systemDefault)
+      val service = new PeriodService(stubClock)
+      service.getRunningPeriod(current) mustBe expected
+    }
+
+    "when current period is Q2" in {
+      val year = 2021
+      val current = LocalDate.of(2021,4,1)
+      val expected = StandardPeriod(year, Q2)
+      val instant = Instant.parse("2022-01-11T12:00:00Z")
+      val stubClock: Clock = Clock.fixed(instant, ZoneId.systemDefault)
+      val service = new PeriodService(stubClock)
+      service.getRunningPeriod(current) mustBe expected
+    }
+
+    "when current period is Q3" in {
+      val year = 2021
+      val current = LocalDate.of(2021,9,1)
+      val expected = StandardPeriod(year, Q3)
+      val instant = Instant.parse("2022-01-11T12:00:00Z")
+      val stubClock: Clock = Clock.fixed(instant, ZoneId.systemDefault)
+      val service = new PeriodService(stubClock)
+      service.getRunningPeriod(current) mustBe expected
+    }
+
+    "when current period is Q4" in {
+      val year = 2021
+      val current = LocalDate.of(2021,12,1)
+      val expected = StandardPeriod(year, Q4)
+      val instant = Instant.parse("2022-01-11T12:00:00Z")
+      val stubClock: Clock = Clock.fixed(instant, ZoneId.systemDefault)
+      val service = new PeriodService(stubClock)
+      service.getRunningPeriod(current) mustBe expected
     }
   }
 }
