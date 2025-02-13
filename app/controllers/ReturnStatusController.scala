@@ -142,6 +142,7 @@ class ReturnStatusController @Inject()(
       }
       fulfilledPeriods <- futureFulfilledPeriods
     } yield {
+
       val currentPeriods = periods.map {
         period =>
           if (fulfilledPeriods.contains(period)) {

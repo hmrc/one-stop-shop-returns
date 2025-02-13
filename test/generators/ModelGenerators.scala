@@ -22,6 +22,7 @@ import models.etmp.*
 import models.exclusions.{ExcludedTrader, ExclusionReason}
 import models.financialdata.Charge
 import models.requests.{CorrectionRequest, SaveForLaterRequest, VatReturnRequest, VatReturnWithCorrectionRequest}
+import models.Period.toEtmpPeriodString
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.{Arbitrary, Gen}
 import play.api.libs.json.{JsObject, Json}
@@ -259,7 +260,7 @@ trait ModelGenerators {
     Arbitrary {
       for {
         status <- Gen.oneOf(EtmpObligationsFulfilmentStatus.values)
-        periodKey <- arbitrary[String]
+        periodKey <- arbitrary[Period].map(toEtmpPeriodString)
       } yield EtmpObligationDetails(
         status = status,
         periodKey = periodKey
