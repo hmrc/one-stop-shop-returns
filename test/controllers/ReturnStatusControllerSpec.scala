@@ -532,6 +532,7 @@ class ReturnStatusControllerSpec
           when(mockS4LaterRepository.get(any())) `thenReturn` Future.successful(Seq.empty)
           when(mockRegConnector.getRegistration(any())(any())) `thenReturn`
             Future.successful(Some(RegistrationData.registration.copy(excludedTrader = Some(excludedTrader.copy(effectiveDate = periodQ2.firstDay)))))
+          when(mockExclusionService.hasSubmittedFinalReturn(any())(any())) `thenReturn` true
 
           val app =
             applicationBuilder
@@ -539,6 +540,7 @@ class ReturnStatusControllerSpec
               .overrides(bind[PeriodService].toInstance(mockPeriodService))
               .overrides(bind[SaveForLaterRepository].toInstance(mockS4LaterRepository))
               .overrides(bind[RegistrationConnector].toInstance(mockRegConnector))
+              .overrides(bind[ExclusionService].toInstance(mockExclusionService))
               .overrides(bind[Clock].toInstance(stubClock))
               .configure("features.strategic-returns.enabled" -> false)
               .build()
@@ -918,7 +920,7 @@ class ReturnStatusControllerSpec
           when(mockS4LaterRepository.get(any())) `thenReturn` Future.successful(Seq.empty)
           when(mockRegConnector.getRegistration(any())(any())) `thenReturn`
             Future.successful(Some(RegistrationData.registration.copy(excludedTrader = Some(excludedTrader.copy(effectiveDate = periodQ2.firstDay)))))
-          when(mockExclusionService.hasSubmittedFinalReturn()(any(), any())) `thenReturn` Future.successful(true)
+          when(mockExclusionService.hasSubmittedFinalReturn(any())(any())) `thenReturn` true
 
           val app =
             applicationBuilder

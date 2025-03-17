@@ -65,7 +65,7 @@ class ReturnStatusController @Inject()(
       for {
         availablePeriodsWithStatus <- getStatuses(request.registration.commencementDate, request.vrn, request.registration.excludedTrader)
         savedAnswers <- saveForLaterRepository.get(request.vrn)
-        finalReturnsCompleted <- exclusionService.hasSubmittedFinalReturn()
+        finalReturnsCompleted = exclusionService.hasSubmittedFinalReturn(availablePeriodsWithStatus)
       } yield {
         val answers = savedAnswers.sortBy(_.lastUpdated).lastOption
 
