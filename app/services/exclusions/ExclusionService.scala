@@ -19,22 +19,22 @@ package services.exclusions
 import logging.Logging
 import models.exclusions.ExcludedTrader
 import models.requests.RegistrationRequest
+import models.PeriodWithStatus
+import models.SubmissionStatus.Complete
 import play.api.mvc.AnyContent
-import services.VatReturnService
 
 import javax.inject.Inject
-import scala.concurrent.{ExecutionContext, Future}
 
-class ExclusionService @Inject()(vatReturnService: VatReturnService) extends Logging {
+class ExclusionService @Inject()() extends Logging {
 
-  def hasSubmittedFinalReturn()(implicit ec: ExecutionContext, request: RegistrationRequest[AnyContent]): Future[Boolean] = {
+  def hasSubmittedFinalReturn(availablePeriodsWithStatus: Seq[PeriodWithStatus])(implicit request: RegistrationRequest[AnyContent]): Boolean = {
     request.registration.excludedTrader match {
       case Some(excludedTrader: ExcludedTrader) =>
-        vatReturnService.get(request.vrn, excludedTrader.finalReturnPeriod).map {
-          case Some(_) => true
-          case _ => false
+        availablePeriodsWithStatus.exists { periodWithStatus =>
+          periodWithStatus.status == Complete &&
+            periodWithStatus.period == excludedTrader.finalReturnPeriod
         }
-      case _ => Future.successful(false)
+      case _ => false
     }
   }
 }

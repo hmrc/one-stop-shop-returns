@@ -17,8 +17,8 @@
 package services.exclusions
 
 import base.SpecBase
-import models.Quarter.Q3
-import models.StandardPeriod
+import models.Quarter.{Q2, Q3}
+import models.{PeriodWithStatus, StandardPeriod, SubmissionStatus}
 import models.domain.Registration
 import models.exclusions.{ExcludedTrader, ExclusionReason}
 import models.requests.RegistrationRequest
@@ -39,11 +39,22 @@ class ExclusionServiceSpec extends SpecBase with BeforeAndAfterEach {
 
   private val mockRegistrationRequest = mock[RegistrationRequest[AnyContent]]
   private val mockRegistration = mock[Registration]
-  private val vatReturnService = mock[VatReturnService]
-  private val exclusionService = new ExclusionService(vatReturnService)
+  private val exclusionService = new ExclusionService()
 
   private val exclusionReason = Gen.oneOf(ExclusionReason.values).sample.value
   private val exclusionPeriod = StandardPeriod(2022, Q3)
+
+  private val periodQ2 = StandardPeriod(2022, Q2)
+  private val periodQ3 = StandardPeriod(2022, Q3)
+  private val periodsWithStatus = Seq(
+    PeriodWithStatus(periodQ2, SubmissionStatus.Complete),
+    PeriodWithStatus(periodQ3, SubmissionStatus.Complete)
+  )
+
+  private val periodsWithStatusNotSubmitted = Seq(
+    PeriodWithStatus(periodQ2, SubmissionStatus.Due),
+    PeriodWithStatus(periodQ3, SubmissionStatus.Next)
+  )
 
   override def beforeEach(): Unit = {
     Mockito.reset(mockRegistrationRequest)
@@ -58,9 +69,7 @@ class ExclusionServiceSpec extends SpecBase with BeforeAndAfterEach {
       when(mockRegistration.excludedTrader) `thenReturn`
         Some(ExcludedTrader(Vrn("123456789"), exclusionReason, exclusionPeriod.firstDay))
 
-      when(vatReturnService.get(any(), any())) `thenReturn` Future.successful(Some(completeVatReturn))
-
-      exclusionService.hasSubmittedFinalReturn()(ec, mockRegistrationRequest).futureValue mustBe true
+      exclusionService.hasSubmittedFinalReturn(periodsWithStatus)(mockRegistrationRequest) mustBe true
     }
 
     "must return false if final return not completed" in {
@@ -69,9 +78,16 @@ class ExclusionServiceSpec extends SpecBase with BeforeAndAfterEach {
       when(mockRegistration.excludedTrader) `thenReturn`
         Some(ExcludedTrader(Vrn("123456789"), exclusionReason, exclusionPeriod.firstDay))
 
-      when(vatReturnService.get(any(),any())) `thenReturn` Future.successful(None)
+      exclusionService.hasSubmittedFinalReturn(Seq.empty)(mockRegistrationRequest) mustBe false
+    }
 
-      exclusionService.hasSubmittedFinalReturn()(ec, mockRegistrationRequest).futureValue mustBe false
+    "must return false if final return not completed as it's due" in {
+      when(mockRegistrationRequest.registration) `thenReturn` mockRegistration
+
+      when(mockRegistration.excludedTrader) `thenReturn`
+        Some(ExcludedTrader(Vrn("123456789"), exclusionReason, exclusionPeriod.firstDay))
+
+      exclusionService.hasSubmittedFinalReturn(periodsWithStatusNotSubmitted)(mockRegistrationRequest) mustBe false
     }
   }
 
