@@ -73,7 +73,7 @@ trait SpecBase
           "Ireland"),
           Some(EuTaxIdentifier(EuTaxIdentifierType.Other, "-2147483648")),
           List(SalesToCountry(Country("CY",
-            "Republic of Cyprus"),
+            "Cyprus"),
             List(SalesDetails(VatRate(98.97,
               VatRateType.Reduced),
               356270.07,
