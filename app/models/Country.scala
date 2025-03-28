@@ -35,7 +35,7 @@ object CountryWithValidationDetails {
     CountryWithValidationDetails(Country("BE", "Belgium"), belgiumVatNumberRegex, "the 10 numbers", "0123456789"),
     CountryWithValidationDetails(Country("BG", "Bulgaria"), bulgariaVatNumberRegex, "9 or 10 numbers", "123456789"),
     CountryWithValidationDetails(Country("HR", "Croatia"), croatiaVatNumberRegex, "the 11 numbers", "01234567899"),
-    CountryWithValidationDetails(Country("CY", "Republic of Cyprus"), cyprusVatNumberRegex, "the 9 characters", "12345678X"),
+    CountryWithValidationDetails(Country("CY", "Cyprus"), cyprusVatNumberRegex, "the 9 characters", "12345678X"),
     CountryWithValidationDetails(Country("CZ", "Czech Republic"), czechRepublicVatNumberRegex, "8, 9 or 10 numbers", "123456789"),
     CountryWithValidationDetails(Country("DK", "Denmark"), denmarkVatNumberRegex, "the 8 numbers", "12345678", Some(". Do not include spaces.")),
     CountryWithValidationDetails(Country("EE", "Estonia"), estoniaVatNumberRegex, "the 9 numbers", "123456789"),
