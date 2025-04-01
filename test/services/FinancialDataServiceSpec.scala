@@ -3,19 +3,18 @@ package services
 import base.SpecBase
 import config.AppConfig
 import connectors.{FinancialDataConnector, VatReturnConnector}
-import models.*
-import models.financialdata.*
+import models.Period.toEtmpPeriodString
 import models.Quarter.*
+import models.*
 import models.corrections.{CorrectionPayload, CorrectionToCountry, PeriodWithCorrections}
 import models.des.{DesException, UnexpectedResponseStatus}
-import models.VatReturn
-import models.etmp.{EtmpObligation, EtmpObligationDetails, EtmpObligations, EtmpVatReturn}
-import models.Period.toEtmpPeriodString
 import models.etmp.EtmpObligationsFulfilmentStatus.Fulfilled
-import org.mockito.ArgumentMatchers.{any, eq as equalTo}
+import models.etmp.{EtmpObligation, EtmpObligationDetails, EtmpObligations, EtmpVatReturn}
+import models.financialdata.*
 import org.mockito.ArgumentMatchers.eq as eqTo
+import org.mockito.ArgumentMatchers.{any, eq as equalTo}
 import org.mockito.Mockito
-import org.mockito.Mockito.{times, verify, verifyNoInteractions, verifyNoMoreInteractions, when}
+import org.mockito.Mockito.*
 import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalatest.BeforeAndAfterEach
@@ -1106,7 +1105,6 @@ class FinancialDataServiceSpec extends SpecBase
     "when passing one vatReturnWithFinancialData" - {
 
       val vatReturnWithFinancialData = PeriodWithFinancialData(vatReturn.period, None, 0, true)
-      val vatOnSales = BigDecimal(1000)
 
       "should return one vatReturnWithFinancialData" - {
 

@@ -16,8 +16,7 @@
 
 package models.financialdata
 
-import models.{Period, VatReturn}
-import models.corrections.CorrectionPayload
+import models.Period
 import play.api.libs.json.{Format, Json}
 
 case class PeriodWithFinancialData(

@@ -20,14 +20,14 @@ import base.SpecBase
 import connectors.{RegistrationConnector, VatReturnConnector}
 import controllers.actions.FakeFailingAuthConnector
 import generators.Generators
+import models.*
+import models.Period.toEtmpPeriodString
 import models.Quarter.{Q1, Q2, Q3, Q4}
 import models.SubmissionStatus.{Due, Excluded, Expired, Next, Overdue}
-import models.*
 import models.etmp.{EtmpObligation, EtmpObligationDetails, EtmpObligations, EtmpObligationsFulfilmentStatus}
-import models.exclusions.{ExcludedTrader, ExclusionReason}
 import models.exclusions.ExclusionReason.Reversal
+import models.exclusions.{ExcludedTrader, ExclusionReason}
 import models.yourAccount.*
-import models.Period.toEtmpPeriodString
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito
 import org.mockito.Mockito.when
@@ -41,14 +41,13 @@ import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import repositories.SaveForLaterRepository
-import services.{PeriodService, VatReturnService}
 import services.exclusions.ExclusionService
+import services.{PeriodService, VatReturnService}
 import testutils.RegistrationData
 import uk.gov.hmrc.auth.core.{AuthConnector, MissingBearerToken}
 import uk.gov.hmrc.domain.Vrn
 
 import java.time.{Clock, LocalDate, ZoneId}
-import scala.collection.immutable.Seq as app
 import scala.concurrent.Future
 
 class ReturnStatusControllerSpec

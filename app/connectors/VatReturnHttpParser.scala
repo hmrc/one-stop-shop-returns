@@ -30,8 +30,8 @@ object VatReturnHttpParser extends Logging {
   implicit object EtmpVatReturnReads extends HttpReads[DisplayVatReturnResponse] {
     override def read(method: String, url: String, response: HttpResponse): DisplayVatReturnResponse =
       response.status match {
-        case OK =>
-          response.json.validate[EtmpVatReturn] match {
+        case OK => // TODO -> What happens with object wrapped in failure?
+          (response.json \"success").validate[EtmpVatReturn] match {
             case JsSuccess(etmpVatReturn, _) =>
               Right(etmpVatReturn)
             case JsError(errors) =>
