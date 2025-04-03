@@ -104,7 +104,9 @@ object Period {
     val quarter = standardPeriod.quarter
     val lastYearDigits = year.toString.substring(2)
 
-    s"$lastYearDigits$quarter"
+    val etmpQuarter = quarter.toString.replace("Q", "C")
+
+    s"$lastYearDigits$etmpQuarter"
   }
 
   implicit def orderingByPeriod[A <: Period]: Ordering[A] =
