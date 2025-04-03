@@ -3,9 +3,9 @@ package connectors
 import base.SpecBase
 import com.github.tomakehurst.wiremock.client.WireMock.*
 import com.github.tomakehurst.wiremock.matching.EqualToPattern
-import models.etmp.{EtmpObligations, EtmpObligationsQueryParameters, EtmpVatReturn}
 import models.*
 import models.Period.toEtmpPeriodString
+import models.etmp.{EtmpObligations, EtmpObligationsQueryParameters, EtmpVatReturn}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
@@ -74,7 +74,7 @@ class VatReturnConnectorSpec extends SpecBase with WireMockHelper {
         val connector = app.injector.instanceOf[VatReturnConnector]
         val result = connector.getObligations(vrn, queryParameters).futureValue
 
-        result mustBe Right(obligations)
+        result `mustBe` Right(obligations)
       }
     }
     "must return OK when server return OK and a recognised payload with a status" in {
@@ -104,7 +104,7 @@ class VatReturnConnectorSpec extends SpecBase with WireMockHelper {
         val connector = app.injector.instanceOf[VatReturnConnector]
         val result = connector.getObligations(vrn, queryParameters).futureValue
 
-        result mustBe Right(obligations)
+        result `mustBe` Right(obligations)
       }
     }
 
@@ -128,8 +128,8 @@ class VatReturnConnectorSpec extends SpecBase with WireMockHelper {
         running(app) {
           val connector = app.injector.instanceOf[VatReturnConnector]
           whenReady(connector.getObligations(vrn, queryParameters), Timeout(Span(30, Seconds))) { exp =>
-            exp.isLeft mustBe true
-            exp.left.toOption.get mustBe GatewayTimeout
+            exp.isLeft `mustBe` true
+            exp.left.toOption.get `mustBe` GatewayTimeout
           }
         }
       }
@@ -157,7 +157,7 @@ class VatReturnConnectorSpec extends SpecBase with WireMockHelper {
 
           val expectedResponse = EtmpListObligationsError("404", errorResponseJson)
 
-          result mustBe Left(expectedResponse)
+          result `mustBe` Left(expectedResponse)
         }
       }
 
@@ -181,7 +181,7 @@ class VatReturnConnectorSpec extends SpecBase with WireMockHelper {
 
           val expectedResponse = EtmpListObligationsError("UNEXPECTED_404", "The response body was empty")
 
-          result mustBe Left(expectedResponse)
+          result `mustBe` Left(expectedResponse)
         }
       }
     }
@@ -225,7 +225,7 @@ class VatReturnConnectorSpec extends SpecBase with WireMockHelper {
         val connector = app.injector.instanceOf[VatReturnConnector]
         val result = connector.get(vrn, period).futureValue
 
-        result mustBe Right(vatReturn)
+        result `mustBe` Right(vatReturn)
       }
     }
 
@@ -246,7 +246,7 @@ class VatReturnConnectorSpec extends SpecBase with WireMockHelper {
         val connector = app.injector.instanceOf[VatReturnConnector]
         val result = connector.get(vrn, period).futureValue
 
-        result mustBe Left(InvalidJson)
+        result `mustBe` Left(InvalidJson)
       }
     }
 
@@ -268,7 +268,7 @@ class VatReturnConnectorSpec extends SpecBase with WireMockHelper {
 
         val result = connector.get(vrn, period).futureValue
 
-        result mustBe Left(UnexpectedResponseStatus(status, s"Unexpected response form Display VAT Return with status: $status and response body: "))
+        result `mustBe` Left(UnexpectedResponseStatus(status, s"Unexpected response form Display VAT Return with status: $status and response body: "))
       }
     }
 
@@ -290,8 +290,8 @@ class VatReturnConnectorSpec extends SpecBase with WireMockHelper {
         val connector = app.injector.instanceOf[VatReturnConnector]
 
         whenReady(connector.get(vrn, period), Timeout(Span(30, Seconds))) { exp =>
-          exp.left.toOption.get mustBe a[ErrorResponse]
-          exp.left.toOption.get mustBe GatewayTimeout
+          exp.left.toOption.get `mustBe` a[ErrorResponse]
+          exp.left.toOption.get `mustBe` GatewayTimeout
         }
       }
     }

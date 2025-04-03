@@ -9,18 +9,15 @@ import uk.gov.hmrc.domain.Vrn
 
 import java.time.Instant
 
-class SavedUserAnswersScala extends SpecBase
+class SavedUserAnswersSpecScala extends SpecBase
   with ScalaCheckPropertyChecks
   with EitherValues {
 
   "SavedUserAnswers" - {
     "must serialise and deserialise correctly" in {
 
-      val correctionCountry: Country = Country("AT", "Austria")
-      val countryVatCorrection: BigDecimal = BigDecimal(100.12)
-
       val vrn: Vrn = Vrn("Vrn")
-      val period: Period  = StandardPeriod(2024, Q1)
+      val period: Period = StandardPeriod(2024, Q1)
       val data: JsValue = Json.obj(
         "data" -> "data"
       )

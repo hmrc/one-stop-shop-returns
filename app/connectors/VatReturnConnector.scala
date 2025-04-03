@@ -80,7 +80,7 @@ class VatReturnConnector @Inject()(
     val headersWithoutAuth = headersWithCorrelationId.filterNot {
       case (key, _) => key.matches(AUTHORIZATION)
     }
-
+    
     val url: URL = url"${etmpDisplayVatReturnConfig.baseUrl}/$vrn/${toEtmpPeriodString(period)}"
 
     logger.info(s"Sending get request to ETMP with headers $headersWithoutAuth")
