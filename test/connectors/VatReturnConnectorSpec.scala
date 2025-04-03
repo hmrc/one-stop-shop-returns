@@ -213,27 +213,27 @@ class VatReturnConnectorSpec extends SpecBase with WireMockHelper {
       )
 
       val responseJson =
-        """|{
-           |  "success":{
-           |    "returnReference": "123456789",
-           |    "returnVersion": "2025-04-01T00:00:00",
-           |    "periodKey": "periodKey",
-           |    "returnPeriodFrom": "2025-07-01",
-           |    "returnPeriodTo": "2025-04-01",
-           |    "goodsSupplied": [],
-           |    "totalVATGoodsSuppliedGBP": 100,
-           |    "goodsDispatched": [],
-           |    "totalVatAmtDispatchedGBP": 100,
-           |    "totalVATAmountPayable": 100,
-           |    "totalVATAmountPayableAllSpplied": 100,
-           |    "correctionPreviousVATReturn": [],
-           |    "totalVATAmountFromCorrectionGBP": 100,
-           |    "balanceOfVATDueForMS": [],
-           |    "totalVATAmountDueForAllMSGBP": 100,
-           |    "paymentReference": "paymentReference"
-           |  }
-           |}
-           |""".stripMargin
+        s"""|{
+            |  "success":{
+            |    "returnReference": "123456789",
+            |    "returnVersion": "${vatReturn.returnVersion.toString}",
+            |    "periodKey": "${vatReturn.periodKey}",
+            |    "returnPeriodFrom": "${vatReturn.returnPeriodFrom.toString}",
+            |    "returnPeriodTo": "${vatReturn.returnPeriodTo.toString}",
+            |    "goodsSupplied": [],
+            |    "totalVATGoodsSuppliedGBP": 100,
+            |    "goodsDispatched": [],
+            |    "totalVatAmtDispatchedGBP": 100,
+            |    "totalVATAmountPayable": 100,
+            |    "totalVATAmountPayableAllSpplied": 100,
+            |    "correctionPreviousVATReturn": [],
+            |    "totalVATAmountFromCorrectionGBP": 100,
+            |    "balanceOfVATDueForMS": [],
+            |    "totalVATAmountDueForAllMSGBP": 100,
+            |    "paymentReference": "paymentReference"
+            |  }
+            |}
+            |""".stripMargin
 
       val app = application
 
