@@ -17,10 +17,9 @@
 package models
 
 import crypto.EncryptedValue
-import play.api.libs.json._
+import play.api.libs.json.*
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
-
 
 import java.time.Instant
 
@@ -63,7 +62,7 @@ object NewEncryptedSavedUserAnswers {
 
   val reads: Reads[NewEncryptedSavedUserAnswers] = {
 
-    import play.api.libs.functional.syntax._
+    import play.api.libs.functional.syntax.*
 
     (
       (__ \ "vrn").read[Vrn] and
@@ -75,7 +74,7 @@ object NewEncryptedSavedUserAnswers {
 
   val writes: OWrites[NewEncryptedSavedUserAnswers] = {
 
-    import play.api.libs.functional.syntax._
+    import play.api.libs.functional.syntax.*
 
     (
       (__ \ "vrn").write[Vrn] and
@@ -99,7 +98,7 @@ object LegacyEncryptedSavedUserAnswers {
 
   val reads: Reads[LegacyEncryptedSavedUserAnswers] = {
 
-    import play.api.libs.functional.syntax._
+    import play.api.libs.functional.syntax.*
 
     (
       (__ \ "vrn").read[Vrn] and
@@ -111,7 +110,7 @@ object LegacyEncryptedSavedUserAnswers {
 
   val writes: OWrites[LegacyEncryptedSavedUserAnswers] = {
 
-    import play.api.libs.functional.syntax._
+    import play.api.libs.functional.syntax.*
 
     (
       (__ \ "vrn").write[Vrn] and

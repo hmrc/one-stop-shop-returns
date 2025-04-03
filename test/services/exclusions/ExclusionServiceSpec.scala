@@ -18,24 +18,18 @@ package services.exclusions
 
 import base.SpecBase
 import models.Quarter.{Q2, Q3}
-import models.{PeriodWithStatus, StandardPeriod, SubmissionStatus}
 import models.domain.Registration
 import models.exclusions.{ExcludedTrader, ExclusionReason}
 import models.requests.RegistrationRequest
-import org.mockito.ArgumentMatchers.any
+import models.{PeriodWithStatus, StandardPeriod, SubmissionStatus}
 import org.mockito.Mockito
 import org.mockito.Mockito.when
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterEach
 import play.api.mvc.AnyContent
-import services.VatReturnService
 import uk.gov.hmrc.domain.Vrn
 
-import scala.concurrent.{ExecutionContext, Future}
-
 class ExclusionServiceSpec extends SpecBase with BeforeAndAfterEach {
-
-  implicit private lazy val ec: ExecutionContext = ExecutionContext.global
 
   private val mockRegistrationRequest = mock[RegistrationRequest[AnyContent]]
   private val mockRegistration = mock[Registration]
