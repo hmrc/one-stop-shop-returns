@@ -9,7 +9,7 @@ import uk.gov.hmrc.domain.Vrn
 
 import java.time.Instant
 
-class SavedUserAnswersSpecScala extends SpecBase
+class SavedUserAnswersSpec extends SpecBase
   with ScalaCheckPropertyChecks
   with EitherValues {
 
