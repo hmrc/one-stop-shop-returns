@@ -103,7 +103,7 @@ object Period {
     val year = standardPeriod.year
     val quarter = standardPeriod.quarter
     val lastYearDigits = year.toString.substring(2)
-    
+
     val etmpQuarter = quarter.toString.replace("Q", "C")
 
     s"$lastYearDigits$etmpQuarter"
