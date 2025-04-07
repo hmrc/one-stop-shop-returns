@@ -16,8 +16,7 @@ class EtmpVatReturnCorrectionSpec extends SpecBase {
         "periodFrom" -> etmpVatReturnCorrection.periodFrom,
         "periodTo" -> etmpVatReturnCorrection.periodTo,
         "msOfConsumption" -> etmpVatReturnCorrection.msOfConsumption,
-        "totalVATAmountCorrectionGBP" -> etmpVatReturnCorrection.totalVATAmountCorrectionGBP,
-        "totalVATAmountCorrectionEUR" -> etmpVatReturnCorrection.totalVATAmountCorrectionEUR
+        "totalVATAmountCorrectionGBP" -> etmpVatReturnCorrection.totalVATAmountCorrectionGBP
       )
 
       val expectedResult = EtmpVatReturnCorrection(
@@ -25,8 +24,7 @@ class EtmpVatReturnCorrectionSpec extends SpecBase {
         periodFrom = etmpVatReturnCorrection.periodFrom,
         periodTo = etmpVatReturnCorrection.periodTo,
         msOfConsumption = etmpVatReturnCorrection.msOfConsumption,
-        totalVATAmountCorrectionGBP = etmpVatReturnCorrection.totalVATAmountCorrectionGBP,
-        totalVATAmountCorrectionEUR = etmpVatReturnCorrection.totalVATAmountCorrectionEUR
+        totalVATAmountCorrectionGBP = etmpVatReturnCorrection.totalVATAmountCorrectionGBP
       )
 
       Json.toJson(expectedResult) mustBe json

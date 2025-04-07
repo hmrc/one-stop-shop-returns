@@ -347,14 +347,12 @@ trait ModelGenerators {
         periodTo <- arbitrary[String]
         msOfConsumption <- arbitrary[String]
         totalVATAmountCorrectionGBP <- arbitrary[BigDecimal]
-        totalVATAmountCorrectionEUR <- arbitrary[BigDecimal]
       } yield EtmpVatReturnCorrection(
         periodKey = periodKey,
         periodFrom = periodFrom,
         periodTo = periodTo,
         msOfConsumption = msOfConsumption,
-        totalVATAmountCorrectionGBP = totalVATAmountCorrectionGBP,
-        totalVATAmountCorrectionEUR = totalVATAmountCorrectionEUR
+        totalVATAmountCorrectionGBP = totalVATAmountCorrectionGBP
       )
     }
   }
@@ -364,11 +362,9 @@ trait ModelGenerators {
       for {
         msOfConsumption <- arbitrary[String]
         totalVATDueGBP <- arbitrary[BigDecimal].retryUntil(x => x > 0 && x < 100000000).map(_.round(MathContext(4)))
-        totalVATEUR <- arbitrary[BigDecimal]
       } yield EtmpVatReturnBalanceOfVatDue(
         msOfConsumption = msOfConsumption,
-        totalVATDueGBP = totalVATDueGBP,
-        totalVATEUR = totalVATEUR
+        totalVATDueGBP = totalVATDueGBP
       )
     }
   }
@@ -386,7 +382,6 @@ trait ModelGenerators {
         totalVATGoodsSuppliedGBP <- arbitrary[BigDecimal]
         amountOfGoodsDispatched <- Gen.oneOf(List(1, 2, 3))
         goodsDispatched <- Gen.listOfN(amountOfGoodsDispatched, arbitrary[EtmpVatReturnGoodsDispatched])
-        totalVatAmtDispatchedGBP <- arbitrary[BigDecimal]
         totalVATAmountPayable <- arbitrary[BigDecimal]
         totalVATAmountPayableAllSpplied <- arbitrary[BigDecimal]
         amountOfCorrections <- Gen.oneOf(List(1, 2, 3))
@@ -405,7 +400,6 @@ trait ModelGenerators {
         goodsSupplied = goodsSupplied,
         totalVATGoodsSuppliedGBP = totalVATGoodsSuppliedGBP,
         goodsDispatched = goodsDispatched,
-        totalVatAmtDispatchedGBP = totalVatAmtDispatchedGBP,
         totalVATAmountPayable = totalVATAmountPayable,
         totalVATAmountPayableAllSpplied = totalVATAmountPayableAllSpplied,
         correctionPreviousVATReturn = correctionPreviousVATReturn,
