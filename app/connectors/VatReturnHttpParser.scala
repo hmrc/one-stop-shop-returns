@@ -31,7 +31,7 @@ object VatReturnHttpParser extends Logging {
     override def read(method: String, url: String, response: HttpResponse): DisplayVatReturnResponse =
       response.status match {
         case OK =>
-          (response.json \"success").validate[EtmpVatReturn] match {
+          response.json.validate[EtmpVatReturn] match {
             case JsSuccess(etmpVatReturn, _) =>
               Right(etmpVatReturn)
             case JsError(errors) =>

@@ -213,23 +213,21 @@ class VatReturnConnectorSpec extends SpecBase with WireMockHelper {
 
       val responseJson =
         s"""|{
-            |  "success":{
-            |    "returnReference": "123456789",
-            |    "returnVersion": "${vatReturn.returnVersion.toString}",
-            |    "periodKey": "${vatReturn.periodKey}",
-            |    "returnPeriodFrom": "${vatReturn.returnPeriodFrom.toString}",
-            |    "returnPeriodTo": "${vatReturn.returnPeriodTo.toString}",
-            |    "goodsSupplied": [],
-            |    "totalVATGoodsSuppliedGBP": 100,
-            |    "goodsDispatched": [],
-            |    "totalVATAmountPayable": 100,
-            |    "totalVATAmountPayableAllSpplied": 100,
-            |    "correctionPreviousVATReturn": [],
-            |    "totalVATAmountFromCorrectionGBP": 100,
-            |    "balanceOfVATDueForMS": [],
-            |    "totalVATAmountDueForAllMSGBP": 100,
-            |    "paymentReference": "paymentReference"
-            |  }
+            |  "returnReference": "123456789",
+            |  "returnVersion": "${vatReturn.returnVersion.toString}",
+            |  "periodKey": "${vatReturn.periodKey}",
+            |  "returnPeriodFrom": "${vatReturn.returnPeriodFrom.toString}",
+            |  "returnPeriodTo": "${vatReturn.returnPeriodTo.toString}",
+            |  "goodsSupplied": [],
+            |  "totalVATGoodsSuppliedGBP": 100,
+            |  "goodsDispatched": [],
+            |  "totalVATAmountPayable": 100,
+            |  "totalVATAmountPayableAllSpplied": 100,
+            |  "correctionPreviousVATReturn": [],
+            |  "totalVATAmountFromCorrectionGBP": 100,
+            |  "balanceOfVATDueForMS": [],
+            |  "totalVATAmountDueForAllMSGBP": 100,
+            |  "paymentReference": "paymentReference"
             |}
             |""".stripMargin
 
