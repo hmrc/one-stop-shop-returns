@@ -30,6 +30,7 @@ case class EtmpVatReturn(
                           returnPeriodTo: LocalDate,
                           goodsSupplied: Seq[EtmpVatReturnGoodsSupplied],
                           totalVATGoodsSuppliedGBP: BigDecimal,
+                          goodsDispatched: Seq[EtmpVatReturnGoodsDispatched],
                           totalVATAmountPayable: BigDecimal,
                           totalVATAmountPayableAllSpplied: BigDecimal,
                           correctionPreviousVATReturn: Seq[EtmpVatReturnCorrection],
@@ -50,6 +51,7 @@ object EtmpVatReturn {
         (__ \ "returnPeriodTo").read[LocalDate] and
         (__ \ "goodsSupplied").readWithDefault[Seq[EtmpVatReturnGoodsSupplied]](Seq.empty) and
         (__ \ "totalVATGoodsSuppliedGBP").read[BigDecimal] and
+        (__ \ "goodsDispatched").readWithDefault[Seq[EtmpVatReturnGoodsDispatched]](Seq.empty) and
         (__ \ "totalVATAmountPayable").read[BigDecimal] and
         (__ \ "totalVATAmountPayableAllSpplied").read[BigDecimal] and
         (__ \ "correctionPreviousVATReturn").readWithDefault[Seq[EtmpVatReturnCorrection]](Seq.empty) and
@@ -69,6 +71,7 @@ object EtmpVatReturn {
         (__ \ "returnPeriodTo").write[LocalDate] and
         (__ \ "goodsSupplied").write[Seq[EtmpVatReturnGoodsSupplied]] and
         (__ \ "totalVATGoodsSuppliedGBP").write[BigDecimal] and
+        (__ \ "goodsDispatched").write[Seq[EtmpVatReturnGoodsDispatched]] and
         (__ \ "totalVATAmountPayable").write[BigDecimal] and
         (__ \ "totalVATAmountPayableAllSpplied").write[BigDecimal] and
         (__ \ "correctionPreviousVATReturn").write[Seq[EtmpVatReturnCorrection]] and

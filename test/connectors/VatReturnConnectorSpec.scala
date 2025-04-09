@@ -201,6 +201,7 @@ class VatReturnConnectorSpec extends SpecBase with WireMockHelper {
         returnPeriodTo = LocalDate.now(stubClock),
         goodsSupplied = Seq.empty,
         totalVATGoodsSuppliedGBP = BigDecimal(100),
+        goodsDispatched = Seq.empty,
         totalVATAmountPayable = BigDecimal(100),
         totalVATAmountPayableAllSpplied = BigDecimal(100),
         correctionPreviousVATReturn = Seq.empty,
@@ -210,7 +211,25 @@ class VatReturnConnectorSpec extends SpecBase with WireMockHelper {
         paymentReference = "paymentReference"
       )
 
-      val responseJson = Json.toJson(vatReturn).toString()
+      val responseJson =
+        s"""|{
+            |  "returnReference": "123456789",
+            |  "returnVersion": "${vatReturn.returnVersion.toString}",
+            |  "periodKey": "${vatReturn.periodKey}",
+            |  "returnPeriodFrom": "${vatReturn.returnPeriodFrom.toString}",
+            |  "returnPeriodTo": "${vatReturn.returnPeriodTo.toString}",
+            |  "goodsSupplied": [],
+            |  "totalVATGoodsSuppliedGBP": 100,
+            |  "goodsDispatched": [],
+            |  "totalVATAmountPayable": 100,
+            |  "totalVATAmountPayableAllSpplied": 100,
+            |  "correctionPreviousVATReturn": [],
+            |  "totalVATAmountFromCorrectionGBP": 100,
+            |  "balanceOfVATDueForMS": [],
+            |  "totalVATAmountDueForAllMSGBP": 100,
+            |  "paymentReference": "paymentReference"
+            |}
+            |""".stripMargin
 
       val app = application
 

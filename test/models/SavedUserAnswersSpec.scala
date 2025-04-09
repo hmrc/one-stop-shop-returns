@@ -14,6 +14,7 @@ class SavedUserAnswersSpec extends SpecBase
   with EitherValues {
 
   "SavedUserAnswers" - {
+
     "must serialise and deserialise correctly" in {
 
       val vrn: Vrn = Vrn("Vrn")
