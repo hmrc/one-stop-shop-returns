@@ -24,7 +24,7 @@ import models.etmp.EtmpObligationsQueryParameters
 import models.requests.{VatReturnRequest, VatReturnWithCorrectionRequest}
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
-import services.VatReturnService
+import services.{PeriodService, VatReturnService}
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import utils.Formatters.etmpDateFormatter
@@ -36,6 +36,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class VatReturnController @Inject()(
                                      cc: ControllerComponents,
                                      vatReturnService: VatReturnService,
+                                     periodService: PeriodService,
                                      vatReturnConnector: VatReturnConnector,
                                      registrationConnector: RegistrationConnector,
                                      auth: AuthAction,
@@ -93,12 +94,16 @@ class VatReturnController @Inject()(
 
       registrationConnector.getRegistration(Vrn(vrn)).flatMap {
         case Some(registration) =>
-          val fromDate: String = registration.commencementDate.format(etmpDateFormatter)
-          val toDate = LocalDate.now(clock).plusMonths(1).withDayOfMonth(1).minusDays(1).format(etmpDateFormatter)
 
-          val queryParameters: EtmpObligationsQueryParameters = EtmpObligationsQueryParameters(
-            fromDate = fromDate,
-            toDate = toDate,
+          val toDate = if (LocalDate.now(clock).isBefore(registration.commencementDate)) {
+            periodService.getRunningPeriod(registration.commencementDate).lastDay
+          } else {
+            periodService.getRunningPeriod(LocalDate.now(clock)).lastDay
+          }
+
+          val queryParameters = EtmpObligationsQueryParameters(
+            fromDate = registration.commencementDate.format(etmpDateFormatter),
+            toDate = toDate.format(etmpDateFormatter),
             status = None
           )
 

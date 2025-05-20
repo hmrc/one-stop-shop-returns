@@ -102,12 +102,18 @@ class ReturnStatusController @Inject()(
 
   private def getStatuses(commencementLocalDate: LocalDate, vrn: Vrn, excludedTrader: Option[ExcludedTrader]): Future[Seq[PeriodWithStatus]] = {
 
+    val toDate = if(LocalDate.now(clock).isBefore(commencementLocalDate)) {
+      periodService.getRunningPeriod(commencementLocalDate).lastDay
+    } else {
+      periodService.getRunningPeriod(LocalDate.now(clock)).lastDay
+    }
+
     val etmpObligationsQueryParameters = EtmpObligationsQueryParameters(
       fromDate = commencementLocalDate.format(etmpDateFormatter),
-      toDate = LocalDate.now(clock).plusMonths(1).withDayOfMonth(1).minusDays(1).format(etmpDateFormatter),
+      toDate = toDate.format(etmpDateFormatter),
       status = None
-
     )
+    
     val futureFulfilledPeriods: Future[Seq[Period]] = if (config.strategicReturnApiEnabled) {
       vatReturnConnector.getObligations(vrn.vrn, etmpObligationsQueryParameters).map {
         case Right(obligations) =>

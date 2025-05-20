@@ -107,6 +107,7 @@ class ReturnStatusControllerSpec
         when(mockPeriodService.getReturnPeriods(any())) `thenReturn` Seq(period)
         when(mockPeriodService.getAllPeriods(any())) `thenReturn` Seq(period)
         when(mockPeriodService.getNextPeriod(any())) `thenReturn` nextPeriod
+        when(mockPeriodService.getRunningPeriod(any())) `thenReturn` period
 
         val app =
           applicationBuilder
@@ -145,6 +146,7 @@ class ReturnStatusControllerSpec
         when(mockPeriodService.getReturnPeriods(any())) `thenReturn` Seq(period, period2021Q4, period2022Q1)
         when(mockPeriodService.getAllPeriods(any())) `thenReturn` Seq(period, period2021Q4, period2022Q1)
         when(mockPeriodService.getNextPeriod(any())) `thenReturn` nextPeriod
+        when(mockPeriodService.getRunningPeriod(any())) `thenReturn` period
 
         val app =
           applicationBuilder
@@ -185,6 +187,7 @@ class ReturnStatusControllerSpec
         when(mockPeriodService.getReturnPeriods(any())) `thenReturn` Seq(period)
         when(mockPeriodService.getAllPeriods(any())) `thenReturn` Seq(period)
         when(mockPeriodService.getNextPeriod(any())) `thenReturn` nextPeriod
+        when(mockPeriodService.getRunningPeriod(any())) `thenReturn` period
 
         val app =
           applicationBuilder
@@ -220,6 +223,7 @@ class ReturnStatusControllerSpec
         when(mockPeriodService.getReturnPeriods(any())) `thenReturn` Seq(period, period2021Q4, period2022Q1)
         when(mockPeriodService.getAllPeriods(any())) `thenReturn` Seq(period, period2021Q4, period2022Q1)
         when(mockPeriodService.getNextPeriod(any())) `thenReturn` nextPeriod
+        when(mockPeriodService.getRunningPeriod(any())) `thenReturn` period
 
         val app =
           applicationBuilder
@@ -491,6 +495,7 @@ class ReturnStatusControllerSpec
           when(mockVatReturnService.get(any(), any())) `thenReturn` Future.successful(None)
           when(mockPeriodService.getReturnPeriods(any())) `thenReturn` Seq(periodQ2, periodQ3)
           when(mockPeriodService.getNextPeriod(any())) `thenReturn` periodQ3
+          when(mockPeriodService.getRunningPeriod(any())) `thenReturn` periodQ2
           when(mockS4LaterRepository.get(any())) `thenReturn` Future.successful(Seq.empty)
           when(mockRegConnector.getRegistration(any())(any())) `thenReturn`
             Future.successful(Some(RegistrationData.registration.copy(excludedTrader = Some(excludedTrader.copy(effectiveDate = periodQ2.firstDay)))))
@@ -528,6 +533,7 @@ class ReturnStatusControllerSpec
           when(mockVatReturnService.get(any(), any())) `thenReturn` Future.successful(Some(completeVatReturn.copy(period = periodQ2)))
           when(mockPeriodService.getReturnPeriods(any())) `thenReturn` Seq(periodQ2, periodQ3)
           when(mockPeriodService.getNextPeriod(any())) `thenReturn` periodQ3
+          when(mockPeriodService.getRunningPeriod(any())) `thenReturn` periodQ2
           when(mockS4LaterRepository.get(any())) `thenReturn` Future.successful(Seq.empty)
           when(mockRegConnector.getRegistration(any())(any())) `thenReturn`
             Future.successful(Some(RegistrationData.registration.copy(excludedTrader = Some(excludedTrader.copy(effectiveDate = periodQ2.firstDay)))))
@@ -566,6 +572,7 @@ class ReturnStatusControllerSpec
           when(mockVatReturnService.get(any(), any())) `thenReturn` Future.successful(None)
           when(mockPeriodService.getReturnPeriods(any())) `thenReturn` Seq(periodQ2, periodQ3, oldPeriod)
           when(mockPeriodService.getNextPeriod(any())) `thenReturn` periodQ3
+          when(mockPeriodService.getRunningPeriod(any())) `thenReturn` periodQ2
           when(mockS4LaterRepository.get(any())) `thenReturn` Future.successful(Seq.empty)
           when(mockRegConnector.getRegistration(any())(any())) `thenReturn`
             Future.successful(Some(RegistrationData.registration.copy(excludedTrader = Some(excludedTrader.copy(effectiveDate = periodQ2.firstDay)))))
@@ -879,6 +886,7 @@ class ReturnStatusControllerSpec
           when(mockVatReturnConnector.getObligations(any(), any())) `thenReturn` Future.successful(Right(obligation))
           when(mockPeriodService.getReturnPeriods(any())) `thenReturn` Seq(periodQ2, periodQ3)
           when(mockPeriodService.getNextPeriod(any())) `thenReturn` periodQ3
+          when(mockPeriodService.getRunningPeriod(any())) `thenReturn` periodQ2
           when(mockS4LaterRepository.get(any())) `thenReturn` Future.successful(Seq.empty)
           when(mockRegConnector.getRegistration(any())(any())) `thenReturn`
             Future.successful(Some(RegistrationData.registration.copy(excludedTrader = Some(excludedTrader.copy(effectiveDate = periodQ2.firstDay)))))
@@ -916,6 +924,7 @@ class ReturnStatusControllerSpec
           when(mockVatReturnConnector.getObligations(any(), any())) `thenReturn` Future.successful(Right(obligation))
           when(mockPeriodService.getReturnPeriods(any())) `thenReturn` Seq(periodQ2, periodQ3)
           when(mockPeriodService.getNextPeriod(any())) `thenReturn` periodQ3
+          when(mockPeriodService.getRunningPeriod(any())) `thenReturn` periodQ2
           when(mockS4LaterRepository.get(any())) `thenReturn` Future.successful(Seq.empty)
           when(mockRegConnector.getRegistration(any())(any())) `thenReturn`
             Future.successful(Some(RegistrationData.registration.copy(excludedTrader = Some(excludedTrader.copy(effectiveDate = periodQ2.firstDay)))))
@@ -954,6 +963,7 @@ class ReturnStatusControllerSpec
           when(mockVatReturnConnector.getObligations(any(), any())) `thenReturn` Future.successful(Right(obligation))
           when(mockPeriodService.getReturnPeriods(any())) `thenReturn` Seq(periodQ2, periodQ3, oldPeriod)
           when(mockPeriodService.getNextPeriod(any())) `thenReturn` periodQ3
+          when(mockPeriodService.getRunningPeriod(any())) `thenReturn` periodQ2
           when(mockS4LaterRepository.get(any())) `thenReturn` Future.successful(Seq.empty)
           when(mockRegConnector.getRegistration(any())(any())) `thenReturn`
             Future.successful(Some(RegistrationData.registration.copy(excludedTrader = Some(excludedTrader.copy(effectiveDate = periodQ2.firstDay)))))

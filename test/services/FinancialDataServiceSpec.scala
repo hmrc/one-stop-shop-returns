@@ -795,6 +795,7 @@ class FinancialDataServiceSpec extends SpecBase
 
         when(appConfig.strategicReturnApiEnabled) `thenReturn` true
         when(periodService.getPeriodYears(any())) `thenReturn` Seq(periodYear2021)
+        when(periodService.getRunningPeriod(any())) `thenReturn` period
         when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters2021))) `thenReturn`
           Future.successful(Right(Some(financialData)))
         when(vatReturnConnector.getObligations(any(), any())) `thenReturn` Future.successful(Right(etmpObligations))
@@ -821,6 +822,7 @@ class FinancialDataServiceSpec extends SpecBase
 
         when(appConfig.strategicReturnApiEnabled) `thenReturn` true
         when(periodService.getPeriodYears(any())) `thenReturn` Seq(periodYear2021)
+        when(periodService.getRunningPeriod(any())) `thenReturn` period
         when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters2021))) `thenReturn`
           Future.successful(Right(None))
         when(vatReturnConnector.getObligations(any(), any())) `thenReturn` Future.successful(Right(etmpObligations))
@@ -844,6 +846,7 @@ class FinancialDataServiceSpec extends SpecBase
 
         when(appConfig.strategicReturnApiEnabled) `thenReturn` true
         when(periodService.getPeriodYears(any())) `thenReturn` Seq(periodYear2021)
+        when(periodService.getRunningPeriod(any())) `thenReturn` period
         when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters2021))) `thenReturn`
           Future.successful(Left(UnexpectedResponseStatus(400, "Error")))
         when(vatReturnConnector.getObligations(any(), any())) `thenReturn` Future.successful(Right(etmpObligations))
@@ -866,6 +869,7 @@ class FinancialDataServiceSpec extends SpecBase
 
         when(appConfig.strategicReturnApiEnabled) `thenReturn` true
         when(periodService.getPeriodYears(any())) `thenReturn` Seq(periodYear2021)
+        when(periodService.getRunningPeriod(any())) `thenReturn` period
         when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters2021))) `thenReturn`
           Future.successful(Right(None))
         when(vatReturnConnector.getObligations(any(), any())) `thenReturn` Future.successful(Right(emptyObligations))
@@ -883,6 +887,7 @@ class FinancialDataServiceSpec extends SpecBase
 
         when(appConfig.strategicReturnApiEnabled) `thenReturn` true
         when(periodService.getPeriodYears(any())) `thenReturn` Seq(periodYear2021)
+        when(periodService.getRunningPeriod(any())) `thenReturn` period
         when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters2021))) `thenReturn`
           Future.successful(Right(None))
         when(vatReturnConnector.getObligations(any(), any())) `thenReturn` Future.successful(Right(etmpObligations))
@@ -931,6 +936,7 @@ class FinancialDataServiceSpec extends SpecBase
 
         when(appConfig.strategicReturnApiEnabled) `thenReturn` true
         when(periodService.getPeriodYears(any())) `thenReturn` Seq(periodYear2021)
+        when(periodService.getRunningPeriod(any())) `thenReturn` period
         when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters2021))) `thenReturn`
           Future.successful(
             Right(Some(FinancialData(
@@ -1005,6 +1011,7 @@ class FinancialDataServiceSpec extends SpecBase
 
         when(appConfig.strategicReturnApiEnabled) `thenReturn` true
         when(periodService.getPeriodYears(any())) `thenReturn` Seq(periodYear2021, periodYear2)
+        when(periodService.getRunningPeriod(any())) `thenReturn` period
         when(financialDataConnector.getFinancialData(any(), any()))
           .thenReturn(
             Future.successful(
@@ -1069,6 +1076,7 @@ class FinancialDataServiceSpec extends SpecBase
         when(vatReturnConnector.getObligations(any(), any())) `thenReturn` Future.successful(Right(etmpObligations))
         when(vatReturnConnector.get(any(), any())) `thenReturn` Future.successful(Right(etmpVatReturn))
         when(periodService.getPeriodYears(any())) `thenReturn` Seq(periodYear2021)
+        when(periodService.getRunningPeriod(any())) `thenReturn` period
         when(correctionsService.get(any(), any())) `thenReturn` Future.successful(Some(correctionPayload))
         when(vatReturnSalesService.getTotalVatOnSalesAfterCorrection(any(), any())) `thenReturn` BigDecimal(100)
         val expectedResponse =
