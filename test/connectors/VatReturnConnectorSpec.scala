@@ -189,7 +189,7 @@ class VatReturnConnectorSpec extends SpecBase with WireMockHelper {
 
   ".get" - {
 
-    val url: String = s"/one-stop-shop-returns-stub/vec/ossreturns/viewreturns/v1/$vrn/${toEtmpPeriodString(period)}"
+    val url: String = s"/one-stop-shop-returns-stub/vec/oss/returns/v1/$vrn/${toEtmpPeriodString(period)}"
 
     "must return Right(VatReturn) when the server returns OK with a valid payload" in {
 
