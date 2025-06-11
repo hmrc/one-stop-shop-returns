@@ -28,7 +28,6 @@ lazy val microservice = Project(appName, file("."))
   .settings(inConfig(IntegrationTest)(itSettings)*)
   .configs(Test)
   .settings(inConfig(Test)(testSettings)*)
-  .settings(resolvers += Resolver.jcenterRepo)
   .settings(scalacOptions ++= Seq("-Wconf:src=routes/.*:s", "-Wconf:msg=Flag.*repeatedly:s"))
 
 lazy val itSettings = Defaults.itSettings ++ Seq(
