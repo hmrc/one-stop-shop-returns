@@ -43,15 +43,16 @@ class FinancialDataConnector @Inject()(
   def getFinancialData(vrn: Vrn, queryParameters: FinancialDataQueryParameters): Future[FinancialDataResponse] = {
     val url: URL = financialDataUrl(vrn)
 
-    httpClientV2.get(url).transform(_
-      .withQueryStringParameters(queryParameters.toSeqQueryParams*)
-      .withHttpHeaders(headers*)
-    ).execute[FinancialDataResponse].recover {
-      case e: HttpException =>
-        logger.error(s"Unexpected error response getting financial data from $url, received status ${e.responseCode}, body of response was: ${e.message}")
-        Left(
-          UnexpectedResponseStatus(e.responseCode, s"Unexpected response from DES, received status ${e.responseCode}")
-        )
-    }
+    httpClientV2.get(url)
+      .setHeader(headers *)
+      .transform(_
+        .withQueryStringParameters(queryParameters.toSeqQueryParams *)
+      ).execute[FinancialDataResponse].recover {
+        case e: HttpException =>
+          logger.error(s"Unexpected error response getting financial data from $url, received status ${e.responseCode}, body of response was: ${e.message}")
+          Left(
+            UnexpectedResponseStatus(e.responseCode, s"Unexpected response from DES, received status ${e.responseCode}")
+          )
+      }
   }
 }
