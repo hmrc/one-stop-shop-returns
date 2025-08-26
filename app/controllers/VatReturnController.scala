@@ -102,7 +102,7 @@ class VatReturnController @Inject()(
           }
 
           val queryParameters = EtmpObligationsQueryParameters(
-            fromDate = registration.commencementDate.format(etmpDateFormatter),
+            fromDate = registration.commencementDateOrToday.format(etmpDateFormatter),
             toDate = toDate.format(etmpDateFormatter),
             status = None
           )
