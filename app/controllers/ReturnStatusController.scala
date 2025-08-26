@@ -101,15 +101,16 @@ class ReturnStatusController @Inject()(
   }
 
   private def getStatuses(commencementLocalDate: LocalDate, vrn: Vrn, excludedTrader: Option[ExcludedTrader]): Future[Seq[PeriodWithStatus]] = {
+    val now = LocalDate.now(clock)
 
-    val toDate = if(LocalDate.now(clock).isBefore(commencementLocalDate)) {
-      periodService.getRunningPeriod(commencementLocalDate).lastDay
+    val (fromDate, toDate) = if(now.isBefore(commencementLocalDate)) {
+      (now, periodService.getRunningPeriod(commencementLocalDate).lastDay)
     } else {
-      periodService.getRunningPeriod(LocalDate.now(clock)).lastDay
+      (commencementLocalDate, periodService.getRunningPeriod(now).lastDay)
     }
 
     val etmpObligationsQueryParameters = EtmpObligationsQueryParameters(
-      fromDate = commencementLocalDate.format(etmpDateFormatter),
+      fromDate = fromDate.format(etmpDateFormatter),
       toDate = toDate.format(etmpDateFormatter),
       status = None
     )

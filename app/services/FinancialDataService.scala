@@ -55,15 +55,17 @@ class FinancialDataService @Inject()(
   private def getFulfilledPeriods(vrn: Vrn, commencementDate: LocalDate): Future[Seq[Period]] = {
 
     if (config.strategicReturnApiEnabled) {
+      
+      val now = LocalDate.now(clock)
 
-      val toDate = if (LocalDate.now(clock).isBefore(commencementDate)) {
-        periodService.getRunningPeriod(commencementDate).lastDay
+      val (fromDate, toDate) = if (now.isBefore(commencementDate)) {
+        (now, periodService.getRunningPeriod(commencementDate).lastDay)
       } else {
-        periodService.getRunningPeriod(LocalDate.now(clock)).lastDay
+        (commencementDate, periodService.getRunningPeriod(now).lastDay)
       }
 
       val queryParameters = EtmpObligationsQueryParameters(
-        fromDate = commencementDate.format(etmpDateFormatter),
+        fromDate = fromDate.format(etmpDateFormatter),
         toDate = toDate.format(etmpDateFormatter),
         status = None
       )

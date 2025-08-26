@@ -38,7 +38,16 @@ case class Registration(
                                dateOfFirstSale: Option[LocalDate],
                                excludedTrader: Option[ExcludedTrader],
                                adminUse: AdminUse
-                             )
+                             ) {
+  def commencementDateOrToday: LocalDate = {
+    val now = LocalDate.now()
+    if(commencementDate.isAfter(now)) {
+      now
+    } else {
+      commencementDate
+    }
+  }
+}
 
 object Registration {
 
