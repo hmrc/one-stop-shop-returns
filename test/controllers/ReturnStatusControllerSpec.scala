@@ -24,13 +24,13 @@ import models.*
 import models.Period.toEtmpPeriodString
 import models.Quarter.{Q1, Q2, Q3, Q4}
 import models.SubmissionStatus.{Due, Excluded, Expired, Next, Overdue}
-import models.etmp.{EtmpObligation, EtmpObligationDetails, EtmpObligations, EtmpObligationsFulfilmentStatus}
-import models.exclusions.ExclusionReason.Reversal
+import models.etmp.*
 import models.exclusions.{ExcludedTrader, ExclusionReason}
+import models.exclusions.ExclusionReason.Reversal
 import models.yourAccount.*
-import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito
-import org.mockito.Mockito.when
+import org.mockito.Mockito.{times, verify, when}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterEach
@@ -41,11 +41,12 @@ import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import repositories.SaveForLaterRepository
-import services.exclusions.ExclusionService
 import services.{PeriodService, VatReturnService}
+import services.exclusions.ExclusionService
 import testutils.RegistrationData
 import uk.gov.hmrc.auth.core.{AuthConnector, MissingBearerToken}
 import uk.gov.hmrc.domain.Vrn
+import utils.Formatters.etmpDateFormatter
 
 import java.time.{Clock, LocalDate, ZoneId}
 import scala.concurrent.Future
@@ -180,6 +181,14 @@ class ReturnStatusControllerSpec
         when(mockRegConnector.getRegistration(any())(any())) `thenReturn`
           Future.successful(Some(RegistrationData.registration))
 
+        RegistrationData.registration.commencementDateOrToday
+
+        val etmpObligationsQueryParameters = EtmpObligationsQueryParameters(
+          fromDate = RegistrationData.registration.commencementDateOrToday.format(etmpDateFormatter),
+          toDate = period.lastDay.format(etmpDateFormatter),
+          status = None
+        )
+
         val nextPeriod = StandardPeriod(2021, Q4)
         val obligation = EtmpObligations(Seq(EtmpObligation(Seq(EtmpObligationDetails(EtmpObligationsFulfilmentStatus.Fulfilled, toEtmpPeriodString(period))))))
 
@@ -207,6 +216,8 @@ class ReturnStatusControllerSpec
             PeriodWithStatus(nextPeriod, SubmissionStatus.Next))
           )
         }
+
+        verify(mockVatReturnConnector, times(1)).getObligations(any(), eqTo(etmpObligationsQueryParameters))
       }
 
       "must respond with OK and a sequence of periods with statuses and trader is excluded" in {
