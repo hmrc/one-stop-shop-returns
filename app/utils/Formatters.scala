@@ -16,11 +16,15 @@
 
 package utils
 
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 object Formatters {
 
-  val eisDateTimeFormatter: DateTimeFormatter = DateTimeFormatter.RFC_1123_DATE_TIME
+  val dateTimeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss z")
+    .withLocale(Locale.UK)
+    .withZone(ZoneId.of("GMT"))
 
   val etmpDateTimeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX")
 

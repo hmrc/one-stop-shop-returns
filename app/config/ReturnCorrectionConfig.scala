@@ -17,11 +17,11 @@
 package config
 
 import play.api.Configuration
-import play.api.http.HeaderNames.*
+import play.api.http.HeaderNames._
 import play.api.http.MimeTypes
 import utils.Formatters
 
-import java.time.{Clock, LocalDateTime, ZoneOffset}
+import java.time.{Clock, LocalDateTime}
 import javax.inject.Inject
 
 class ReturnCorrectionConfig @Inject()(
@@ -40,7 +40,7 @@ class ReturnCorrectionConfig @Inject()(
     X_FORWARDED_HOST -> "MDTP",
     ACCEPT -> MimeTypes.JSON,
     CONTENT_TYPE -> MimeTypes.JSON,
-    DATE -> Formatters.eisDateTimeFormatter.format(LocalDateTime.now(clock).atOffset(ZoneOffset.UTC)),
+    DATE -> Formatters.dateTimeFormatter.format(LocalDateTime.now(clock)),
     AUTHORIZATION -> s"Bearer $authorizationToken"
   )
 }
