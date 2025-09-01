@@ -17,11 +17,11 @@
 package config
 
 import play.api.Configuration
-import play.api.http.HeaderNames._
+import play.api.http.HeaderNames.*
 import play.api.http.MimeTypes
 import utils.Formatters
 
-import java.time.{Clock, LocalDateTime}
+import java.time.{Clock, LocalDateTime, ZoneOffset}
 import javax.inject.Inject
 
 class IfConfig @Inject()(config: Configuration, clock: Clock) {
@@ -36,7 +36,7 @@ class IfConfig @Inject()(config: Configuration, clock: Clock) {
     CONTENT_TYPE -> MimeTypes.JSON,
     ACCEPT -> MimeTypes.JSON,
     AUTHORIZATION -> s"Bearer $authorizationToken",
-    DATE -> Formatters.dateTimeFormatter.format(LocalDateTime.now(clock)),
+    DATE -> Formatters.eisDateTimeFormatter.format(LocalDateTime.now(clock).atOffset(ZoneOffset.UTC)),
     XCorrelationId -> correlationId,
     X_FORWARDED_HOST -> "MDTP"
   )

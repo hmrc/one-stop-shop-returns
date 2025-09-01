@@ -21,7 +21,7 @@ import play.api.http.HeaderNames.{ACCEPT, AUTHORIZATION, CONTENT_TYPE, DATE, X_F
 import play.api.http.MimeTypes
 import utils.Formatters
 
-import java.time.{Clock, LocalDateTime}
+import java.time.{Clock, LocalDateTime, ZoneOffset}
 import javax.inject.Inject
 
 class EtmpListObligationsConfig @Inject()(config: Configuration, clock: Clock) {
@@ -39,7 +39,7 @@ class EtmpListObligationsConfig @Inject()(config: Configuration, clock: Clock) {
     ACCEPT -> MimeTypes.JSON,
     AUTHORIZATION -> s"Bearer $authorizationToken",
     "Environment" -> environment,
-    DATE -> Formatters.dateTimeFormatter.format(LocalDateTime.now(clock)),
+    DATE -> Formatters.eisDateTimeFormatter.format(LocalDateTime.now(clock).atOffset(ZoneOffset.UTC)),
     XCorrelationId -> correlationId,
     X_FORWARDED_HOST -> "MDTP"
   )
