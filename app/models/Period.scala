@@ -16,14 +16,14 @@
 
 package models
 
-import models.Quarter._
-import play.api.libs.json._
+import models.Quarter.*
+import play.api.libs.json.*
 import play.api.mvc.{PathBindable, QueryStringBindable}
 
-import java.time.{Clock, LocalDate}
 import java.time.format.DateTimeFormatter
-import scala.util.{Failure, Success, Try}
+import java.time.{Clock, LocalDate}
 import scala.util.matching.Regex
+import scala.util.{Failure, Success, Try}
 
 trait Period {
   val year: Int
@@ -63,7 +63,6 @@ trait Period {
         StandardPeriod(year - 1, Q4)
     }
   }
-
 }
 
 case class StandardPeriod(year: Int, quarter: Quarter) extends Period {
@@ -179,5 +178,4 @@ object Period {
 
     StandardPeriod(s"20$yearLast2".toInt, quarter)
   }
-
 }
