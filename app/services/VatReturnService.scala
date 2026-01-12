@@ -38,6 +38,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class VatReturnService @Inject()(
                                   repository: VatReturnRepository,
                                   coreVatReturnService: CoreVatReturnService,
+                                  saveForLaterService: SaveForLaterService,
                                   auditService: AuditService,
                                   coreVatReturnConnector: CoreVatReturnConnector,
                                   appConfig: AppConfig,
@@ -67,7 +68,7 @@ class VatReturnService @Inject()(
       lastUpdated = Instant.now(clock)
     )
 
-    lazy val insertToDbIfTactical: Future[Option[VatReturn]] = if(appConfig.strategicReturnApiEnabled) {
+    lazy val insertToDbIfTactical: Future[Option[VatReturn]] = if (appConfig.strategicReturnApiEnabled) {
       Some(vatReturn).toFuture
     } else {
       repository.insert(vatReturn)
@@ -85,10 +86,23 @@ class VatReturnService @Inject()(
         submissionResult <- coreVatReturnConnector.submit(coreVatReturn).flatMap {
           case Right(_) =>
             logger.info("Successful submission of vat return to core")
-            auditService.audit(CoreVatReturnAuditModel.build(coreVatReturn, SubmissionResult.Success, None))
-            block.map(
-              payload => Right(payload)
-            )
+
+            Period.fromString(coreVatReturn.period.toString) match {
+              case Some(period: Period) =>
+                saveForLaterService.delete(request.vrn, period).flatMap { _ =>
+                  auditService.audit(CoreVatReturnAuditModel.build(coreVatReturn, SubmissionResult.Success, None))
+                  block.map(
+                    payload => Right(payload)
+                  )
+                }
+
+              case _ =>
+                val message: String = "There was an error converting Core period to Period."
+                logger.error(message)
+                val exception = new Exception(message)
+                throw exception
+            }
+
           case Left(eisErrorResponse) =>
             logger.error(s"Error occurred while submitting to core $eisErrorResponse", eisErrorResponse.errorDetail.asException)
             auditService.audit(CoreVatReturnAuditModel.build(coreVatReturn, SubmissionResult.Failure, Some(eisErrorResponse.errorDetail)))
