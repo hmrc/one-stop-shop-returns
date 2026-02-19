@@ -302,7 +302,7 @@ class FinancialDataControllerSpec
 
     "must return Current Payments as Json when there are overdue and excluded payments" in {
 
-      val exclusionReason = Gen.oneOf(ExclusionReason.values).sample.value
+      val exclusionReason = ExclusionReason.FailsToComply
 
       val excludedTrader: ExcludedTrader = ExcludedTrader(
         RegistrationData.registration.vrn,
