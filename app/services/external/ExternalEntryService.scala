@@ -20,7 +20,7 @@ import logging.Logging
 import models.external._
 import models.Period
 import repositories.ExternalEntryRepository
-import uk.gov.hmrc.play.bootstrap.backend.http.ErrorResponse
+import uk.gov.hmrc.play.bootstrap.http.ErrorResponse
 
 import java.time.{Clock, Instant}
 import javax.inject.Inject
