@@ -6,7 +6,6 @@ import models.{Country, Period, StandardPeriod}
 import org.scalatest.EitherValues
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.libs.json.{JsSuccess, Json}
-import uk.gov.hmrc.domain.Vrn
 
 import java.time.Instant
 
@@ -22,8 +21,7 @@ with EitherValues{
 
       val correctionReturnPeriod: Period = StandardPeriod(2024, Q1)
       val correctionsToCountry: List[CorrectionToCountry] = List(CorrectionToCountry(correctionCountry, countryVatCorrection))
-
-      val vrn: Vrn = Vrn("Vrn")
+      
       val period: Period = StandardPeriod(2024, Q1)
       val corrections = List(PeriodWithCorrections(correctionReturnPeriod, correctionsToCountry))
       val submissionReceived = Instant.parse("2025-02-12T00:00:00Z")
@@ -48,7 +46,7 @@ with EitherValues{
             )
           )
         ),
-        "vrn" -> "Vrn",
+        "vrn" -> "123456789",
         "submissionReceived" -> "2025-02-12T00:00:00Z",
         "period" -> Json.obj(
           "year" -> 2024,

@@ -5,7 +5,6 @@ import models.Quarter.Q1
 import org.scalatest.EitherValues
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.libs.json.{JsSuccess, JsValue, Json}
-import uk.gov.hmrc.domain.Vrn
 
 import java.time.Instant
 
@@ -17,7 +16,6 @@ class SavedUserAnswersSpec extends SpecBase
 
     "must serialise and deserialise correctly" in {
 
-      val vrn: Vrn = Vrn("Vrn")
       val period: Period = StandardPeriod(2024, Q1)
       val data: JsValue = Json.obj(
         "data" -> "data"
@@ -25,7 +23,7 @@ class SavedUserAnswersSpec extends SpecBase
       val lastUpdated: Instant = Instant.parse("2025-02-12T00:00:00Z")
 
       val json = Json.obj(
-        "vrn" -> "Vrn",
+        "vrn" -> "123456789",
         "period" -> Json.obj(
           "year" -> 2024,
           "quarter" -> "Q1"
