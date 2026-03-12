@@ -7,7 +7,6 @@ import models.{EncryptedCountry, Period, StandardPeriod}
 import org.scalatest.EitherValues
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.libs.json.{JsSuccess, JsValue, Json}
-import uk.gov.hmrc.domain.Vrn
 
 import java.time.Instant
 
@@ -28,7 +27,6 @@ class EncryptedCorrectionPayloadSpec extends SpecBase
       val correctionCountry: EncryptedCountry = EncryptedCountry(code, name)
       val correctionsToCountry: List[EncryptedCorrectionToCountry] = List(EncryptedCorrectionToCountry(correctionCountry, countryVatCorrection))
 
-      val vrn: Vrn = Vrn("Vrn")
       val period: Period = StandardPeriod(2024, Q1)
       val corrections = List(EncryptedPeriodWithCorrections(correctionReturnPeriod, correctionsToCountry))
       val submissionReceived = Instant.parse("2025-02-12T00:00:00Z")
@@ -62,7 +60,7 @@ class EncryptedCorrectionPayloadSpec extends SpecBase
             )
           )
         ),
-        "vrn" -> "Vrn",
+        "vrn" -> "123456789",
         "submissionReceived" -> "2025-02-12T00:00:00Z",
         "period" -> Json.obj(
           "year" -> 2024,

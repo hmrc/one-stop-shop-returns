@@ -10,7 +10,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import services.external.ExternalEntryService
 import services.AuditService
-import uk.gov.hmrc.play.bootstrap.backend.http.ErrorResponse
+import uk.gov.hmrc.play.bootstrap.http.ErrorResponse
 
 import scala.concurrent.Future
 

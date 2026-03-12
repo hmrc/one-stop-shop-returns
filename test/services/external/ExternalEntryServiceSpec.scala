@@ -5,7 +5,7 @@ import models.external._
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 import repositories.ExternalEntryRepository
-import uk.gov.hmrc.play.bootstrap.backend.http.ErrorResponse
+import uk.gov.hmrc.play.bootstrap.http.ErrorResponse
 
 import java.time.Instant
 import scala.concurrent.ExecutionContext.Implicits.global
