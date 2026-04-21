@@ -34,5 +34,7 @@ class AppConfig @Inject()(config: Configuration) {
   val ossEnrolmentEnabled: Boolean = config.get[Boolean]("features.oss-enrolment")
 
   val externalEntryTtlDays: Long = config.get[Long]("features.externalEntry.ttlInDays")
-  
+
+  val cleanupOldCollectionsEnabled: Boolean = config.get[Boolean]("features.cleanupOldCollections.enabled")
+  val cleanupOldCollectionsList: Seq[String] = config.get[Seq[String]]("features.cleanupOldCollections.collections")
 }
