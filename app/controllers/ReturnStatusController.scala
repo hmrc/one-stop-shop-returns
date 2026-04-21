@@ -16,7 +16,6 @@
 
 package controllers
 
-import config.AppConfig
 import connectors.VatReturnConnector
 import controllers.actions.AuthenticatedControllerComponents
 import logging.Logging
@@ -30,7 +29,7 @@ import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent}
 import repositories.SaveForLaterRepository
 import services.exclusions.ExclusionService
-import services.{PeriodService, VatReturnService}
+import services.PeriodService
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import utils.Formatters.etmpDateFormatter
@@ -41,8 +40,6 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class ReturnStatusController @Inject()(
                                         cc: AuthenticatedControllerComponents,
-                                        config: AppConfig,
-                                        vatReturnService: VatReturnService,
                                         periodService: PeriodService,
                                         exclusionService: ExclusionService,
                                         saveForLaterRepository: SaveForLaterRepository,
@@ -115,7 +112,7 @@ class ReturnStatusController @Inject()(
       status = None
     )
     
-    val futureFulfilledPeriods: Future[Seq[Period]] = if (config.strategicReturnApiEnabled) {
+    val futureFulfilledPeriods: Future[Seq[Period]] = {
       vatReturnConnector.getObligations(vrn.vrn, etmpObligationsQueryParameters).map {
         case Right(obligations) =>
           obligations.getFulfilledPeriods
@@ -123,8 +120,6 @@ class ReturnStatusController @Inject()(
           logger.error(s"Error when getting obligations for return status' $x")
           throw new Exception("Error getting obligations for status")
       }
-    } else {
-      vatReturnService.get(vrn).map(x => x.map(y => y.period))
     }
 
     for {

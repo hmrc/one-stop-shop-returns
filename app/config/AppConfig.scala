@@ -34,6 +34,5 @@ class AppConfig @Inject()(config: Configuration) {
   val ossEnrolmentEnabled: Boolean = config.get[Boolean]("features.oss-enrolment")
 
   val externalEntryTtlDays: Long = config.get[Long]("features.externalEntry.ttlInDays")
-
-  val strategicReturnApiEnabled: Boolean = config.get[Boolean]("features.strategic-returns.enabled")
+  
 }

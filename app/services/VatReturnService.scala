@@ -25,8 +25,6 @@ import models.core.EisErrorResponse
 import models.corrections.CorrectionPayload
 import models.requests.{VatReturnRequest, VatReturnWithCorrectionRequest}
 import models.{PaymentReference, Period, ReturnReference, VatReturn}
-import repositories.VatReturnRepository
-import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.FutureSyntax.FutureOps
 
@@ -36,7 +34,6 @@ import scala.concurrent.{ExecutionContext, Future}
 
 
 class VatReturnService @Inject()(
-                                  repository: VatReturnRepository,
                                   coreVatReturnService: CoreVatReturnService,
                                   saveForLaterService: SaveForLaterService,
                                   auditService: AuditService,
@@ -68,10 +65,8 @@ class VatReturnService @Inject()(
       lastUpdated = Instant.now(clock)
     )
 
-    lazy val insertToDbIfTactical: Future[Option[VatReturn]] = if (appConfig.strategicReturnApiEnabled) {
+    val insertToDbIfTactical: Future[Option[VatReturn]] = {
       Some(vatReturn).toFuture
-    } else {
-      repository.insert(vatReturn)
     }
 
     sendToCoreIfEnabled(vatReturn, emptyCorrectionPayload, insertToDbIfTactical)
@@ -141,18 +136,10 @@ class VatReturnService @Inject()(
       lastUpdated = Instant.now(clock)
     )
 
-    lazy val insertToDbIfTactical: Future[Option[(VatReturn, CorrectionPayload)]] = if (appConfig.strategicReturnApiEnabled) {
+    val insertToDbIfTactical: Future[Option[(VatReturn, CorrectionPayload)]] = {
       Some(vatReturn, correctionPayload).toFuture
-    } else {
-      repository.insert(vatReturn, correctionPayload)
     }
 
     sendToCoreIfEnabled(vatReturn, correctionPayload, insertToDbIfTactical)
   }
-
-  def get(vrn: Vrn): Future[Seq[VatReturn]] =
-    repository.get(vrn)
-
-  def get(vrn: Vrn, period: Period): Future[Option[VatReturn]] =
-    repository.get(vrn, period)
 }

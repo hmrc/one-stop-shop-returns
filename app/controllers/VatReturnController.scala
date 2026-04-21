@@ -64,23 +64,6 @@ class VatReturnController @Inject()(
       }
   }
 
-  // TODO -> Remove via VEOSS-1998
-  def list(): Action[AnyContent] = auth.async {
-    implicit request =>
-      vatReturnService.get(request.vrn).map {
-        case Nil => NotFound
-        case seq => Ok(Json.toJson(seq))
-      }
-  }
-
-  def get(period: Period): Action[AnyContent] = auth.async {
-    implicit request =>
-      vatReturnService.get(request.vrn, period).map {
-        case None => NotFound
-        case value => Ok(Json.toJson(value))
-      }
-  }
-
   def getEtmpVatReturn(period: Period): Action[AnyContent] = auth.async {
     implicit request =>
       vatReturnConnector.get(request.vrn, period).map {

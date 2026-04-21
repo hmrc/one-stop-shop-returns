@@ -15,31 +15,17 @@
  */
 
 package controllers.test
-import org.mongodb.scala.model.Filters
+
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
-import repositories.{CorrectionRepository, VatReturnRepository}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-import org.mongodb.scala.SingleObservableFuture
 
 import javax.inject.Inject
-import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
-class TestOnlyController @Inject()(
-                               cc: ControllerComponents,
-                               correctionRepository: CorrectionRepository,
-                               vatReturnRepository: VatReturnRepository)(implicit ec: ExecutionContext)
+class TestOnlyController @Inject()(cc: ControllerComponents)()
   extends BackendController(cc) {
 
   def deleteAccounts(): Action[AnyContent] = Action.async {
-
-    val vrnPattern = "^1110".r
-
-    for {
-      res1 <- correctionRepository.collection.deleteMany(Filters.regex("vrn", vrnPattern)).toFutureOption()
-      res2 <- vatReturnRepository.collection.deleteMany(Filters.regex("vrn", vrnPattern)).toFutureOption()
-    } yield {
-      Ok("Deleted Perf Tests Accounts MongoDB")
-    }
-
+    Future.successful(Ok("Deleted Perf Tests Accounts MongoDB"))
   }
 }

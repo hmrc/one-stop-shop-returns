@@ -26,16 +26,14 @@ import models.core.CoreErrorResponse.REGISTRATION_NOT_FOUND
 import models.core.{CoreErrorResponse, CorePeriod, CoreVatReturn, EisErrorResponse}
 import models.corrections.CorrectionPayload
 import models.requests.{VatReturnRequest, VatReturnWithCorrectionRequest}
-import models.{Period, VatReturn}
+import models.{PaymentReference, Period, ReturnReference, VatReturn}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito
 import org.mockito.Mockito.{times, verify, verifyNoInteractions, when}
 import org.scalacheck.Arbitrary.arbitrary
-import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterEach
 import play.api.mvc.AnyContent
 import play.api.test.FakeRequest
-import repositories.VatReturnRepository
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.FutureSyntax.FutureOps
@@ -45,20 +43,17 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 class VatReturnServiceSpec extends SpecBase with BeforeAndAfterEach {
 
-  private val mockRepository = mock[VatReturnRepository]
   private val coreVatReturnService = mock[CoreVatReturnService]
   private val coreVatReturnConnector = mock[CoreVatReturnConnector]
   private val mockSaveForLaterService: SaveForLaterService = mock[SaveForLaterService]
   private val appConfig = mock[AppConfig]
 
-  private val vatReturn = arbitrary[VatReturn].sample.value
   private val auditService = mock[AuditService]
   implicit private lazy val hc: HeaderCarrier = HeaderCarrier()
   implicit private lazy val ar: AuthorisedRequest[AnyContent] = AuthorisedRequest(FakeRequest(), userAnswersId, Vrn("123456789"))
 
   override def beforeEach(): Unit = {
     Mockito.reset(
-      mockRepository,
       mockSaveForLaterService,
       auditService,
       coreVatReturnService,
@@ -71,19 +66,27 @@ class VatReturnServiceSpec extends SpecBase with BeforeAndAfterEach {
 
     ".createVatReturn" - {
 
-      "must create a VAT return, attempt to save it to the repository, and respond with the result of saving" in {
-
-        val insertResult = Gen.oneOf(Some(vatReturn), None).sample.value
-
-        when(mockRepository.insert(any())) `thenReturn` insertResult.toFuture
+      "must create a VAT return and return it" in {
 
         val request = arbitrary[VatReturnRequest].sample.value
-        val service = new VatReturnService(mockRepository, coreVatReturnService, mockSaveForLaterService, auditService, coreVatReturnConnector, appConfig, stubClock)
+        val service = new VatReturnService(coreVatReturnService, mockSaveForLaterService, auditService, coreVatReturnConnector, appConfig, stubClock)
 
         val result = service.createVatReturn(request).futureValue
 
-        result `mustBe` Right(insertResult)
-        verify(mockRepository, times(1)).insert(any())
+        val expectedVatReturn = VatReturn(
+          vrn = request.vrn,
+          period = request.period,
+          reference = ReturnReference(request.vrn, request.period),
+          paymentReference = PaymentReference(request.vrn, request.period),
+          startDate = request.startDate,
+          endDate = request.endDate,
+          salesFromNi = request.salesFromNi,
+          salesFromEu = request.salesFromEu,
+          submissionReceived = Instant.now(stubClock),
+          lastUpdated = Instant.now(stubClock)
+        )
+
+        result `mustBe` Right(Some(expectedVatReturn))
         verifyNoInteractions(mockSaveForLaterService)
         verifyNoInteractions(coreVatReturnService)
         verifyNoInteractions(coreVatReturnConnector)
@@ -94,16 +97,13 @@ class VatReturnServiceSpec extends SpecBase with BeforeAndAfterEach {
 
         "must create a VAT return, attempt to save it to the repository, delete any saved returns for that period and respond with the result of saving" in {
 
-          val insertResult = Gen.oneOf(Some(vatReturn), None).sample.value
-
           when(appConfig.coreVatReturnsEnabled) `thenReturn` true
-          when(mockRepository.insert(any())) `thenReturn` insertResult.toFuture
           when(coreVatReturnConnector.submit(any())) `thenReturn` Right(()).toFuture
           when(coreVatReturnService.toCore(any(), any())(any())) `thenReturn` coreVatReturn.toFuture
           when(mockSaveForLaterService.delete(any(), any())) `thenReturn` true.toFuture
 
           val request = arbitrary[VatReturnRequest].sample.value
-          val service = new VatReturnService(mockRepository, coreVatReturnService, mockSaveForLaterService, auditService, coreVatReturnConnector, appConfig, stubClock)
+          val service = new VatReturnService(coreVatReturnService, mockSaveForLaterService, auditService, coreVatReturnConnector, appConfig, stubClock)
 
           val result = service.createVatReturn(request).futureValue
 
@@ -118,9 +118,21 @@ class VatReturnServiceSpec extends SpecBase with BeforeAndAfterEach {
             errorResponse = None
           )
 
-          result `mustBe` Right(insertResult)
+          val expectedVatReturn = VatReturn(
+            vrn = request.vrn,
+            period = request.period,
+            reference = ReturnReference(request.vrn, request.period),
+            paymentReference = PaymentReference(request.vrn, request.period),
+            startDate = request.startDate,
+            endDate = request.endDate,
+            salesFromNi = request.salesFromNi,
+            salesFromEu = request.salesFromEu,
+            submissionReceived = Instant.now(stubClock),
+            lastUpdated = Instant.now(stubClock)
+          )
+
+          result `mustBe` Right(Some(expectedVatReturn))
           verify(mockSaveForLaterService, times(1)).delete(eqTo(vrn), eqTo(convertedPeriod))
-          verify(mockRepository, times(1)).insert(any())
           verify(coreVatReturnConnector, times(1)).submit(eqTo(coreVatReturn))
           verify(coreVatReturnService, times(1)).toCore(any(), any())(any())
           verify(auditService, times(1)).audit(eqTo(expectedAuditEvent))(any(), any())
@@ -132,13 +144,12 @@ class VatReturnServiceSpec extends SpecBase with BeforeAndAfterEach {
             .copy(period = CorePeriod(year = 2025, quarter = 5))
 
           when(appConfig.coreVatReturnsEnabled) `thenReturn` true
-          when(mockRepository.insert(any())) `thenReturn` None.toFuture
           when(coreVatReturnConnector.submit(any())) `thenReturn` Right(()).toFuture
           when(coreVatReturnService.toCore(any(), any())(any())) `thenReturn` invalidCoreVatReturn.toFuture
           when(mockSaveForLaterService.delete(any(), any())) `thenReturn` false.toFuture
 
           val request = arbitrary[VatReturnRequest].sample.value
-          val service = new VatReturnService(mockRepository, coreVatReturnService, mockSaveForLaterService, auditService, coreVatReturnConnector, appConfig, stubClock)
+          val service = new VatReturnService(coreVatReturnService, mockSaveForLaterService, auditService, coreVatReturnConnector, appConfig, stubClock)
 
           val result = service.createVatReturn(request).failed
 
@@ -146,7 +157,6 @@ class VatReturnServiceSpec extends SpecBase with BeforeAndAfterEach {
             exp `mustBe` a[Exception]
           }
           verifyNoInteractions(mockSaveForLaterService)
-          verifyNoInteractions(mockRepository)
           verify(coreVatReturnConnector, times(1)).submit(eqTo(invalidCoreVatReturn))
           verify(coreVatReturnService, times(1)).toCore(any(), any())(any())
           verifyNoInteractions(auditService)
@@ -158,18 +168,33 @@ class VatReturnServiceSpec extends SpecBase with BeforeAndAfterEach {
 
       "must create a VAT return and correction, attempt to save it to the repositories, and respond with the result of saving" in {
 
-        val correctionPayload = arbitrary[CorrectionPayload].sample.value
-        val insertResult = Gen.oneOf(Some((vatReturn, correctionPayload)), None).sample.value
-
-        when(mockRepository.insert(any(), any())) `thenReturn` insertResult.toFuture
-
         val request = arbitrary[VatReturnWithCorrectionRequest].sample.value
-        val service = new VatReturnService(mockRepository, coreVatReturnService, mockSaveForLaterService, auditService, coreVatReturnConnector, appConfig, stubClock)
+        val service = new VatReturnService(coreVatReturnService, mockSaveForLaterService, auditService, coreVatReturnConnector, appConfig, stubClock)
 
         val result = service.createVatReturnWithCorrection(request).futureValue
 
-        result `mustBe` Right(insertResult)
-        verify(mockRepository, times(1)).insert(any(), any())
+        val expectedVatReturn = VatReturn(
+          vrn = request.vatReturnRequest.vrn,
+          period = request.vatReturnRequest.period,
+          reference = ReturnReference(request.vatReturnRequest.vrn, request.vatReturnRequest.period),
+          paymentReference = PaymentReference(request.vatReturnRequest.vrn, request.vatReturnRequest.period),
+          startDate = request.vatReturnRequest.startDate,
+          endDate = request.vatReturnRequest.endDate,
+          salesFromNi = request.vatReturnRequest.salesFromNi,
+          salesFromEu = request.vatReturnRequest.salesFromEu,
+          submissionReceived = Instant.now(stubClock),
+          lastUpdated = Instant.now(stubClock)
+        )
+
+        val expectedCorrectionPayload = CorrectionPayload(
+          request.correctionRequest.vrn,
+          request.correctionRequest.period,
+          request.correctionRequest.corrections,
+          submissionReceived = Instant.now(stubClock),
+          lastUpdated = Instant.now(stubClock)
+        )
+
+        result mustBe Right(Some((expectedVatReturn, expectedCorrectionPayload)))
         verifyNoInteractions(mockSaveForLaterService)
         verifyNoInteractions(coreVatReturnService)
         verifyNoInteractions(coreVatReturnConnector)
@@ -180,17 +205,13 @@ class VatReturnServiceSpec extends SpecBase with BeforeAndAfterEach {
 
         "must create a VAT return and correction, attempt to save it to the repositories, delete any saved returns for that period and respond with the result of saving" in {
 
-          val correctionPayload = arbitrary[CorrectionPayload].sample.value
-          val insertResult = Gen.oneOf(Some((vatReturn, correctionPayload)), None).sample.value
-
           when(appConfig.coreVatReturnsEnabled) `thenReturn` true
-          when(mockRepository.insert(any(), any())) `thenReturn`insertResult.toFuture
           when(coreVatReturnConnector.submit(any())) `thenReturn` Right(()).toFuture
           when(coreVatReturnService.toCore(any(), any())(any())) `thenReturn` coreVatReturn.toFuture
           when(mockSaveForLaterService.delete(any(), any())) `thenReturn` true.toFuture
 
           val request = arbitrary[VatReturnWithCorrectionRequest].sample.value
-          val service = new VatReturnService(mockRepository, coreVatReturnService, mockSaveForLaterService, auditService, coreVatReturnConnector, appConfig, stubClock)
+          val service = new VatReturnService(coreVatReturnService, mockSaveForLaterService, auditService, coreVatReturnConnector, appConfig, stubClock)
 
           val result = service.createVatReturnWithCorrection(request).futureValue
 
@@ -205,9 +226,29 @@ class VatReturnServiceSpec extends SpecBase with BeforeAndAfterEach {
             errorResponse = None
           )
 
-          result `mustBe` Right(insertResult)
+          val expectedVatReturn = VatReturn(
+            vrn = request.vatReturnRequest.vrn,
+            period = request.vatReturnRequest.period,
+            reference = ReturnReference(request.vatReturnRequest.vrn, request.vatReturnRequest.period),
+            paymentReference = PaymentReference(request.vatReturnRequest.vrn, request.vatReturnRequest.period),
+            startDate = request.vatReturnRequest.startDate,
+            endDate = request.vatReturnRequest.endDate,
+            salesFromNi = request.vatReturnRequest.salesFromNi,
+            salesFromEu = request.vatReturnRequest.salesFromEu,
+            submissionReceived = Instant.now(stubClock),
+            lastUpdated = Instant.now(stubClock)
+          )
+
+          val expectedCorrectionPayload = CorrectionPayload(
+            request.correctionRequest.vrn,
+            request.correctionRequest.period,
+            request.correctionRequest.corrections,
+            submissionReceived = Instant.now(stubClock),
+            lastUpdated = Instant.now(stubClock)
+          )
+
+          result mustBe Right(Some((expectedVatReturn, expectedCorrectionPayload)))
           verify(mockSaveForLaterService, times(1)).delete(eqTo(vrn), eqTo(convertedPeriod))
-          verify(mockRepository, times(1)).insert(any(), any())
           verify(coreVatReturnConnector, times(1)).submit(eqTo(coreVatReturn))
           verify(coreVatReturnService, times(1)).toCore(any(), any())(any())
           verify(auditService, times(1)).audit(eqTo(expectedAuditEvent))(any(), any())
@@ -219,13 +260,12 @@ class VatReturnServiceSpec extends SpecBase with BeforeAndAfterEach {
             .copy(period = CorePeriod(year = 2025, quarter = 5))
 
           when(appConfig.coreVatReturnsEnabled) `thenReturn` true
-          when(mockRepository.insert(any())) `thenReturn` None.toFuture
           when(coreVatReturnConnector.submit(any())) `thenReturn` Right(()).toFuture
           when(coreVatReturnService.toCore(any(), any())(any())) `thenReturn` invalidCoreVatReturn.toFuture
           when(mockSaveForLaterService.delete(any(), any())) `thenReturn` false.toFuture
 
           val request = arbitrary[VatReturnWithCorrectionRequest].sample.value
-          val service = new VatReturnService(mockRepository, coreVatReturnService, mockSaveForLaterService, auditService, coreVatReturnConnector, appConfig, stubClock)
+          val service = new VatReturnService(coreVatReturnService, mockSaveForLaterService, auditService, coreVatReturnConnector, appConfig, stubClock)
 
           val result = service.createVatReturnWithCorrection(request).failed
 
@@ -233,7 +273,6 @@ class VatReturnServiceSpec extends SpecBase with BeforeAndAfterEach {
             exp `mustBe` a[Exception]
           }
           verifyNoInteractions(mockSaveForLaterService)
-          verifyNoInteractions(mockRepository)
           verify(coreVatReturnConnector, times(1)).submit(eqTo(invalidCoreVatReturn))
           verify(coreVatReturnService, times(1)).toCore(any(), any())(any())
           verifyNoInteractions(auditService)
@@ -249,7 +288,7 @@ class VatReturnServiceSpec extends SpecBase with BeforeAndAfterEach {
           when(coreVatReturnService.toCore(any(), any())(any())) `thenReturn` coreVatReturn.toFuture
 
           val request = arbitrary[VatReturnWithCorrectionRequest].sample.value
-          val service = new VatReturnService(mockRepository, coreVatReturnService, mockSaveForLaterService, auditService, coreVatReturnConnector, appConfig, stubClock)
+          val service = new VatReturnService(coreVatReturnService, mockSaveForLaterService, auditService, coreVatReturnConnector, appConfig, stubClock)
 
           val result = service.createVatReturnWithCorrection(request).futureValue
 
@@ -266,7 +305,7 @@ class VatReturnServiceSpec extends SpecBase with BeforeAndAfterEach {
           when(coreVatReturnService.toCore(any(), any())(any())) `thenReturn` coreVatReturn.toFuture
 
           val request = arbitrary[VatReturnWithCorrectionRequest].sample.value
-          val service = new VatReturnService(mockRepository, coreVatReturnService, mockSaveForLaterService, auditService, coreVatReturnConnector, appConfig, stubClock)
+          val service = new VatReturnService(coreVatReturnService, mockSaveForLaterService, auditService, coreVatReturnConnector, appConfig, stubClock)
 
           val result = service.createVatReturnWithCorrection(request).futureValue
           result `mustBe` Left(eisErrorResponse)
