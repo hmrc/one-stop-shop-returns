@@ -22,11 +22,10 @@ import controllers.actions.FakeFailingAuthConnector
 import generators.Generators
 import models._
 import models.Quarter.Q3
-import models.corrections.{CorrectionPayload, ReturnCorrectionValue}
+import models.corrections.ReturnCorrectionValue
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
-import org.scalacheck.Gen
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
@@ -46,7 +45,7 @@ class CorrectionControllerSpec
     val period = StandardPeriod(2021, Q3)
     val country1 = arbitrary[Country].sample.value
     val returnCorrectionValue: ReturnCorrectionValue = arbitraryReturnCorrectionValue.arbitrary.sample.value
-    
+
     val mockReturnCorrectionConnector = mock[ReturnCorrectionConnector]
 
     lazy val request = FakeRequest(GET, routes.CorrectionController.getCorrectionValue(country1.code, period).url)
