@@ -16,7 +16,6 @@
 
 package services
 
-import config.AppConfig
 import connectors.{FinancialDataConnector, VatReturnConnector}
 import logging.Logging
 import models.des.DesException
@@ -32,13 +31,9 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class FinancialDataService @Inject()(
                                       financialDataConnector: FinancialDataConnector,
-                                      vatReturnService: VatReturnService,
-                                      vatReturnSalesService: VatReturnSalesService,
                                       vatReturnConnector: VatReturnConnector,
                                       periodService: PeriodService,
-                                      correctionService: CorrectionService,
                                       clock: Clock,
-                                      config: AppConfig
                                     )(implicit ec: ExecutionContext) extends Logging {
 
   def getCharge(vrn: Vrn, period: Period): Future[Option[Charge]] = {
@@ -53,43 +48,35 @@ class FinancialDataService @Inject()(
   }
 
   private def getFulfilledPeriods(vrn: Vrn, commencementDate: LocalDate): Future[Seq[Period]] = {
-
-    if (config.strategicReturnApiEnabled) {
       
-      val now = LocalDate.now(clock)
+    val now = LocalDate.now(clock)
 
-      val (fromDate, toDate) = if (now.isBefore(commencementDate)) {
-        (now, periodService.getRunningPeriod(commencementDate).lastDay)
-      } else {
-        (commencementDate, periodService.getRunningPeriod(now).lastDay)
-      }
-
-      val queryParameters = EtmpObligationsQueryParameters(
-        fromDate = fromDate.format(etmpDateFormatter),
-        toDate = toDate.format(etmpDateFormatter),
-        status = None
-      )
-
-      vatReturnConnector.getObligations(vrn.vrn, queryParameters).map {
-        case Right(obligations) =>
-
-          obligations.obligations.flatMap { obligation =>
-            obligation.obligationDetails
-              .filter(_.status == EtmpObligationsFulfilmentStatus.Fulfilled)
-              .map(detail => Period.fromKey(detail.periodKey))
-          }
-        case Left(errorResponse) =>
-          val message = s"Failed to retrieve obligations for VRN $vrn, error: ${errorResponse.body}"
-          val exception = new Exception(message)
-          logger.error(exception.getMessage, exception)
-          throw exception
-      }
-
+    val (fromDate, toDate) = if (now.isBefore(commencementDate)) {
+      (now, periodService.getRunningPeriod(commencementDate).lastDay)
     } else {
-      vatReturnService.get(vrn).map(_.map(_.period))
+      (commencementDate, periodService.getRunningPeriod(now).lastDay)
     }
 
+    val queryParameters = EtmpObligationsQueryParameters(
+      fromDate = fromDate.format(etmpDateFormatter),
+      toDate = toDate.format(etmpDateFormatter),
+      status = None
+    )
 
+    vatReturnConnector.getObligations(vrn.vrn, queryParameters).map {
+      case Right(obligations) =>
+
+        obligations.obligations.flatMap { obligation =>
+          obligation.obligationDetails
+            .filter(_.status == EtmpObligationsFulfilmentStatus.Fulfilled)
+            .map(detail => Period.fromKey(detail.periodKey))
+        }
+      case Left(errorResponse) =>
+        val message = s"Failed to retrieve obligations for VRN $vrn, error: ${errorResponse.body}"
+        val exception = new Exception(message)
+        logger.error(exception.getMessage, exception)
+        throw exception
+    }
   }
 
   def getVatReturnWithFinancialData(vrn: Vrn, commencementDate: LocalDate): Future[Seq[PeriodWithFinancialData]] = {
@@ -127,40 +114,20 @@ class FinancialDataService @Inject()(
             )
           )
         case None =>
-          if(config.strategicReturnApiEnabled) {
-            vatReturnConnector.get(vrn, period).map {
-              case Right(etmpVatReturn) =>
-                val vatOwed = etmpVatReturn.totalVATAmountDueForAllMSGBP
-                PeriodWithFinancialData(
-                  period = period,
-                  charge = None,
-                  vatOwed = vatOwed,
-                  expectedCharge = vatOwed > 0
-                )
-              case Left(error) =>
-                val message = s"There was an error with getting vat return during a missing charge ${error.body}"
-                val exception = Exception(message)
-                logger.error(exception.getMessage, exception)
-                throw exception
-            }
-          } else {
-            vatReturnService.get(vrn, period).flatMap {
-              case Some(vatReturn) =>
-                correctionService.get(vrn, period).map { maybeCorrectionPayload =>
-                  val vatOwed = vatReturnSalesService.getTotalVatOnSalesAfterCorrection(vatReturn, maybeCorrectionPayload)
-                  PeriodWithFinancialData(
-                    period = period,
-                    charge = None,
-                    vatOwed = vatOwed,
-                    expectedCharge = vatOwed > 0
-                  )
-                }
-              case None =>
-                val message = s"VAT Return not found for VRN $vrn and period $period"
-                val exception = Exception(message)
-                logger.error(exception.getMessage, exception)
-                throw exception
-            }
+          vatReturnConnector.get(vrn, period).map {
+            case Right(etmpVatReturn) =>
+              val vatOwed = etmpVatReturn.totalVATAmountDueForAllMSGBP
+              PeriodWithFinancialData(
+                period = period,
+                charge = None,
+                vatOwed = vatOwed,
+                expectedCharge = vatOwed > 0
+              )
+            case Left(error) =>
+              val message = s"There was an error with getting vat return during a missing charge ${error.body}"
+              val exception = Exception(message)
+              logger.error(exception.getMessage, exception)
+              throw exception
           }
       }
     }

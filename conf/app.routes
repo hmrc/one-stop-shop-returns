@@ -1,8 +1,6 @@
 # microservice specific routes
 
 POST        /vat-returns                                      controllers.VatReturnController.post()
-GET         /vat-returns                                      controllers.VatReturnController.list()
-GET         /vat-returns/period/:period                       controllers.VatReturnController.get(period: Period)
 
 GET         /etmp-vat-returns/period/:period                  controllers.VatReturnController.getEtmpVatReturn(period: Period)
 
@@ -16,9 +14,6 @@ GET         /financial-data/charge/:period                    controllers.Financ
 
 GET         /financial-data/outstanding-payments              controllers.FinancialDataController.getOutstandingAmounts()
 
-GET         /corrections                                      controllers.CorrectionController.list()
-GET         /corrections/:period                              controllers.CorrectionController.get(period: Period)
-GET         /corrections-for-period/:period                   controllers.CorrectionController.getByCorrectionPeriod(period: Period)
 GET         /max-correction-value/:countryCode/:period        controllers.CorrectionController.getCorrectionValue(countryCode: String, period: Period)
 POST        /save-for-later                                   controllers.SaveForLaterController.post()
 GET         /save-for-later                                   controllers.SaveForLaterController.get()

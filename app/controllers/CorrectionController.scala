@@ -22,7 +22,6 @@ import models.Period
 import models.Period.toEtmpPeriodString
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent}
-import services.CorrectionService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import javax.inject.Inject
@@ -30,34 +29,9 @@ import scala.concurrent.ExecutionContext
 
 class CorrectionController @Inject()(
                                       cc: AuthenticatedControllerComponents,
-                                      correctionService: CorrectionService,
                                       returnCorrectionConnector: ReturnCorrectionConnector
                                     )(implicit ec: ExecutionContext)
   extends BackendController(cc) {
-
-  def list(): Action[AnyContent] = cc.auth.async {
-    implicit request =>
-      correctionService.get(request.vrn).map {
-        case Nil => NotFound
-        case seq => Ok(Json.toJson(seq))
-      }
-  }
-
-  def get(period: Period): Action[AnyContent] = cc.auth.async {
-    implicit request =>
-      correctionService.get(request.vrn, period).map {
-        case None => NotFound
-        case value => Ok(Json.toJson(value))
-      }
-  }
-
-  def getByCorrectionPeriod(period: Period): Action[AnyContent] = cc.auth.async {
-    implicit request =>
-      correctionService.getByCorrectionPeriod(request.vrn, period).map {
-        case Nil => NotFound
-        case value => Ok(Json.toJson(value))
-      }
-  }
 
   def getCorrectionValue(countryCode: String, period: Period): Action[AnyContent] = cc.auth.async {
     implicit request =>

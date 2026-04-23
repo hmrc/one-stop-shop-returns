@@ -1,7 +1,6 @@
 package services
 
 import base.SpecBase
-import config.AppConfig
 import connectors.{FinancialDataConnector, VatReturnConnector}
 import models.Period.toEtmpPeriodString
 import models.Quarter.*
@@ -31,12 +30,10 @@ class FinancialDataServiceSpec extends SpecBase
   private val financialDataConnector = mock[FinancialDataConnector]
   private val vatReturnService = mock[VatReturnService]
   private val vatReturnSalesService = mock[VatReturnSalesService]
-  private val correctionsService = mock[CorrectionService]
   private val vatReturnConnector = mock[VatReturnConnector]
-  private val appConfig = mock[AppConfig]
 
   private val financialDataService =
-    new FinancialDataService(financialDataConnector, vatReturnService, vatReturnSalesService, vatReturnConnector, periodService, correctionsService, stubClock, appConfig)
+    new FinancialDataService(financialDataConnector, vatReturnConnector, periodService, stubClock)
 
   private val periodYear2021 = PeriodYear(2021)
   private val queryParameters2021 =
@@ -61,7 +58,6 @@ class FinancialDataServiceSpec extends SpecBase
     Mockito.reset(financialDataConnector)
     Mockito.reset(vatReturnService)
     Mockito.reset(vatReturnSalesService)
-    Mockito.reset(correctionsService)
     Mockito.reset(vatReturnConnector)
   }
 
@@ -339,7 +335,7 @@ class FinancialDataServiceSpec extends SpecBase
             fromDate = None, toDate = None, onlyOpenItems = Some(true)
           )
 
-        when(vatReturnService.get(any())) `thenReturn` Future.successful(Seq(vatReturn))
+        when(vatReturnConnector.get(any(), any())) `thenReturn` Future.successful(Seq(vatReturn))
         when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters))) `thenReturn`
           Future.successful(Right(Some(FinancialData(
             Some("VRN"), Some("123456789"), Some("ECOM"), ZonedDateTime.now(), Option(financialTransactions))
@@ -385,7 +381,7 @@ class FinancialDataServiceSpec extends SpecBase
             fromDate = None, toDate = None, onlyOpenItems = Some(true)
           )
 
-        when(vatReturnService.get(any())) `thenReturn` Future.successful(Seq(vatReturn))
+        when(vatReturnConnector.get(any(), any())) `thenReturn` Future.successful(Seq(vatReturn))
         when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters))) `thenReturn`
           Future.successful(Right(Some(FinancialData(
             Some("VRN"), Some("123456789"), Some("ECOM"), ZonedDateTime.now(), Option(financialTransactions)))))
@@ -409,7 +405,7 @@ class FinancialDataServiceSpec extends SpecBase
             fromDate = None, toDate = None, onlyOpenItems = Some(true)
           )
 
-        when(vatReturnService.get(any())) `thenReturn` Future.successful(Seq(vatReturn))
+        when(vatReturnConnector.get(any(), any())) `thenReturn` Future.successful(Seq(vatReturn))
         when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters))) `thenReturn`
           Future.successful(Right(Some(FinancialData(
             Some("VRN"), Some("123456789"), Some("ECOM"), ZonedDateTime.now(), Option(financialTransactions)))))
@@ -441,7 +437,7 @@ class FinancialDataServiceSpec extends SpecBase
           fromDate = None, toDate = None, onlyOpenItems = Some(true)
         )
 
-      when(vatReturnService.get(any())) `thenReturn` Future.successful(Seq(vatReturn))
+      when(vatReturnConnector.get(any(), any())) `thenReturn` Future.successful(Seq(vatReturn))
       when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters))) `thenReturn`
         Future.successful(Right(Some(FinancialData(
           Some("VRN"), Some("123456789"), Some("ECOM"), ZonedDateTime.now(), Option(financialTransactions)))))
@@ -453,491 +449,242 @@ class FinancialDataServiceSpec extends SpecBase
 
   ".getVatReturnWithFinancialData" - {
 
-    "with strategic api toggled off" - {
+    "must return one VatReturnWithFinancialData when there is one vatReturn and one charge" in {
+      val commencementDate = LocalDate.now()
 
-      "must return one VatReturnWithFinancialData when there is one vatReturn and one charge" in {
-        val commencementDate = LocalDate.now()
+      val financialTransactions = Seq(
+        FinancialTransaction(
+          chargeType = Some("G Ret AT EU-OMS"),
+          mainType = None,
+          taxPeriodFrom = Some(period.firstDay),
+          taxPeriodTo = Some(period.lastDay),
+          originalAmount = Some(BigDecimal(1000)),
+          outstandingAmount = Some(BigDecimal(1000)),
+          clearedAmount = Some(BigDecimal(0)),
+          items = Some(Seq.empty)
+        )
+      )
 
-        val financialTransactions = Seq(
-          FinancialTransaction(
-            chargeType = Some("G Ret AT EU-OMS"),
-            mainType = None,
-            taxPeriodFrom = Some(period.firstDay),
-            taxPeriodTo = Some(period.lastDay),
-            originalAmount = Some(BigDecimal(1000)),
-            outstandingAmount = Some(BigDecimal(1000)),
-            clearedAmount = Some(BigDecimal(0)),
-            items = Some(Seq.empty)
-          )
+      val financialData =
+        FinancialData(
+          Some("VRN"),
+          Some("123456789"),
+          Some("ECOM"),
+          ZonedDateTime.now(),
+          Option(financialTransactions)
         )
 
-        val financialData =
-          FinancialData(
-            Some("VRN"),
-            Some("123456789"),
-            Some("ECOM"),
-            ZonedDateTime.now(),
-            Option(financialTransactions)
-          )
+      when(periodService.getPeriodYears(any())) `thenReturn` Seq(periodYear2021)
+      when(periodService.getRunningPeriod(any())) `thenReturn` period
+      when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters2021))) `thenReturn`
+        Future.successful(Right(Some(financialData)))
+      when(vatReturnConnector.getObligations(any(), any())) `thenReturn` Future.successful(Right(etmpObligations))
 
-        when(appConfig.strategicReturnApiEnabled) `thenReturn` false
-        when(periodService.getPeriodYears(any())) `thenReturn` Seq(periodYear2021)
-        when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters2021))) `thenReturn`
-          Future.successful(Right(Some(financialData)))
-        when(vatReturnService.get(any())) `thenReturn` Future.successful(Seq(vatReturn))
+      val response = financialDataService.getVatReturnWithFinancialData(Vrn("123456789"), commencementDate).futureValue
+      val expectedResponse =
+        Seq(PeriodWithFinancialData(
+          vatReturn.period,
+          Some(Charge(period, BigDecimal(1000), BigDecimal(1000), BigDecimal(0))),
+          1000,
+          true
+        ))
 
-        val response = financialDataService.getVatReturnWithFinancialData(Vrn("123456789"), commencementDate).futureValue
-        val expectedResponse =
-          Seq(PeriodWithFinancialData(
-            vatReturn.period,
-            Some(Charge(period, BigDecimal(1000), BigDecimal(1000), BigDecimal(0))),
-            1000,
-            true
-          ))
-
-        response must contain theSameElementsAs expectedResponse
-        verify(financialDataConnector, times(1)).getFinancialData(any(), eqTo(queryParameters2021))
-        verify(periodService, times(1)).getPeriodYears(eqTo(commencementDate))
-        verify(vatReturnService, times(1)).get(any())
-        verifyNoMoreInteractions(vatReturnService)
-        verifyNoInteractions(correctionsService)
-      }
-
-      "must return one VatReturnWithFinancialData with no charge when there is one vatReturn and no charge" in {
-        val commencementDate = LocalDate.now()
-
-        when(appConfig.strategicReturnApiEnabled) `thenReturn` false
-        when(periodService.getPeriodYears(any())) `thenReturn` Seq(periodYear2021)
-        when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters2021))) `thenReturn`
-          Future.successful(Right(None))
-        when(vatReturnService.get(any())) `thenReturn` Future.successful(Seq(vatReturn))
-        when(vatReturnService.get(any(), any())) `thenReturn` Future.successful(Some(vatReturn))
-        when(correctionsService.get(any(), any())) `thenReturn` Future.successful(None)
-        when(vatReturnSalesService.getTotalVatOnSalesAfterCorrection(any(), any())) `thenReturn` BigDecimal(0)
-
-        val response = financialDataService.getVatReturnWithFinancialData(Vrn("123456789"), commencementDate).futureValue
-        val expectedResponse =
-          Seq(PeriodWithFinancialData(vatReturn.period, None, 0, false))
-
-        response mustBe expectedResponse
-        verify(financialDataConnector, times(1)).getFinancialData(any(), eqTo(queryParameters2021))
-        verify(periodService, times(1)).getPeriodYears(eqTo(commencementDate))
-        verify(vatReturnService, times(1)).get(any())
-        verify(correctionsService, times(1)).get(eqTo(Vrn("123456789")), eqTo(period))
-        verify(vatReturnSalesService, times(1)).getTotalVatOnSalesAfterCorrection(eqTo(vatReturn), eqTo(None))
-      }
-
-      "must return one VatReturnWithFinancialData when there is one vatReturn and financialDataConnector call fails" in {
-        val commencementDate = LocalDate.now()
-
-        when(appConfig.strategicReturnApiEnabled) `thenReturn` false
-        when(periodService.getPeriodYears(any())) `thenReturn` Seq(periodYear2021)
-        when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters2021))) `thenReturn`
-          Future.successful(Left(UnexpectedResponseStatus(400, "Error")))
-        when(vatReturnService.get(any())) `thenReturn` Future.successful(Seq(vatReturn))
-        when(vatReturnService.get(any(), any())) `thenReturn` Future.successful(Some(vatReturn))
-        when(correctionsService.get(any(), any())) `thenReturn` Future.successful(None)
-        when(vatReturnSalesService.getTotalVatOnSalesAfterCorrection(any(), any())) `thenReturn` BigDecimal(0)
-        val response = financialDataService.getVatReturnWithFinancialData(Vrn("123456789"), commencementDate).futureValue
-        val expectedResponse = Seq(PeriodWithFinancialData(vatReturn.period, None, 0, false))
-
-        response must contain theSameElementsAs expectedResponse
-        verify(financialDataConnector, times(1)).getFinancialData(any(), eqTo(queryParameters2021))
-        verify(periodService, times(1)).getPeriodYears(eqTo(commencementDate))
-        verify(vatReturnService, times(1)).get(any())
-        verify(correctionsService, times(1)).get(eqTo(Vrn("123456789")), eqTo(period))
-        verify(vatReturnSalesService, times(1)).getTotalVatOnSalesAfterCorrection(eqTo(vatReturn), eqTo(None))
-
-      }
-
-      "must return Seq.empty when there are no vatReturns" in {
-        val commencementDate = LocalDate.now()
-
-        when(periodService.getPeriodYears(any())) `thenReturn` Seq(periodYear2021)
-        when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters2021))) `thenReturn`
-          Future.successful(Right(None))
-        when(vatReturnService.get(any())) `thenReturn` Future.successful(Seq.empty)
-
-        val response = financialDataService.getVatReturnWithFinancialData(Vrn("123456789"), commencementDate).futureValue
-
-        response mustBe Seq.empty
-        verify(financialDataConnector, times(1)).getFinancialData(any(), eqTo(queryParameters2021))
-        verify(periodService, times(1)).getPeriodYears(eqTo(commencementDate))
-        verify(vatReturnService, times(1)).get(any())
-      }
-
-      "must return something when there are vat returns but 404 financial data" in {
-        val commencementDate = LocalDate.of(2021, 7, 1)
-
-        when(appConfig.strategicReturnApiEnabled) `thenReturn` false
-        when(periodService.getPeriodYears(any())) `thenReturn` Seq(periodYear2021)
-        when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters2021))) `thenReturn`
-          Future.successful(Right(None))
-        when(vatReturnService.get(any())) `thenReturn` Future.successful(Seq(vatReturn))
-        when(vatReturnService.get(any(), any())) `thenReturn` Future.successful(Some(vatReturn))
-        when(correctionsService.get(any(), any())) `thenReturn` Future.successful(None)
-        when(vatReturnSalesService.getTotalVatOnSalesAfterCorrection(any(), any())) `thenReturn` BigDecimal(1000)
-        val response = financialDataService.getVatReturnWithFinancialData(Vrn("123456789"), commencementDate).futureValue
-
-        val expectedResponse =
-          Seq(
-            PeriodWithFinancialData(
-              vatReturn.period, None, 1000, true
-            ),
-          )
-
-        response mustBe expectedResponse
-        verify(financialDataConnector, times(1)).getFinancialData(any(), eqTo(queryParameters2021))
-        verify(periodService, times(1)).getPeriodYears(eqTo(commencementDate))
-        verify(vatReturnService, times(1)).get(any())
-      }
-
-      "must return multiple VatReturnWithFinancialDatas when there is multiple vatReturns in the same period year and charges" in {
-        val commencementDate = LocalDate.now()
-        val period = StandardPeriod(2021, Q3)
-        val period2 = StandardPeriod(2021, Q4)
-
-        val financialTransaction =
-          FinancialTransaction(
-            chargeType = Some("G Ret AT EU-OMS"),
-            mainType = None,
-            taxPeriodFrom = Some(period.firstDay),
-            taxPeriodTo = Some(period.lastDay),
-            originalAmount = Some(BigDecimal(1000)),
-            outstandingAmount = Some(BigDecimal(1000)),
-            clearedAmount = Some(BigDecimal(0)),
-            items = Some(Seq.empty)
-          )
-
-        val financialTransactions = Seq(
-          financialTransaction,
-          financialTransaction.copy(
-            taxPeriodTo = Some(period2.firstDay),
-            taxPeriodFrom = Some(period2.firstDay)
-          )
-        )
-
-        val vatReturn = arbitrary[VatReturn].sample.value.copy(vrn, period = period)
-
-        when(appConfig.strategicReturnApiEnabled) `thenReturn` false
-        when(periodService.getPeriodYears(any())) `thenReturn` Seq(periodYear2021)
-        when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters2021))) `thenReturn`
-          Future.successful(
-            Right(Some(FinancialData(
-              Some("VRN"),
-              Some("123456789"),
-              Some("ECOM"),
-              ZonedDateTime.now(),
-              Option(financialTransactions)
-            )))
-          )
-        when(vatReturnService.get(any())) `thenReturn`
-          Future.successful(Seq(vatReturn, vatReturn.copy(period = period2)))
-
-        val response = financialDataService.getVatReturnWithFinancialData(Vrn("123456789"), commencementDate).futureValue
-        val expectedResponse =
-          Seq(
-            PeriodWithFinancialData(
-              vatReturn.period,
-              Some(Charge(period, BigDecimal(1000), BigDecimal(1000), BigDecimal(0))),
-              1000,
-              true
-            ),
-            PeriodWithFinancialData(
-              period2,
-              Some(Charge(period2, BigDecimal(1000), BigDecimal(1000), BigDecimal(0))),
-              1000,
-              true
-            )
-          )
-
-        response must contain theSameElementsAs expectedResponse
-        verify(financialDataConnector, times(1)).getFinancialData(any(), eqTo(queryParameters2021))
-        verify(periodService, times(1)).getPeriodYears(eqTo(commencementDate))
-        verify(vatReturnService, times(1)).get(any())
-        verifyNoInteractions(correctionsService)
-      }
-
-      "must return multiple VatReturnWithFinancialDatas when there is multiple vatReturns in the different period years and charges" in {
-        val commencementDate = LocalDate.now()
-        val period = StandardPeriod(2021, Q4)
-        val period2 = StandardPeriod(2022, Q1)
-
-        val financialTransaction =
-          FinancialTransaction(
-            chargeType = Some("G Ret AT EU-OMS"),
-            mainType = None,
-            taxPeriodFrom = Some(period.firstDay),
-            taxPeriodTo = Some(period.lastDay),
-            originalAmount = Some(BigDecimal(1000)),
-            outstandingAmount = Some(BigDecimal(1000)),
-            clearedAmount = Some(BigDecimal(0)),
-            items = Some(Seq.empty)
-          )
-
-        val financialTransaction2 =
-          financialTransaction.copy(
-            taxPeriodFrom = Some(period2.firstDay),
-            taxPeriodTo = Some(period2.lastDay)
-          )
-
-        val financialTransactions = Seq(financialTransaction)
-        val financialTransactions2 = Seq(financialTransaction2)
-
-        val vatReturn = arbitrary[VatReturn].sample.value.copy(vrn, period = period)
-        val periodYear2 = PeriodYear(2022)
-        val queryParameters2 =
-          FinancialDataQueryParameters(fromDate = Some(periodYear2.startOfYear), toDate = Some(periodYear2.endOfYear))
-
-        when(appConfig.strategicReturnApiEnabled) `thenReturn` false
-        when(periodService.getPeriodYears(any())) `thenReturn` Seq(periodYear2021, periodYear2)
-        when(financialDataConnector.getFinancialData(any(), any()))
-          .thenReturn(
-            Future.successful(
-              Right(Some(FinancialData(
-                Some("VRN"),
-                Some("123456789"),
-                Some("ECOM"),
-                ZonedDateTime.now(),
-                Option(financialTransactions)
-              )))
-            )
-          ).thenReturn(
-            Future.successful(
-              Right(Some(FinancialData(
-                Some("VRN"),
-                Some("123456789"),
-                Some("ECOM"),
-                ZonedDateTime.now(),
-                Option(financialTransactions2)
-              )))
-            )
-          )
-        when(vatReturnService.get(any())) `thenReturn`
-          Future.successful(Seq(vatReturn, vatReturn.copy(period = period2)))
-
-        val response = financialDataService.getVatReturnWithFinancialData(Vrn("123456789"), commencementDate).futureValue
-        val expectedResponse =
-          Seq(
-            PeriodWithFinancialData(
-              vatReturn.period,
-              Some(Charge(period, BigDecimal(1000), BigDecimal(1000), BigDecimal(0))),
-              1000,
-              true
-            ),
-            PeriodWithFinancialData(
-              period2,
-              Some(Charge(period2, BigDecimal(1000), BigDecimal(1000), BigDecimal(0))),
-              1000,
-              true
-            )
-          )
-
-        response must contain theSameElementsAs expectedResponse
-        verify(financialDataConnector, times(1)).getFinancialData(any(), eqTo(queryParameters2021))
-        verify(financialDataConnector, times(1)).getFinancialData(any(), eqTo(queryParameters2))
-        verify(periodService, times(1)).getPeriodYears(eqTo(commencementDate))
-        verify(vatReturnService, times(1)).get(any())
-        verifyNoInteractions(correctionsService)
-      }
-
-      "must return one VatReturnWithFinancialData with no charge when there is one vatReturn and no charge with correction" in {
-        val commencementDate = LocalDate.now()
-
-        when(appConfig.strategicReturnApiEnabled) `thenReturn` false
-        when(financialDataConnector.getFinancialData(any(), eqTo(queryParameters2021))) `thenReturn` Future.successful(Right(None))
-        when(vatReturnService.get(any())) `thenReturn` Future.successful(Seq(vatReturn))
-        when(vatReturnService.get(any(), any())) `thenReturn` Future.successful(Some(vatReturn))
-        when(periodService.getPeriodYears(any())) `thenReturn` Seq(periodYear2021)
-        when(correctionsService.get(any(), any())) `thenReturn` Future.successful(Some(correctionPayload))
-        when(vatReturnSalesService.getTotalVatOnSalesAfterCorrection(any(), any())) `thenReturn` BigDecimal(100)
-        val expectedResponse =
-          Seq(PeriodWithFinancialData(vatReturn.period, None, 100, true))
-
-        val response = financialDataService.getVatReturnWithFinancialData(Vrn("123456789"), commencementDate).futureValue
-
-        response mustBe expectedResponse
-        verify(financialDataConnector, times(1)).getFinancialData(any(), eqTo(queryParameters2021))
-        verify(vatReturnService, times(1)).get(eqTo(Vrn("123456789")))
-        verify(periodService, times(1)).getPeriodYears(eqTo(commencementDate))
-        verify(correctionsService, times(1)).get(eqTo(Vrn("123456789")), eqTo(period))
-        verify(vatReturnSalesService, times(1)).getTotalVatOnSalesAfterCorrection(eqTo(vatReturn), eqTo(Some(correctionPayload)))
-
-      }
+      response must contain theSameElementsAs expectedResponse
+      verify(financialDataConnector, times(1)).getFinancialData(any(), eqTo(queryParameters2021))
+      verify(periodService, times(1)).getPeriodYears(eqTo(commencementDate))
+      verify(vatReturnConnector, times(1)).getObligations(any(), any())
+      verifyNoInteractions(vatReturnService)
     }
 
-    "with strategic api toggled on" - {
+    "must return one VatReturnWithFinancialData with no charge when there is one vatReturn and no charge" in {
+      val commencementDate = LocalDate.now()
 
-      "must return one VatReturnWithFinancialData when there is one vatReturn and one charge" in {
-        val commencementDate = LocalDate.now()
+      when(periodService.getPeriodYears(any())) `thenReturn` Seq(periodYear2021)
+      when(periodService.getRunningPeriod(any())) `thenReturn` period
+      when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters2021))) `thenReturn`
+        Future.successful(Right(None))
+      when(vatReturnConnector.getObligations(any(), any())) `thenReturn` Future.successful(Right(etmpObligations))
+      when(vatReturnConnector.get(any(), any())) `thenReturn` Future.successful(Right(etmpVatReturn))
 
-        val financialTransactions = Seq(
-          FinancialTransaction(
-            chargeType = Some("G Ret AT EU-OMS"),
-            mainType = None,
-            taxPeriodFrom = Some(period.firstDay),
-            taxPeriodTo = Some(period.lastDay),
-            originalAmount = Some(BigDecimal(1000)),
-            outstandingAmount = Some(BigDecimal(1000)),
-            clearedAmount = Some(BigDecimal(0)),
-            items = Some(Seq.empty)
-          )
+      val response = financialDataService.getVatReturnWithFinancialData(Vrn("123456789"), commencementDate).futureValue
+
+      val expectedResponse =
+        Seq(PeriodWithFinancialData(vatReturn.period, None, etmpVatReturn.totalVATAmountDueForAllMSGBP, true))
+
+      response mustBe expectedResponse
+      verify(financialDataConnector, times(1)).getFinancialData(any(), eqTo(queryParameters2021))
+      verify(periodService, times(1)).getPeriodYears(eqTo(commencementDate))
+      verify(vatReturnConnector, times(1)).getObligations(any(), any())
+      verify(vatReturnConnector, times(1)).get(any(), any())
+      verifyNoInteractions(vatReturnService)
+    }
+
+    "must return one VatReturnWithFinancialData when there is one vatReturn and financialDataConnector call fails" in {
+      val commencementDate = LocalDate.now()
+
+      when(periodService.getPeriodYears(any())) `thenReturn` Seq(periodYear2021)
+      when(periodService.getRunningPeriod(any())) `thenReturn` period
+      when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters2021))) `thenReturn`
+        Future.successful(Left(UnexpectedResponseStatus(400, "Error")))
+      when(vatReturnConnector.getObligations(any(), any())) `thenReturn` Future.successful(Right(etmpObligations))
+      when(vatReturnConnector.get(any(), any())) `thenReturn` Future.successful(Right(etmpVatReturn))
+      val response = financialDataService.getVatReturnWithFinancialData(Vrn("123456789"), commencementDate).futureValue
+      val expectedResponse = Seq(PeriodWithFinancialData(vatReturn.period, None, etmpVatReturn.totalVATAmountDueForAllMSGBP, true))
+
+      response must contain theSameElementsAs expectedResponse
+      verify(financialDataConnector, times(1)).getFinancialData(any(), eqTo(queryParameters2021))
+      verify(periodService, times(1)).getPeriodYears(eqTo(commencementDate))
+      verify(vatReturnConnector, times(1)).getObligations(any(), any())
+      verify(vatReturnConnector, times(1)).get(any(), any())
+      verifyNoInteractions(vatReturnService)
+    }
+
+    "must return Seq.empty when there are no vatReturns" in {
+      val commencementDate = LocalDate.now()
+      val emptyObligations = EtmpObligations(Seq.empty)
+
+      when(periodService.getPeriodYears(any())) `thenReturn` Seq(periodYear2021)
+      when(periodService.getRunningPeriod(any())) `thenReturn` period
+      when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters2021))) `thenReturn`
+        Future.successful(Right(None))
+      when(vatReturnConnector.getObligations(any(), any())) `thenReturn` Future.successful(Right(emptyObligations))
+
+      val response = financialDataService.getVatReturnWithFinancialData(Vrn("123456789"), commencementDate).futureValue
+
+      response mustBe Seq.empty
+      verify(financialDataConnector, times(1)).getFinancialData(any(), eqTo(queryParameters2021))
+      verify(periodService, times(1)).getPeriodYears(eqTo(commencementDate))
+      verify(vatReturnConnector, times(1)).getObligations(any(), any())
+    }
+
+    "must return something when there are vat returns but 404 financial data" in {
+      val commencementDate = LocalDate.of(2021, 7, 1)
+
+      when(periodService.getPeriodYears(any())) `thenReturn` Seq(periodYear2021)
+      when(periodService.getRunningPeriod(any())) `thenReturn` period
+      when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters2021))) `thenReturn`
+        Future.successful(Right(None))
+      when(vatReturnConnector.getObligations(any(), any())) `thenReturn` Future.successful(Right(etmpObligations))
+      when(vatReturnConnector.get(any(), any())) `thenReturn` Future.successful(Right(etmpVatReturn))
+      val response = financialDataService.getVatReturnWithFinancialData(Vrn("123456789"), commencementDate).futureValue
+
+      val expectedResponse =
+        Seq(
+          PeriodWithFinancialData(
+            vatReturn.period, None, etmpVatReturn.totalVATAmountDueForAllMSGBP, true
+          ),
         )
 
-        val financialData =
-          FinancialData(
+      response mustBe expectedResponse
+      verify(financialDataConnector, times(1)).getFinancialData(any(), eqTo(queryParameters2021))
+      verify(periodService, times(1)).getPeriodYears(eqTo(commencementDate))
+      verify(vatReturnConnector, times(1)).getObligations(any(), any())
+    }
+
+    "must return multiple VatReturnWithFinancialDatas when there is multiple vatReturns in the same period year and charges" in {
+      val commencementDate = LocalDate.now()
+      val period = StandardPeriod(2021, Q3)
+      val period2 = StandardPeriod(2021, Q4)
+
+      val financialTransaction =
+        FinancialTransaction(
+          chargeType = Some("G Ret AT EU-OMS"),
+          mainType = None,
+          taxPeriodFrom = Some(period.firstDay),
+          taxPeriodTo = Some(period.lastDay),
+          originalAmount = Some(BigDecimal(1000)),
+          outstandingAmount = Some(BigDecimal(1000)),
+          clearedAmount = Some(BigDecimal(0)),
+          items = Some(Seq.empty)
+        )
+
+      val financialTransactions = Seq(
+        financialTransaction,
+        financialTransaction.copy(
+          taxPeriodTo = Some(period2.firstDay),
+          taxPeriodFrom = Some(period2.firstDay)
+        )
+      )
+
+      val vatReturn = arbitrary[VatReturn].sample.value.copy(vrn, period = period)
+
+      when(periodService.getPeriodYears(any())) `thenReturn` Seq(periodYear2021)
+      when(periodService.getRunningPeriod(any())) `thenReturn` period
+      when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters2021))) `thenReturn`
+        Future.successful(
+          Right(Some(FinancialData(
             Some("VRN"),
             Some("123456789"),
             Some("ECOM"),
             ZonedDateTime.now(),
             Option(financialTransactions)
-          )
+          )))
+        )
+      when(vatReturnConnector.getObligations(any(), any())) `thenReturn`
+        Future.successful(Right(EtmpObligations(Seq(EtmpObligation(Seq(
+          EtmpObligationDetails(Fulfilled, etmpVatReturn.periodKey),
+          EtmpObligationDetails(Fulfilled, toEtmpPeriodString(period2)),
+        ))))))
 
-        when(appConfig.strategicReturnApiEnabled) `thenReturn` true
-        when(periodService.getPeriodYears(any())) `thenReturn` Seq(periodYear2021)
-        when(periodService.getRunningPeriod(any())) `thenReturn` period
-        when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters2021))) `thenReturn`
-          Future.successful(Right(Some(financialData)))
-        when(vatReturnConnector.getObligations(any(), any())) `thenReturn` Future.successful(Right(etmpObligations))
-
-        val response = financialDataService.getVatReturnWithFinancialData(Vrn("123456789"), commencementDate).futureValue
-        val expectedResponse =
-          Seq(PeriodWithFinancialData(
+      val response = financialDataService.getVatReturnWithFinancialData(Vrn("123456789"), commencementDate).futureValue
+      val expectedResponse =
+        Seq(
+          PeriodWithFinancialData(
             vatReturn.period,
             Some(Charge(period, BigDecimal(1000), BigDecimal(1000), BigDecimal(0))),
             1000,
             true
-          ))
-
-        response must contain theSameElementsAs expectedResponse
-        verify(financialDataConnector, times(1)).getFinancialData(any(), eqTo(queryParameters2021))
-        verify(periodService, times(1)).getPeriodYears(eqTo(commencementDate))
-        verify(vatReturnConnector, times(1)).getObligations(any(), any())
-        verifyNoInteractions(vatReturnService)
-        verifyNoInteractions(correctionsService)
-      }
-
-      "must return one VatReturnWithFinancialData with no charge when there is one vatReturn and no charge" in {
-        val commencementDate = LocalDate.now()
-
-        when(appConfig.strategicReturnApiEnabled) `thenReturn` true
-        when(periodService.getPeriodYears(any())) `thenReturn` Seq(periodYear2021)
-        when(periodService.getRunningPeriod(any())) `thenReturn` period
-        when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters2021))) `thenReturn`
-          Future.successful(Right(None))
-        when(vatReturnConnector.getObligations(any(), any())) `thenReturn` Future.successful(Right(etmpObligations))
-        when(vatReturnConnector.get(any(), any())) `thenReturn` Future.successful(Right(etmpVatReturn))
-
-        val response = financialDataService.getVatReturnWithFinancialData(Vrn("123456789"), commencementDate).futureValue
-
-        val expectedResponse =
-          Seq(PeriodWithFinancialData(vatReturn.period, None, etmpVatReturn.totalVATAmountDueForAllMSGBP, true))
-
-        response mustBe expectedResponse
-        verify(financialDataConnector, times(1)).getFinancialData(any(), eqTo(queryParameters2021))
-        verify(periodService, times(1)).getPeriodYears(eqTo(commencementDate))
-        verify(vatReturnConnector, times(1)).getObligations(any(), any())
-        verify(vatReturnConnector, times(1)).get(any(), any())
-        verifyNoInteractions(vatReturnService)
-      }
-
-      "must return one VatReturnWithFinancialData when there is one vatReturn and financialDataConnector call fails" in {
-        val commencementDate = LocalDate.now()
-
-        when(appConfig.strategicReturnApiEnabled) `thenReturn` true
-        when(periodService.getPeriodYears(any())) `thenReturn` Seq(periodYear2021)
-        when(periodService.getRunningPeriod(any())) `thenReturn` period
-        when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters2021))) `thenReturn`
-          Future.successful(Left(UnexpectedResponseStatus(400, "Error")))
-        when(vatReturnConnector.getObligations(any(), any())) `thenReturn` Future.successful(Right(etmpObligations))
-        when(vatReturnConnector.get(any(), any())) `thenReturn` Future.successful(Right(etmpVatReturn))
-        val response = financialDataService.getVatReturnWithFinancialData(Vrn("123456789"), commencementDate).futureValue
-        val expectedResponse = Seq(PeriodWithFinancialData(vatReturn.period, None, etmpVatReturn.totalVATAmountDueForAllMSGBP, true))
-
-        response must contain theSameElementsAs expectedResponse
-        verify(financialDataConnector, times(1)).getFinancialData(any(), eqTo(queryParameters2021))
-        verify(periodService, times(1)).getPeriodYears(eqTo(commencementDate))
-        verify(vatReturnConnector, times(1)).getObligations(any(), any())
-        verify(vatReturnConnector, times(1)).get(any(), any())
-        verifyNoInteractions(vatReturnService)
-        verifyNoInteractions(correctionsService)
-      }
-
-      "must return Seq.empty when there are no vatReturns" in {
-        val commencementDate = LocalDate.now()
-        val emptyObligations = EtmpObligations(Seq.empty)
-
-        when(appConfig.strategicReturnApiEnabled) `thenReturn` true
-        when(periodService.getPeriodYears(any())) `thenReturn` Seq(periodYear2021)
-        when(periodService.getRunningPeriod(any())) `thenReturn` period
-        when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters2021))) `thenReturn`
-          Future.successful(Right(None))
-        when(vatReturnConnector.getObligations(any(), any())) `thenReturn` Future.successful(Right(emptyObligations))
-
-        val response = financialDataService.getVatReturnWithFinancialData(Vrn("123456789"), commencementDate).futureValue
-
-        response mustBe Seq.empty
-        verify(financialDataConnector, times(1)).getFinancialData(any(), eqTo(queryParameters2021))
-        verify(periodService, times(1)).getPeriodYears(eqTo(commencementDate))
-        verify(vatReturnConnector, times(1)).getObligations(any(), any())
-      }
-
-      "must return something when there are vat returns but 404 financial data" in {
-        val commencementDate = LocalDate.of(2021, 7, 1)
-
-        when(appConfig.strategicReturnApiEnabled) `thenReturn` true
-        when(periodService.getPeriodYears(any())) `thenReturn` Seq(periodYear2021)
-        when(periodService.getRunningPeriod(any())) `thenReturn` period
-        when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters2021))) `thenReturn`
-          Future.successful(Right(None))
-        when(vatReturnConnector.getObligations(any(), any())) `thenReturn` Future.successful(Right(etmpObligations))
-        when(vatReturnConnector.get(any(), any())) `thenReturn` Future.successful(Right(etmpVatReturn))
-        val response = financialDataService.getVatReturnWithFinancialData(Vrn("123456789"), commencementDate).futureValue
-
-        val expectedResponse =
-          Seq(
-            PeriodWithFinancialData(
-              vatReturn.period, None, etmpVatReturn.totalVATAmountDueForAllMSGBP, true
-            ),
-          )
-
-        response mustBe expectedResponse
-        verify(financialDataConnector, times(1)).getFinancialData(any(), eqTo(queryParameters2021))
-        verify(periodService, times(1)).getPeriodYears(eqTo(commencementDate))
-        verify(vatReturnConnector, times(1)).getObligations(any(), any())
-      }
-
-      "must return multiple VatReturnWithFinancialDatas when there is multiple vatReturns in the same period year and charges" in {
-        val commencementDate = LocalDate.now()
-        val period = StandardPeriod(2021, Q3)
-        val period2 = StandardPeriod(2021, Q4)
-
-        val financialTransaction =
-          FinancialTransaction(
-            chargeType = Some("G Ret AT EU-OMS"),
-            mainType = None,
-            taxPeriodFrom = Some(period.firstDay),
-            taxPeriodTo = Some(period.lastDay),
-            originalAmount = Some(BigDecimal(1000)),
-            outstandingAmount = Some(BigDecimal(1000)),
-            clearedAmount = Some(BigDecimal(0)),
-            items = Some(Seq.empty)
-          )
-
-        val financialTransactions = Seq(
-          financialTransaction,
-          financialTransaction.copy(
-            taxPeriodTo = Some(period2.firstDay),
-            taxPeriodFrom = Some(period2.firstDay)
+          ),
+          PeriodWithFinancialData(
+            period2,
+            Some(Charge(period2, BigDecimal(1000), BigDecimal(1000), BigDecimal(0))),
+            1000,
+            true
           )
         )
 
-        val vatReturn = arbitrary[VatReturn].sample.value.copy(vrn, period = period)
+      response must contain theSameElementsAs expectedResponse
+      verify(financialDataConnector, times(1)).getFinancialData(any(), eqTo(queryParameters2021))
+      verify(periodService, times(1)).getPeriodYears(eqTo(commencementDate))
+      verify(vatReturnConnector, times(1)).getObligations(any(), any())
+      verifyNoInteractions(vatReturnService)
+    }
 
-        when(appConfig.strategicReturnApiEnabled) `thenReturn` true
-        when(periodService.getPeriodYears(any())) `thenReturn` Seq(periodYear2021)
-        when(periodService.getRunningPeriod(any())) `thenReturn` period
-        when(financialDataConnector.getFinancialData(any(), equalTo(queryParameters2021))) `thenReturn`
+    "must return multiple VatReturnWithFinancialDatas when there is multiple vatReturns in the different period years and charges" in {
+      val commencementDate = LocalDate.now()
+      val period = StandardPeriod(2021, Q4)
+      val period2 = StandardPeriod(2022, Q1)
+
+      val financialTransaction =
+        FinancialTransaction(
+          chargeType = Some("G Ret AT EU-OMS"),
+          mainType = None,
+          taxPeriodFrom = Some(period.firstDay),
+          taxPeriodTo = Some(period.lastDay),
+          originalAmount = Some(BigDecimal(1000)),
+          outstandingAmount = Some(BigDecimal(1000)),
+          clearedAmount = Some(BigDecimal(0)),
+          items = Some(Seq.empty)
+        )
+
+      val financialTransaction2 =
+        financialTransaction.copy(
+          taxPeriodFrom = Some(period2.firstDay),
+          taxPeriodTo = Some(period2.lastDay)
+        )
+
+      val financialTransactions = Seq(financialTransaction)
+      val financialTransactions2 = Seq(financialTransaction2)
+
+      val etmpVatReturn = arbitrary[EtmpVatReturn].sample.value.copy(periodKey = toEtmpPeriodString(period))
+      val periodYear2 = PeriodYear(2022)
+      val queryParameters2 =
+        FinancialDataQueryParameters(fromDate = Some(periodYear2.startOfYear), toDate = Some(periodYear2.endOfYear))
+
+      when(periodService.getPeriodYears(any())) `thenReturn` Seq(periodYear2021, periodYear2)
+      when(periodService.getRunningPeriod(any())) `thenReturn` period
+      when(financialDataConnector.getFinancialData(any(), any()))
+        .thenReturn(
           Future.successful(
             Right(Some(FinancialData(
               Some("VRN"),
@@ -947,151 +694,70 @@ class FinancialDataServiceSpec extends SpecBase
               Option(financialTransactions)
             )))
           )
-        when(vatReturnConnector.getObligations(any(), any())) `thenReturn`
-          Future.successful(Right(EtmpObligations(Seq(EtmpObligation(Seq(
-            EtmpObligationDetails(Fulfilled, etmpVatReturn.periodKey),
-            EtmpObligationDetails(Fulfilled, toEtmpPeriodString(period2)),
-          ))))))
-
-        val response = financialDataService.getVatReturnWithFinancialData(Vrn("123456789"), commencementDate).futureValue
-        val expectedResponse =
-          Seq(
-            PeriodWithFinancialData(
-              vatReturn.period,
-              Some(Charge(period, BigDecimal(1000), BigDecimal(1000), BigDecimal(0))),
-              1000,
-              true
-            ),
-            PeriodWithFinancialData(
-              period2,
-              Some(Charge(period2, BigDecimal(1000), BigDecimal(1000), BigDecimal(0))),
-              1000,
-              true
-            )
+        ).thenReturn(
+          Future.successful(
+            Right(Some(FinancialData(
+              Some("VRN"),
+              Some("123456789"),
+              Some("ECOM"),
+              ZonedDateTime.now(),
+              Option(financialTransactions2)
+            )))
           )
+        )
+      when(vatReturnConnector.getObligations(any(), any())) `thenReturn`
+        Future.successful(Right(EtmpObligations(Seq(EtmpObligation(Seq(
+          EtmpObligationDetails(Fulfilled, toEtmpPeriodString(period)),
+          EtmpObligationDetails(Fulfilled, toEtmpPeriodString(period2)),
+        ))))))
+      when(vatReturnConnector.get(any(), any())) `thenReturn`
+        Future.successful(Right(etmpVatReturn))
 
-        response must contain theSameElementsAs expectedResponse
-        verify(financialDataConnector, times(1)).getFinancialData(any(), eqTo(queryParameters2021))
-        verify(periodService, times(1)).getPeriodYears(eqTo(commencementDate))
-        verify(vatReturnConnector, times(1)).getObligations(any(), any())
-        verifyNoInteractions(vatReturnService)
-        verifyNoInteractions(correctionsService)
-      }
-
-      "must return multiple VatReturnWithFinancialDatas when there is multiple vatReturns in the different period years and charges" in {
-        val commencementDate = LocalDate.now()
-        val period = StandardPeriod(2021, Q4)
-        val period2 = StandardPeriod(2022, Q1)
-
-        val financialTransaction =
-          FinancialTransaction(
-            chargeType = Some("G Ret AT EU-OMS"),
-            mainType = None,
-            taxPeriodFrom = Some(period.firstDay),
-            taxPeriodTo = Some(period.lastDay),
-            originalAmount = Some(BigDecimal(1000)),
-            outstandingAmount = Some(BigDecimal(1000)),
-            clearedAmount = Some(BigDecimal(0)),
-            items = Some(Seq.empty)
+      val response = financialDataService.getVatReturnWithFinancialData(Vrn("123456789"), commencementDate).futureValue
+      val expectedResponse =
+        Seq(
+          PeriodWithFinancialData(
+            period,
+            Some(Charge(period, BigDecimal(1000), BigDecimal(1000), BigDecimal(0))),
+            1000,
+            true
+          ),
+          PeriodWithFinancialData(
+            period2,
+            Some(Charge(period2, BigDecimal(1000), BigDecimal(1000), BigDecimal(0))),
+            1000,
+            true
           )
+        )
 
-        val financialTransaction2 =
-          financialTransaction.copy(
-            taxPeriodFrom = Some(period2.firstDay),
-            taxPeriodTo = Some(period2.lastDay)
-          )
+      response must contain theSameElementsAs expectedResponse
+      verify(financialDataConnector, times(1)).getFinancialData(any(), eqTo(queryParameters2021))
+      verify(financialDataConnector, times(1)).getFinancialData(any(), eqTo(queryParameters2))
+      verify(periodService, times(1)).getPeriodYears(eqTo(commencementDate))
+      verify(vatReturnConnector, times(1)).getObligations(any(), any())
+      verifyNoInteractions(vatReturnService)
+    }
 
-        val financialTransactions = Seq(financialTransaction)
-        val financialTransactions2 = Seq(financialTransaction2)
+    "must return one VatReturnWithFinancialData with no charge when there is one vatReturn and no charge with correction" in {
+      val commencementDate = LocalDate.now()
 
-        val etmpVatReturn = arbitrary[EtmpVatReturn].sample.value.copy(periodKey = toEtmpPeriodString(period))
-        val periodYear2 = PeriodYear(2022)
-        val queryParameters2 =
-          FinancialDataQueryParameters(fromDate = Some(periodYear2.startOfYear), toDate = Some(periodYear2.endOfYear))
+      when(financialDataConnector.getFinancialData(any(), eqTo(queryParameters2021))) `thenReturn` Future.successful(Right(None))
+      when(vatReturnConnector.getObligations(any(), any())) `thenReturn` Future.successful(Right(etmpObligations))
+      when(vatReturnConnector.get(any(), any())) `thenReturn` Future.successful(Right(etmpVatReturn))
+      when(periodService.getPeriodYears(any())) `thenReturn` Seq(periodYear2021)
+      when(periodService.getRunningPeriod(any())) `thenReturn` period
+      when(vatReturnSalesService.getTotalVatOnSalesAfterCorrection(any(), any())) `thenReturn` BigDecimal(100)
+      val expectedResponse =
+        Seq(PeriodWithFinancialData(vatReturn.period, None, etmpVatReturn.totalVATAmountDueForAllMSGBP, true))
 
-        when(appConfig.strategicReturnApiEnabled) `thenReturn` true
-        when(periodService.getPeriodYears(any())) `thenReturn` Seq(periodYear2021, periodYear2)
-        when(periodService.getRunningPeriod(any())) `thenReturn` period
-        when(financialDataConnector.getFinancialData(any(), any()))
-          .thenReturn(
-            Future.successful(
-              Right(Some(FinancialData(
-                Some("VRN"),
-                Some("123456789"),
-                Some("ECOM"),
-                ZonedDateTime.now(),
-                Option(financialTransactions)
-              )))
-            )
-          ).thenReturn(
-            Future.successful(
-              Right(Some(FinancialData(
-                Some("VRN"),
-                Some("123456789"),
-                Some("ECOM"),
-                ZonedDateTime.now(),
-                Option(financialTransactions2)
-              )))
-            )
-          )
-        when(vatReturnConnector.getObligations(any(), any())) `thenReturn`
-          Future.successful(Right(EtmpObligations(Seq(EtmpObligation(Seq(
-            EtmpObligationDetails(Fulfilled, toEtmpPeriodString(period)),
-            EtmpObligationDetails(Fulfilled, toEtmpPeriodString(period2)),
-          ))))))
-        when(vatReturnConnector.get(any(), any())) `thenReturn`
-          Future.successful(Right(etmpVatReturn))
+      val response = financialDataService.getVatReturnWithFinancialData(Vrn("123456789"), commencementDate).futureValue
 
-        val response = financialDataService.getVatReturnWithFinancialData(Vrn("123456789"), commencementDate).futureValue
-        val expectedResponse =
-          Seq(
-            PeriodWithFinancialData(
-              period,
-              Some(Charge(period, BigDecimal(1000), BigDecimal(1000), BigDecimal(0))),
-              1000,
-              true
-            ),
-            PeriodWithFinancialData(
-              period2,
-              Some(Charge(period2, BigDecimal(1000), BigDecimal(1000), BigDecimal(0))),
-              1000,
-              true
-            )
-          )
-
-        response must contain theSameElementsAs expectedResponse
-        verify(financialDataConnector, times(1)).getFinancialData(any(), eqTo(queryParameters2021))
-        verify(financialDataConnector, times(1)).getFinancialData(any(), eqTo(queryParameters2))
-        verify(periodService, times(1)).getPeriodYears(eqTo(commencementDate))
-        verify(vatReturnConnector, times(1)).getObligations(any(), any())
-        verifyNoInteractions(vatReturnService)
-        verifyNoInteractions(correctionsService)
-      }
-
-      "must return one VatReturnWithFinancialData with no charge when there is one vatReturn and no charge with correction" in {
-        val commencementDate = LocalDate.now()
-
-        when(appConfig.strategicReturnApiEnabled) `thenReturn` true
-        when(financialDataConnector.getFinancialData(any(), eqTo(queryParameters2021))) `thenReturn` Future.successful(Right(None))
-        when(vatReturnConnector.getObligations(any(), any())) `thenReturn` Future.successful(Right(etmpObligations))
-        when(vatReturnConnector.get(any(), any())) `thenReturn` Future.successful(Right(etmpVatReturn))
-        when(periodService.getPeriodYears(any())) `thenReturn` Seq(periodYear2021)
-        when(periodService.getRunningPeriod(any())) `thenReturn` period
-        when(correctionsService.get(any(), any())) `thenReturn` Future.successful(Some(correctionPayload))
-        when(vatReturnSalesService.getTotalVatOnSalesAfterCorrection(any(), any())) `thenReturn` BigDecimal(100)
-        val expectedResponse =
-          Seq(PeriodWithFinancialData(vatReturn.period, None, etmpVatReturn.totalVATAmountDueForAllMSGBP, true))
-
-        val response = financialDataService.getVatReturnWithFinancialData(Vrn("123456789"), commencementDate).futureValue
-
-        response mustBe expectedResponse
-        verify(financialDataConnector, times(1)).getFinancialData(any(), eqTo(queryParameters2021))
-        verify(vatReturnConnector, times(1)).getObligations(any(), any())
-        verify(vatReturnConnector, times(1)).get(eqTo(Vrn("123456789")), any())
-        verify(periodService, times(1)).getPeriodYears(eqTo(commencementDate))
-        verifyNoInteractions(vatReturnService)
-        verifyNoInteractions(correctionsService)
-      }
+      response mustBe expectedResponse
+      verify(financialDataConnector, times(1)).getFinancialData(any(), eqTo(queryParameters2021))
+      verify(vatReturnConnector, times(1)).getObligations(any(), any())
+      verify(vatReturnConnector, times(1)).get(eqTo(Vrn("123456789")), any())
+      verify(periodService, times(1)).getPeriodYears(eqTo(commencementDate))
+      verifyNoInteractions(vatReturnService)
     }
   }
 

@@ -35,5 +35,6 @@ class AppConfig @Inject()(config: Configuration) {
 
   val externalEntryTtlDays: Long = config.get[Long]("features.externalEntry.ttlInDays")
 
-  val strategicReturnApiEnabled: Boolean = config.get[Boolean]("features.strategic-returns.enabled")
+  val cleanupOldCollectionsEnabled: Boolean = config.get[Boolean]("features.cleanupOldCollections.enabled")
+  val cleanupOldCollectionsList: Seq[String] = config.get[Seq[String]]("features.cleanupOldCollections.collections")
 }
