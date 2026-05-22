@@ -72,7 +72,7 @@ class FinancialDataService @Inject()(
             .map(detail => Period.fromKey(detail.periodKey))
         }
       case Left(errorResponse) =>
-        val message = s"Failed to retrieve obligations for VRN $vrn, error: ${errorResponse.body}"
+        val message = s"Failed to retrieve obligations for VRN $vrn with query parameters $queryParameters, error: ${errorResponse.body}"
         val exception = new Exception(message)
         logger.error(exception.getMessage, exception)
         throw exception
@@ -183,7 +183,7 @@ class FinancialDataService @Inject()(
       )
     ).flatMap {
       case Right(value) => Future.successful(value)
-      case Left(e) => Future.failed(DesException(s"An error occurred while getting financial Data: ${e.body}"))
+      case Left(e) => Future.failed(DesException(s"An error occurred while getting financial Data with from date: $fromDate and to date $toDate: ${e.body}"))
     }
 
   def getOutstandingAmounts(vrn: Vrn): Future[Seq[PeriodWithOutstandingAmount]] = {
