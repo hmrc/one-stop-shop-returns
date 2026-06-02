@@ -141,7 +141,7 @@ class VatReturnControllerSpec
 
         val result = route(app, request).value
 
-        status(result) mustEqual SERVICE_UNAVAILABLE
+        status(result) mustEqual INTERNAL_SERVER_ERROR
       }
     }
 
