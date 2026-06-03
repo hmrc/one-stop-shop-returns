@@ -25,3 +25,5 @@ POST        /external-entry/:page                             controllers.extern
 GET         /external-entry                                   controllers.external.ExternalEntryController.getExternalEntry()
 
 GET         /obligations/:vrn                                 controllers.VatReturnController.getObligations(vrn: String)
+
+POST        /upscan/callback                                  controllers.UpscanCallbackController.callback
