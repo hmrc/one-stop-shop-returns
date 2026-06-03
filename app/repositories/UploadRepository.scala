@@ -75,7 +75,7 @@ class UploadRepository @Inject()(
         update = Updates.combine(
           Updates.set("status", "UPLOADED"),
           Updates.set("checksum", checksum),
-          Updates.set("filename", fileName),
+          Updates.set("fileName", fileName),
           Updates.set("size", size),
           Updates.setOnInsert("createdAt", Instant.now(clock)),
           Updates.set("downloadUrl", downloadUrl)
