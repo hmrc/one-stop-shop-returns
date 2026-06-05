@@ -27,3 +27,7 @@ GET         /external-entry                                   controllers.extern
 GET         /obligations/:vrn                                 controllers.VatReturnController.getObligations(vrn: String)
 
 POST        /upscan/callback                                  controllers.UpscanCallbackController.callback
+
+GET         /file-upload-outcome/:reference                   controllers.FileUploadOutcomeResponseController.get(reference: String)
+
+GET         /file-upload-csv/:reference                       controllers.FileUploadOutcomeResponseController.getCsv(reference: String)
