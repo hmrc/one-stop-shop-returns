@@ -67,7 +67,7 @@ class UpscanCallbackService @Inject()(appConfig: AppConfig, uploadRepository: Up
         }
         
       case failure: UpscanCallbackFailure =>
-        val mappedReason =mapFailureReason(failure)
+        val mappedReason = mapFailureReason(failure)
         
         logger.warn(
           s"Upscan FAILURE for reference ${failure.reference}, " +
