@@ -37,4 +37,5 @@ class AppConfig @Inject()(config: Configuration) {
 
   val cleanupOldCollectionsEnabled: Boolean = config.get[Boolean]("features.cleanupOldCollections.enabled")
   val cleanupOldCollectionsList: Seq[String] = config.get[Seq[String]]("features.cleanupOldCollections.collections")
+  val maxFileSize: Long = config.get[Long]("features.upscan.maxUploadFileSizeMb") * 1024 * 1024
 }
